@@ -1,8 +1,8 @@
  # Makefile for mylib
 
-lib.name = one
+lib.name = motif
 
-class.sources = one.cpp
+class.sources = ticker.cpp bank.cpp
 
 # datafiles = help.pd README.txt LICENSE.txt
 
