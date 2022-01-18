@@ -1,17 +1,54 @@
-#N canvas 989 339 450 369 12;
-#X obj 132 239 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+#N canvas 780 285 515 355 12;
+#X floatatom 134 285 10 0 0 0 - - -, f 10;
+#X msg 77 196 deactivate;
+#X msg 69 172 activate;
+#X floatatom 298 285 7 0 0 0 - - -, f 7;
+#X floatatom 246 189 5 0 0 0 - - -, f 5;
+#X obj 166 239 bank 1, f 8;
+#X obj 309 233 bank 2, f 8;
+#X floatatom 213 285 8 0 0 0 - - -, f 8;
+#X floatatom 359 284 10 0 0 0 - - -, f 10;
+#X msg 374 183 deactivate;
+#X msg 366 159 activate;
+#X msg 148 56 t_stop;
+#X msg 253 54 q_launch;
+#X msg 276 77 q_stop;
+#X msg 132 29 t_start;
+#X msg 291 100 get_pos;
+#X obj 233 269 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
 -1 -1;
-#X msg 113 114 start;
-#X msg 170 112 stop;
-#X msg 219 112 reset;
-#X obj 142 182 ticker 3;
-#X obj 167 234 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+#X obj 375 267 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
 -1 -1;
-#X obj 194 235 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+#X msg 244 28 clear;
+#X obj 256 268 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
 -1 -1;
-#X connect 1 0 4 0;
-#X connect 2 0 4 0;
-#X connect 3 0 4 0;
-#X connect 4 0 0 0;
-#X connect 4 1 5 0;
-#X connect 4 2 6 0;
+#X obj 395 267 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X connect 1 0 5 0;
+#X connect 2 0 5 0;
+#X connect 4 0 5 1;
+#X connect 4 0 6 1;
+#X connect 5 0 0 0;
+#X connect 5 0 4 0;
+#X connect 5 1 7 0;
+#X connect 5 2 16 0;
+#X connect 5 3 19 0;
+#X connect 6 0 3 0;
+#X connect 6 0 4 0;
+#X connect 6 1 8 0;
+#X connect 6 2 17 0;
+#X connect 6 3 20 0;
+#X connect 9 0 6 0;
+#X connect 10 0 6 0;
+#X connect 11 0 6 0;
+#X connect 11 0 5 0;
+#X connect 12 0 5 0;
+#X connect 12 0 6 0;
+#X connect 13 0 5 0;
+#X connect 13 0 6 0;
+#X connect 14 0 5 0;
+#X connect 14 0 6 0;
+#X connect 15 0 5 0;
+#X connect 15 0 6 0;
+#X connect 18 0 5 0;
+#X connect 18 0 6 0;

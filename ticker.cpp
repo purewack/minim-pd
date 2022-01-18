@@ -7,59 +7,56 @@ void ticker_dsp(t_ticker *x, t_signal **sp)
 t_int* ticker_perform(t_int *w)
 { 
     t_ticker *x = (t_ticker *)(w[1]);
-    if(x->tick_mode == 1){
+    if(x->tick_state == 1){
         x->tick_len += 1.0f;
     }
-    else if(x->tick_mode == 2){
+    else if(x->tick_state == 2){
         x->tick_pos += 1.0f;
-        if(x->tick_pos >= x->tick_len){
-            x->tick_pos = 0.0f;
-            
-            outlet_bang(x->o_tick_sync);
-            // for(int i=0; i<x->o_count; i++)
-            //     outlet_bang(x->o_outs[i]);
+        if(x->tick_pos >= x->tick_start+x->tick_len){
+            x->tick_start = x->tick_pos;
+            outlet_float(x->o_tick_sync, x->tick_pos);
         }
     }
-//   t_sample    *in  =      (t_sample *)(w[2]);
-//   t_sample    *out =      (t_sample *)(w[3]);
-//   int            n =             (int)(w[4]);
-//   while (n--) *out++ = (*in++)*(x->phase);
+
   return (w+2);
 }
 
 
 void ticker_onstart(t_ticker* x){
-    if(x->tick_mode == 0 && x->tick_len == 0.0f)
-        x->tick_mode = 1;
+    if(x->tick_state == 0 && x->tick_len == 0.0f)
+        x->tick_state = 1;
     else if(x->tick_len){
         x->tick_pos = 0.0f;
-        x->tick_mode = 2;
+        x->tick_start = 0.0f;
+        x->tick_state = 2;
+        outlet_float(x->o_tick_stats, x->tick_len);
+        post("sync len: %f",x->tick_len);
     }
 }
 
 void ticker_onend(t_ticker* x){
-    if(x->tick_mode != 0){
-        x->tick_mode = 0;
+    if(x->tick_state != 0){
+        x->tick_state = 0;
     }
 }
 
 void ticker_onreset(t_ticker* x){
-    x->tick_mode = 0;
+    x->tick_state = 0;
     x->tick_pos = 0.0f;
     x->tick_len = 0.0f;
+    x->tick_start = 0.0f;
+    post("sync len: %f",x->tick_len);
 }
 
 void* ticker_new(t_floatarg out_count){
  
     t_ticker* x = (t_ticker*)pd_new(ticker_class);
  
-    x->o_tick_sync = (t_outlet*)outlet_new(&x->x_obj, &s_bang);
-    // x->o_count = out_count > 0 ? (int)out_count : 1;
-    // x->o_outs = (t_outlet**)malloc(x->o_count * sizeof(t_outlet*));
-    // for(int i=0; i<x->o_count; i++) 
-    //     x->o_outs[i] = (t_outlet*)outlet_new(&x->x_obj, &s_bang);
-    
-    x->tick_mode = 0;
+    x->o_tick_sync = (t_outlet*)outlet_new(&x->x_obj, &s_float);
+    x->o_tick_stats = (t_outlet*)outlet_new(&x->x_obj, &s_float);
+
+    x->tick_count = 0;
+    x->tick_state = 0;
     x->tick_pos = 0.0f;
     x->tick_len = 0.0f;
  
@@ -68,6 +65,7 @@ void* ticker_new(t_floatarg out_count){
 
 void ticker_free(t_ticker* x){
     outlet_free(x->o_tick_sync);
+    outlet_free(x->o_tick_stats);
     // for(int i=0; i<x->o_count; i++) 
     //     outlet_free(x->o_outs[i]);
 }
@@ -84,7 +82,7 @@ void ticker_setup(void){
     );
     class_addmethod(ticker_class,
         (t_method)ticker_dsp, gensym("dsp"), A_CANT, 0);
-    class_addmethod(ticker_class,(t_method)ticker_onstart,gensym("start"),(t_atomtype)0);
-    class_addmethod(ticker_class,(t_method)ticker_onend,gensym("stop"),(t_atomtype)0);
-    class_addmethod(ticker_class,(t_method)ticker_onreset,gensym("reset"),(t_atomtype)0);
+    class_addmethod(ticker_class,(t_method)ticker_onstart, gensym("start"),  (t_atomtype)0);
+    class_addmethod(ticker_class,(t_method)ticker_onend,   gensym("stop"),   (t_atomtype)0);
+    class_addmethod(ticker_class,(t_method)ticker_onreset, gensym("reset"),  (t_atomtype)0);
 }

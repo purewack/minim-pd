@@ -10,13 +10,15 @@ extern "C"{
     static t_class *ticker_class;
     typedef struct _ticker{
         t_object    x_obj;
-        t_float     f;
+        // t_float     f;
         t_outlet*   o_tick_sync;
-        t_outlet**  o_outs;
-        int         o_count;
+        t_outlet*   o_tick_stats;
+        // t_outlet**  o_outs;
+        int         tick_count;
+        int         tick_state;
         t_float     tick_len;
         t_float     tick_pos;
-        t_float     tick_mode;
+        t_float     tick_start;
     } t_ticker;
 
     void* ticker_new(t_floatarg f);
