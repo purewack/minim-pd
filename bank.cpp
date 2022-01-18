@@ -60,6 +60,10 @@ void bank_onReset(t_bank* x){
     x->tick_start = 0;
     x->tick_action_pending = 0;
     x->tick_action_nstate = 0;
+    x->tick_action_when = 0;
+    outlet_float(x->o_sync, 0);
+    outlet_float(x->o_m_sync, 0);
+    outlet_float(x->o_tick_pending, 0);
     bank_clear_motif(x->active_motif_ptr);
     post("reset: %d",x->active_motif_idx);
 }
@@ -86,9 +90,10 @@ void bank_onTickLen(t_bank* x, t_floatarg t){
     if(x->tick_duration > 0) return;
 
     x->tick_duration = t;
+    x->tick_current = 0;
     if(x->active_motif_ptr->state == _motif_state::m_base){
         x->active_motif_ptr->state = _motif_state::m_play;
-        x->active_motif_ptr->pos_syncs = -1;
+        x->active_motif_ptr->pos_syncs = 0;
         x->active_motif_ptr->len_syncs = x->tick_duration;
     }
     post("bank %d tick len: %f", x->id, t);
