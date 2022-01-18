@@ -1,4 +1,4 @@
-#N canvas 1246 311 515 443 12;
+#N canvas 1252 338 515 443 12;
 #X floatatom 90 240 10 0 0 0 - - -, f 10;
 #X msg 15 147 deactivate;
 #X msg 7 123 activate;
@@ -32,6 +32,14 @@
 #X text 400 30 tick_pending;
 #X text 400 50 sync;
 #X text 400 70 m_sync;
+#X obj 200 410 dac~;
+#X obj 230 370 plonk~ 1200;
+#X obj 80 300 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000
+#000000;
+#X obj 370 320 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc
+#000000 #000000;
+#X obj 80 350 plonk~ 500;
+#X obj 360 350 plonk~ 600;
 #X connect 1 0 5 0;
 #X connect 2 0 5 0;
 #X connect 4 0 5 1;
@@ -39,6 +47,7 @@
 #X connect 5 0 0 0;
 #X connect 5 0 4 0;
 #X connect 5 1 7 0;
+#X connect 5 1 31 0;
 #X connect 5 2 21 0;
 #X connect 5 2 16 0;
 #X connect 5 3 19 0;
@@ -46,6 +55,7 @@
 #X connect 6 0 3 0;
 #X connect 6 0 4 0;
 #X connect 6 1 8 0;
+#X connect 6 1 32 0;
 #X connect 6 2 17 0;
 #X connect 6 2 23 0;
 #X connect 6 3 20 0;
@@ -62,5 +72,12 @@
 #X connect 14 0 6 0;
 #X connect 15 0 5 0;
 #X connect 15 0 6 0;
+#X connect 16 0 30 0;
 #X connect 18 0 5 0;
 #X connect 18 0 6 0;
+#X connect 30 0 29 0;
+#X connect 30 0 29 1;
+#X connect 31 0 33 0;
+#X connect 32 0 34 0;
+#X connect 33 0 29 0;
+#X connect 34 0 29 1;
