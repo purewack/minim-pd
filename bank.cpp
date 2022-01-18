@@ -13,15 +13,9 @@ t_int* bank_perform(t_int *w)
 //   t_sample    *out =      (t_sample *)(w[3]);
 //   int            n =             (int)(w[4]);
 //   while (n--) *out++ = (*in++)*(x->phase);
-    
-    if(x->tick_action_pending){
-        if(x->tick_current >= x->tick_action_when){
-            m->state = x->tick_action_nstate;
-            x->tick_action_pending = 0;
-            outlet_float(x->o_tick_pending, 0.0f);
-        }
-    }
 
+    x->tick_current += 1.0f;
+    
     switch(m->state){
         case _motif_state::m_base:
             m->len_syncs += 1.0f;
@@ -33,25 +27,34 @@ t_int* bank_perform(t_int *w)
             m->pos_syncs += 1.0f;
             if(m->pos_syncs >= m->len_syncs){
                 m->pos_syncs = 0.0f;
-                outlet_bang(x->o_m_sync);
+                m->last_sync = x->tick_current;
+                outlet_float(x->o_m_sync, x->tick_current);
             }
         break;
     }
 
-    if(x->tick_duration <= 0.0f) return (w+2);
+    if(x->tick_action_pending){
+        if(x->tick_current >= x->tick_action_when){
+            //if state play and n_state stop => reset pos etc, next state machine essentially 
+            m->state = x->tick_action_nstate;
+            x->tick_action_pending = 0;
+            outlet_float(x->o_tick_pending, 0.0f);
+        }
+    }
 
-    x->tick_current += 1.0f;
-    if(x->tick_current >= x->tick_start+x->tick_duration)
+    if(x->tick_duration > 0 && x->tick_current >= x->tick_start+x->tick_duration)
     {
         x->tick_start = x->tick_current;
         x->tick_next = x->tick_start + x->tick_duration;
-        outlet_bang(x->o_sync);
+        x->last_sync = x->tick_current;
+        outlet_float(x->o_sync, x->tick_current);
     }
-
+    
     return (w+2);
 }
 
 void bank_onReset(t_bank* x){
+    x->tick_current = 0;
     x->tick_duration = 0;
     x->tick_next = 0;
     x->tick_start = 0;
@@ -65,6 +68,11 @@ void bank_onTransportReset(t_bank* x){
     x->tick_start = 0;
     x->tick_current = 0;
     x->tick_action_when = 0;
+    t_motif* m = x->active_motif_ptr;
+    if(m->state != _motif_state::m_clear){
+        m->state = _motif_state::m_stop;
+        m->pos_syncs = 0;
+    }
 }
 void bank_onActivate(t_bank* x){
     x->is_active = 1;
@@ -76,7 +84,13 @@ void bank_onDeactivate(t_bank* x){
 }
 void bank_onTickLen(t_bank* x, t_floatarg t){
     if(x->tick_duration > 0) return;
+
     x->tick_duration = t;
+    if(x->active_motif_ptr->state == _motif_state::m_base){
+        x->active_motif_ptr->state = _motif_state::m_play;
+        x->active_motif_ptr->pos_syncs = -1;
+        x->active_motif_ptr->len_syncs = x->tick_duration;
+    }
     post("bank %d tick len: %f", x->id, t);
 }
 
@@ -85,6 +99,8 @@ void bank_onGetPos(t_bank* x){
     float p = x->active_motif_ptr->len_syncs ? x->active_motif_ptr->pos_syncs / x->active_motif_ptr->len_syncs : 0.0f;
     post("pos: %f , len : %f",p, x->active_motif_ptr->len_syncs);
     post("bank %d tick len: %f", x->id, x->tick_duration);
+    post("state %d", x->active_motif_ptr->state);
+    post("mls:%f bls:%f", x->active_motif_ptr->last_sync, x->last_sync);
 }
 
 void bank_onNextSlot(t_bank* x){
@@ -127,9 +143,7 @@ void bank_onLaunch(t_bank* x){
 
     case _motif_state::m_base:
         if(x->tick_duration < 0){
-            float t = x->tick_duration*-1.0;
-            x->tick_duration = t;
-            x->active_motif_ptr->state = _motif_state::m_play;
+            float t = x->tick_duration * -1.0;
             outlet_float(x->o_tick_len, t);
             post("%d set new tick len %f", x->id, t);
         }
@@ -178,8 +192,8 @@ void* bank_new(t_floatarg id){
     x->i_tick_stats = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_tick_len"));
     x->o_tick_len = outlet_new(&x->x_obj,&s_float);
     x->o_tick_pending = outlet_new(&x->x_obj,&s_float);
-    x->o_sync = outlet_new(&x->x_obj,&s_bang);
-    x->o_m_sync = outlet_new(&x->x_obj,&s_bang);
+    x->o_sync = outlet_new(&x->x_obj,&s_float);
+    x->o_m_sync = outlet_new(&x->x_obj,&s_float);
 
     x->motifs_array = (t_motif**)malloc(4 * sizeof(t_motif*));
     for(int i=0; i<4; i++){

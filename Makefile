@@ -13,5 +13,6 @@ define forDarwin
 cflags = -stdlib=libc++ -mmacosx-version-min=10.9
 endef
 PDINCLUDEDIR = ./
+PDBINDIR = /mnt/c/Program Files/Purr Data/bin/
 
 include Makefile.pdlibbuilder

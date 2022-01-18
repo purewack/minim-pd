@@ -12,7 +12,8 @@ typedef struct _motif{
     float len_spl;
     float pos_spl;
     float pos_syncs;
-    float pos_ratio;    
+    float pos_ratio;   
+    float last_sync; 
     float* buf;
 } t_motif;
 
@@ -49,6 +50,7 @@ extern "C"{
         t_motif**   motifs_array;
         t_motif*    active_motif_ptr;
         int         active_motif_idx;
+        float       last_sync;
     } t_bank;
 
     void bank_q(t_bank* x);
