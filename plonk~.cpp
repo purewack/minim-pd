@@ -24,7 +24,7 @@ t_int* plonk_tilde_perform(t_int *w)
 
   if(x->plonk != 0.f){
     while (n--) {
-        *out++ = std::sin(x->sin_phase * 2.0f*3.1415f) * x->plonk;
+        *out++ = sin(x->sin_phase * 2.0f*3.1415f) * x->plonk;
         x->sin_phase += x->sin_f / 48000.f;
         if(x->sin_phase > 1.0f) x->sin_phase -= 1.0f;
         x->plonk -= x->unplonk;

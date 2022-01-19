@@ -29,14 +29,13 @@ extern "C"{
    
     static t_class *bank_class;
     typedef struct _bank{
+        int         id;
         t_object    x_obj;
         t_float     f;
-        int         id;
         t_inlet*    i_tick_stats;
-        t_outlet*   o_tick_len;
-        t_outlet*   o_tick_pending;
-        t_outlet*   o_sync;
-        t_outlet*   o_m_sync;
+        t_outlet*   o_loop_sig;
+        t_outlet*   o_state_pending;
+        t_outlet*   o_list_tick_sync; 
         // t_outlet*   o_active_motif_slot;
         // t_outlet*   o_active_motif_state;
         int         is_active;

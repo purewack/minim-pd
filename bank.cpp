@@ -133,7 +133,7 @@ void bank_onPrevSlot(t_bank* x){
 void bank_q(t_bank* x){
     x->tick_action_when = x->tick_start+x->tick_duration;
     x->tick_action_pending = 1;
-    outlet_float(x->o_tick_pending, x->tick_action_when);
+    outlet_list(x->o_list_tick_sync, &s_list,1,1);
 }
 
 void bank_onLaunch(t_bank* x){
@@ -149,7 +149,7 @@ void bank_onLaunch(t_bank* x){
     case _motif_state::m_base:
         if(x->tick_duration < 0){
             float t = x->tick_duration * -1.0;
-            outlet_float(x->o_tick_len, t);
+            outlet_list(x->o_list_tick_sync,&s_list,1,t_atom);
             post("%d set new tick len %f", x->id, t);
         }
     case _motif_state::m_stop:
@@ -177,7 +177,7 @@ void bank_onStop(t_bank* x){
 
     x->tick_action_when = x->tick_start+x->tick_duration;
     x->tick_action_pending = 1;
-    outlet_float(x->o_tick_pending, x->tick_action_when);
+    outlet_float(x->o_state_pending, x->tick_action_when);
     post("%d current motif state: %d", x->id, x->tick_action_nstate);
 }
 
@@ -194,11 +194,11 @@ void bank_clear_motif(t_motif* m){
 
 void* bank_new(t_floatarg id){
     t_bank* x = (t_bank*)pd_new(bank_class);
+    //f signal in
     x->i_tick_stats = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_tick_len"));
-    x->o_tick_len = outlet_new(&x->x_obj,&s_float);
-    x->o_tick_pending = outlet_new(&x->x_obj,&s_float);
-    x->o_sync = outlet_new(&x->x_obj,&s_float);
-    x->o_m_sync = outlet_new(&x->x_obj,&s_float);
+    x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
+    x->o_state_pending = outlet_new(&x->x_obj,&s_float);
+    x->o_list_tick_sync = outlet_new(&x->x_obj,&s_list);
 
     x->motifs_array = (t_motif**)malloc(4 * sizeof(t_motif*));
     for(int i=0; i<4; i++){
@@ -222,9 +222,9 @@ void* bank_new(t_floatarg id){
 
 void bank_free(t_bank* x){
     inlet_free(x->i_tick_stats);
-    outlet_free(x->o_tick_len);
-    outlet_free(x->o_tick_pending);
-    outlet_free(x->o_sync);
+    outlet_free(x->o_loop_sig);
+    outlet_free(x->o_state_pending);
+    outlet_free(x->o_list_tick_sync);
     for(int i=0; i<4; i++)
         free(x->motifs_array[i]);
 }
@@ -239,7 +239,7 @@ void bank_setup(void){
         A_DEFFLOAT,
         (t_atomtype)0
     );
-
+    //CLASS_MAINSIGNALIN(bank_class, t_bank, f);
     class_addmethod(bank_class, (t_method) bank_dsp      ,gensym("dsp")    , A_CANT, (t_atomtype)0);
     class_addmethod(bank_class, (t_method) bank_onReset  ,gensym("clear")   ,(t_atomtype)0 );
     class_addmethod(bank_class, (t_method) bank_onLaunch ,gensym("q_launch") ,(t_atomtype)0 );
