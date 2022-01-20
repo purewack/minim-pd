@@ -13,8 +13,8 @@ t_int* bank_perform(t_int *w)
 //   t_sample    *out =      (t_sample *)(w[3]);
 //   int            n =             (int)(w[4]);
 //   while (n--) *out++ = (*in++)*(x->phase);
-
     x->tick_current += 1.0f;
+    int msync = 0;
     
     switch(m->state){
         case _motif_state::m_base:
@@ -28,7 +28,7 @@ t_int* bank_perform(t_int *w)
             if(m->pos_syncs >= m->len_syncs){
                 m->pos_syncs = 0.0f;
                 m->last_sync = x->tick_current;
-                outlet_float(x->o_m_sync, x->tick_current);
+                msync = 1;
             }
         break;
     }
@@ -38,7 +38,7 @@ t_int* bank_perform(t_int *w)
             //if state play and n_state stop => reset pos etc, next state machine essentially 
             m->state = x->tick_action_nstate;
             x->tick_action_pending = 0;
-            outlet_float(x->o_tick_pending, 0.0f);
+            bank_outlet_mstats(x, 0);
         }
     }
 
@@ -47,10 +47,36 @@ t_int* bank_perform(t_int *w)
         x->tick_start = x->tick_current;
         x->tick_next = x->tick_start + x->tick_duration;
         x->last_sync = x->tick_current;
-        outlet_float(x->o_sync, x->tick_current);
+        bank_outlet_sync(x, msync);
     }
     
     return (w+2);
+}
+
+void bank_outlet_mstats(t_bank* x, t_float ticklen){
+    // int c = 3;
+    // SETFLOAT(x->a_m_stats   ,x->active_motif_ptr->state);
+    // SETFLOAT(x->a_m_stats+1 ,x->tick_action_pending ? x->tick_action_nstate : 0);
+    // SETFLOAT(x->a_m_stats+2 ,x->tick_action_pending ? x->tick_action_when : 0);
+    // if(ticklen){
+    //     SETFLOAT(x->a_m_stats+c, ticklen);
+    //     c+=1;
+    // }
+    // SETFLOAT(x->a_m_stats,x->active_motif_ptr->len_syncs);
+    // SETFLOAT(x->a_m_stats,x->active_motif_ptr->pos_syncs);
+    //outlet_list(x->o_m_state,&s_list,c,x->a_m_stats);
+}
+
+void bank_outlet_sync(t_bank* x, int mstats){
+    // int c = 1;
+    // SETFLOAT(x->a_sync, x->tick_current);
+    
+    // if(mstats){
+    //     c += 1;
+    //     SETFLOAT(x->a_sync+1, x->tick_start + x->active_motif_ptr->len_syncs);
+    // }
+
+    //outlet_list(x->o_sync, &s_list, c, x->a_sync);
 }
 
 void bank_onReset(t_bank* x){
@@ -61,9 +87,8 @@ void bank_onReset(t_bank* x){
     x->tick_action_pending = 0;
     x->tick_action_nstate = 0;
     x->tick_action_when = 0;
-    outlet_float(x->o_sync, 0);
-    outlet_float(x->o_m_sync, 0);
-    outlet_float(x->o_tick_pending, 0);
+    bank_outlet_mstats(x,0);
+    bank_outlet_sync(x,0);
     bank_clear_motif(x->active_motif_ptr);
     post("reset: %d",x->active_motif_idx);
 }
@@ -133,7 +158,8 @@ void bank_onPrevSlot(t_bank* x){
 void bank_q(t_bank* x){
     x->tick_action_when = x->tick_start+x->tick_duration;
     x->tick_action_pending = 1;
-    outlet_list(x->o_list_tick_sync, &s_list,1,1);
+    bank_outlet_mstats(x,0);
+    //outlet_list(x->o_sync, &s_list,1,1);
 }
 
 void bank_onLaunch(t_bank* x){
@@ -148,8 +174,8 @@ void bank_onLaunch(t_bank* x){
 
     case _motif_state::m_base:
         if(x->tick_duration < 0){
-            float t = x->tick_duration * -1.0;
-            outlet_list(x->o_list_tick_sync,&s_list,1,t_atom);
+            t_float t = x->tick_duration * -1.0;
+            bank_outlet_mstats(x, t);
             post("%d set new tick len %f", x->id, t);
         }
     case _motif_state::m_stop:
@@ -177,7 +203,7 @@ void bank_onStop(t_bank* x){
 
     x->tick_action_when = x->tick_start+x->tick_duration;
     x->tick_action_pending = 1;
-    outlet_float(x->o_state_pending, x->tick_action_when);
+    bank_outlet_mstats(x,0);
     post("%d current motif state: %d", x->id, x->tick_action_nstate);
 }
 
@@ -196,9 +222,9 @@ void* bank_new(t_floatarg id){
     t_bank* x = (t_bank*)pd_new(bank_class);
     //f signal in
     x->i_tick_stats = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_tick_len"));
-    x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
-    x->o_state_pending = outlet_new(&x->x_obj,&s_float);
-    x->o_list_tick_sync = outlet_new(&x->x_obj,&s_list);
+    // x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
+    x->o_sync = outlet_new(&x->x_obj,&s_list);
+    x->o_m_state = outlet_new(&x->x_obj,&s_list);
 
     x->motifs_array = (t_motif**)malloc(4 * sizeof(t_motif*));
     for(int i=0; i<4; i++){
@@ -222,9 +248,9 @@ void* bank_new(t_floatarg id){
 
 void bank_free(t_bank* x){
     inlet_free(x->i_tick_stats);
-    outlet_free(x->o_loop_sig);
-    outlet_free(x->o_state_pending);
-    outlet_free(x->o_list_tick_sync);
+    // outlet_free(x->o_loop_sig);
+    outlet_free(x->o_m_state);
+    outlet_free(x->o_sync);
     for(int i=0; i<4; i++)
         free(x->motifs_array[i]);
 }
@@ -255,3 +281,4 @@ void bank_setup(void){
 
     class_addmethod(bank_class, (t_method) bank_onTickLen,    gensym("on_tick_len"),  A_DEFFLOAT, (t_atomtype)0);
 }
+

@@ -9,9 +9,9 @@ typedef struct _motif{
     int state;
     int n_state;
     float len_syncs;
+    float pos_syncs;
     float len_spl;
     float pos_spl;
-    float pos_syncs;
     float pos_ratio;   
     float last_sync; 
     float* buf;
@@ -31,13 +31,16 @@ extern "C"{
     typedef struct _bank{
         int         id;
         t_object    x_obj;
+
         t_float     f;
         t_inlet*    i_tick_stats;
         t_outlet*   o_loop_sig;
-        t_outlet*   o_state_pending;
-        t_outlet*   o_list_tick_sync; 
-        // t_outlet*   o_active_motif_slot;
-        // t_outlet*   o_active_motif_state;
+        t_outlet*   o_m_state;
+        t_outlet*   o_sync; 
+
+        t_atom      a_m_stats[5];
+        t_atom      a_sync[2];
+        
         int         is_active;
         t_float     tick_duration;
         t_float     tick_start;
@@ -46,12 +49,15 @@ extern "C"{
         int         tick_action_pending;
         t_float     tick_action_when;
         int         tick_action_nstate;
+        float       last_sync;
+
         t_motif**   motifs_array;
         t_motif*    active_motif_ptr;
         int         active_motif_idx;
-        float       last_sync;
     } t_bank;
 
+    void bank_outlet_sync(t_bank* x, int msync);
+    void bank_outlet_mstats(t_bank* x, t_float ticklen);
     void bank_q(t_bank* x);
     void bank_onActivate(t_bank* x);
     void bank_onDeactivate(t_bank* x);
