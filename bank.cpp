@@ -40,12 +40,13 @@ t_int* bank_perform(t_int *w)
             if(m->pos_syncs >= m->len_syncs){
                 m->pos_syncs = 0.0f;
                 m->last_sync = x->tick_current;
-                msync = 1;
+                msync = x->tick_current;
+                outlet_float(x->o_sync, x->tick_current);
             }
         break;
 
         default:
-            while(--n) *out++ = 0;
+            while(n--) *out++ = 0;
         break;
     }
 
@@ -65,7 +66,8 @@ t_int* bank_perform(t_int *w)
         x->tick_next = x->tick_start + x->tick_duration;
         x->last_sync = x->tick_current;
         // bank_outlet_sync(x, msync);
-        outlet_float(x->o_sync, x->tick_current);
+        if(msync != x->tick_current)
+        outlet_float(x->o_sync, x->tick_current * -1.0f);
     }
     
     return (w+5);
