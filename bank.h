@@ -10,8 +10,8 @@ typedef struct _motif{
     int n_state;
     float len_syncs;
     float pos_syncs;
-    float len_spl;
-    float pos_spl;
+    int len_spl;
+    int pos_spl;
     float pos_ratio;   
     float last_sync; 
     float* buf;
@@ -29,8 +29,8 @@ extern "C"{
    
     static t_class *bank_class;
     typedef struct _bank{
-        int         id;
         t_object    x_obj;
+        int         id;
 
         t_float     f;
         t_inlet*    i_tick_stats;
