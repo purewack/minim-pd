@@ -14,7 +14,7 @@ t_int* bank_perform(t_int *w)
     t_sample    *out =      (t_sample *)(w[3]);
     int            n =             (int)(w[4]);
 
-    x->tick_current += 1.0f;
+    x->tick_current += 1;
     int msync = 0;
     t_sample dub = m->isDubbing;
 
@@ -27,9 +27,9 @@ t_int* bank_perform(t_int *w)
                 m->len_spl++;
                 m->isLong = m->len_spl - MOTIF_BUF_SIZE/2; //if positive, true
             }
-            m->len_syncs += 1.0f;
-            if(x->tick_duration <= 0.0f)
-                x->tick_duration -= 1.0f;
+            m->len_syncs += 1;
+            if(x->tick_duration <= 0)
+                x->tick_duration -= 1;
 
             if(m->len_spl >= MOTIF_BUF_SIZE){
                 m->len_spl = MOTIF_BUF_SIZE;
@@ -46,12 +46,12 @@ t_int* bank_perform(t_int *w)
                 *out++ = m->_data[m->dataHead];
                 m->_data[m->dataHead] += (*in++ * dub);
                 m->pos_spl = (m->pos_spl+1) % m->len_spl;
-                m->dataHead = (m->dataHead+1) % MOTIF_BUF_SIZE;
+                m->dataHead = (m->dataHead+1) % m->len_spl;
             }
 
-            m->pos_syncs += 1.0f;
+            m->pos_syncs += 1;
             if(m->pos_syncs >= m->len_syncs){
-                m->pos_syncs = 0.0f;
+                m->pos_syncs = 0;
                 m->last_sync = x->tick_current;
                 msync = x->tick_current;
                 outlet_float(x->o_sync, x->tick_current);
@@ -100,7 +100,7 @@ t_int* bank_perform(t_int *w)
         x->last_sync = x->tick_current;
         // bank_outlet_sync(x, msync);
         if(msync != x->tick_current)
-        outlet_float(x->o_sync, x->tick_current * -1.0f);
+        outlet_float(x->o_sync, float(x->tick_current * -1));
     }
     
     return (w+5);
@@ -188,7 +188,7 @@ void bank_onTickLen(t_bank* x, t_floatarg t){
 
 void bank_onGetPos(t_bank* x){
     if(! x->is_active) return;
-    float p = x->active_motif_ptr->len_syncs ? x->active_motif_ptr->pos_syncs / x->active_motif_ptr->len_syncs : 0.0f;
+    float p = x->active_motif_ptr->len_syncs ? float(x->active_motif_ptr->pos_syncs) / float(x->active_motif_ptr->len_syncs) : 0.0f;
     post("pos: %f , len : %f",p, x->active_motif_ptr->len_syncs);
     post("bank %d tick len: %f", x->id, x->tick_duration);
     post("state %d", x->active_motif_ptr->state);
@@ -282,11 +282,14 @@ void bank_onStop(t_bank* x){
 void bank_clear_motif(t_motif* m){
     m->state      = _motif_state::m_clear;
     m->n_state    = _motif_state::m_clear;
-    m->pos_spl    = 0.0f;
-    m->pos_ratio  = 0.0f;
-    m->pos_syncs  = 0.0f;
-    m->len_spl    = 0.0f;
-    m->len_syncs  = 0.0f;
+    m->pos_spl    = 0;
+    m->pos_ratio  = 0;
+    m->pos_syncs  = 0;
+    m->len_spl    = 0;
+    m->len_syncs  = 0;
+    m->dataHead = 0;
+    m->_data = m->_aData;
+    m->_ndata = m->_bData;
 }
 
 void bank_motif_toStart(t_motif* m){
@@ -323,6 +326,7 @@ void* bank_new(t_floatarg id){
     }
     
     x->id = (int)id;
+    x->motifs_array_count = 4;
     x->active_motif_idx = 0;
     x->active_motif_ptr = x->motifs_array[x->active_motif_idx];
     x->is_active = 0;
