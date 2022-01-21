@@ -16,26 +16,37 @@ t_int* bank_perform(t_int *w)
 
     x->tick_current += 1.0f;
     int msync = 0;
+    t_sample dub = m->isDubbing;
 
     switch(m->state){
         case _motif_state::m_base:
             while (n--) {
                 t_float ii = *in++;
-                m->buf[m->len_spl] = ii;
+                m->_aData[m->len_spl] = ii;
+                m->_bData[m->len_spl] = ii;
                 m->len_spl++;
-                *out++ = x->is_active ? ii : 0;
+                m->isLong = m->len_spl - MOTIF_BUF_SIZE/2; //if positive, true
             }
             m->len_syncs += 1.0f;
             if(x->tick_duration <= 0.0f)
                 x->tick_duration -= 1.0f;
-        break;
 
+            if(m->len_spl >= MOTIF_BUF_SIZE){
+                m->len_spl = MOTIF_BUF_SIZE;
+                m->len_syncs = m->len_spl / 64;
+                bank_outlet_mstats(x, m->len_syncs);
+                x->tick_action_nstate = _motif_state::m_play;
+                bank_q(x, 0); 
+            }
+        break;
+          
+        case _motif_state::m_dub:
         case _motif_state::m_play:
             while (n--) {
-                t_float ii = x->is_active ? *in++ : 0;
-                *out++ = m->buf[m->pos_spl] + ii;
-                m->pos_spl++;
-                if(m->pos_spl >= m->len_spl) m->pos_spl = 0;
+                *out++ = m->_data[m->dataHead];
+                m->_data[m->dataHead] += (*in++ * dub);
+                m->pos_spl = (m->pos_spl+1) % m->len_spl;
+                m->dataHead = (m->dataHead+1) % MOTIF_BUF_SIZE;
             }
 
             m->pos_syncs += 1.0f;
@@ -48,7 +59,7 @@ t_int* bank_perform(t_int *w)
         break;
 
         default:
-            while(n--) *out++ = x->is_active ? *in++ : 0;
+            while(n--) *out++ = 0;
         break;
     }
 
@@ -57,7 +68,26 @@ t_int* bank_perform(t_int *w)
             //if state play and n_state stop => reset pos etc, next state machine essentially 
             x->tick_action_when = 0;
             bank_outlet_mstats(x, 0);
-            if(x->tick_action_nstate == _motif_state::m_play) bank_motif_toStart(m);
+
+            if(m->state == _motif_state::m_stop && x->tick_action_nstate == _motif_state::m_play) 
+                bank_motif_toStart(m);
+
+            else if(m->state == _motif_state::m_play && x->tick_action_nstate == _motif_state::m_dub){
+                //start dub
+                m->isDubbing = 1;
+                bank_motif_swapStreams(m);
+            }
+            else if(m->state == _motif_state::m_dub && x->tick_action_nstate == _motif_state::m_play){
+                //confirm dub
+                m->isDubbing = 0;
+            }
+            else if(m->state == _motif_state::m_dub && x->tick_action_nstate == _motif_state::m_stop){
+                //cancel
+                m->isDubbing = 0;
+                bank_motif_swapStreams(m);
+                x->tick_action_nstate = _motif_state::m_play;
+            }
+
             m->state = x->tick_action_nstate;
             x->tick_action_pending = 0;
         }
@@ -185,8 +215,11 @@ void bank_onPrevSlot(t_bank* x){
     post("%d current slot: %d", x->id, x->active_motif_idx);
 }
 
-void bank_q(t_bank* x){
-    x->tick_action_when = x->tick_start+x->tick_duration;
+void bank_q(t_bank* x, int now){
+    if(!now)
+        x->tick_action_when = x->tick_start+x->tick_duration;
+    else
+        x->tick_action_when = 0;
     x->tick_action_pending = 1;
     bank_outlet_mstats(x,0);
 }
@@ -198,7 +231,7 @@ void bank_onLaunch(t_bank* x){
     {
     case _motif_state::m_clear:
         x->tick_action_nstate = _motif_state::m_base;
-        bank_q(x);
+        bank_q(x, 0);
     break;
 
     case _motif_state::m_base:
@@ -209,7 +242,17 @@ void bank_onLaunch(t_bank* x){
         }
     case _motif_state::m_stop:
         x->tick_action_nstate = _motif_state::m_play;
-        bank_q(x);
+        bank_q(x, 0);
+    break;
+
+    case _motif_state::m_play:
+        x->tick_action_nstate = _motif_state::m_dub;
+        bank_q(x, 1); 
+    break;
+
+    case _motif_state::m_dub:
+        x->tick_action_nstate = _motif_state::m_play;
+        bank_q(x, 1); 
     break;
     }
 
@@ -223,15 +266,15 @@ void bank_onStop(t_bank* x){
     {
     case _motif_state::m_base:
         x->tick_action_nstate = _motif_state::m_clear;
+        bank_q(x,0);
     break;
 
     case _motif_state::m_play:
         x->tick_action_nstate = _motif_state::m_stop;
+        bank_q(x, x->active_motif_ptr->isDubbing);
     break;
     }
 
-    x->tick_action_when = x->tick_start+x->tick_duration;
-    x->tick_action_pending = 1;
     bank_outlet_mstats(x,0);
     post("%d current motif state: %d", x->id, x->tick_action_nstate);
 }
@@ -249,6 +292,18 @@ void bank_clear_motif(t_motif* m){
 void bank_motif_toStart(t_motif* m){
     m->pos_syncs = 0;
     m->pos_spl = 0;
+    m->dataHead = 0;
+}
+
+void bank_motif_swapStreams(t_motif* m){
+    if(m->_data == m->_aData) {
+        m->_data = m->_bData;
+        m->_ndata = m->_aData;
+    }
+    else {
+        m->_data = m->_aData;
+        m->_ndata = m->_bData;
+    }
 }
 
 void* bank_new(t_floatarg id){
@@ -262,7 +317,8 @@ void* bank_new(t_floatarg id){
     x->motifs_array = (t_motif**)malloc(4 * sizeof(t_motif*));
     for(int i=0; i<4; i++){
         x->motifs_array[i] = (t_motif*)malloc(sizeof(t_motif));
-        x->motifs_array[i]->buf = (t_sample*)malloc(sizeof(t_sample) * 4 * 1024 * 1024);
+        x->motifs_array[i]->_aData = (t_sample*)malloc(sizeof(t_sample) * MOTIF_BUF_SIZE);
+        x->motifs_array[i]->_bData = (t_sample*)malloc(sizeof(t_sample) * MOTIF_BUF_SIZE);
         bank_clear_motif(x->motifs_array[i]);
     }
     
@@ -286,7 +342,8 @@ void bank_free(t_bank* x){
     outlet_free(x->o_m_state);
     outlet_free(x->o_sync);
     for(int i=0; i<4; i++){    
-        free(x->motifs_array[i]->buf);
+        free(x->motifs_array[i]->_aData);
+        free(x->motifs_array[i]->_bData);
         free(x->motifs_array[i]);
     }
 }

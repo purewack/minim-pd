@@ -4,17 +4,20 @@
 
 // void cpppost();
 // std::string complexcpp(std::string s);
-
+#define MOTIF_BUF_SIZE 4194304 //4MB = 1024*1024*4
 typedef struct _motif{
     int state;
     int n_state;
-    float len_syncs;
-    float pos_syncs;
+    int isDubbing;
+    int isLong;
+    int len_syncs;
+    int pos_syncs;
     int len_spl;
     int pos_spl;
-    float pos_ratio;   
-    float last_sync; 
-    float* buf;
+    t_float pos_ratio;   
+    int last_sync;
+    int dataHead;
+    t_sample *_aData, *_bData, *_data, *_ndata;
 } t_motif;
 
 enum _motif_state{
@@ -39,26 +42,26 @@ extern "C"{
         t_outlet*   o_sync; 
 
         t_atom      a_m_stats[5];
-        t_atom      a_sync[2];
         
         int         is_active;
-        t_float     tick_duration;
-        t_float     tick_start;
-        t_float     tick_next;
-        t_float     tick_current;
+        int         tick_duration;
+        int         tick_start;
+        int         tick_next;
+        int         tick_current;
         int         tick_action_pending;
-        t_float     tick_action_when;
+        int         tick_action_when;
         int         tick_action_nstate;
         float       last_sync;
 
         t_motif**   motifs_array;
+        int         motifs_array_count;
         t_motif*    active_motif_ptr;
         int         active_motif_idx;
     } t_bank;
 
     void bank_outlet_sync(t_bank* x, int msync);
     void bank_outlet_mstats(t_bank* x, t_float ticklen);
-    void bank_q(t_bank* x);
+    void bank_q(t_bank* x, int now);
     void bank_onActivate(t_bank* x);
     void bank_onDeactivate(t_bank* x);
     void bank_onTickLen(t_bank* x, t_floatarg t);
@@ -71,6 +74,7 @@ extern "C"{
     void bank_onReset(t_bank* x);
     void bank_clear_motif(t_motif* m);
     void bank_motif_toStart(t_motif* m);
+    void bank_motif_swapStreams(t_motif* m);
     void* bank_new(t_floatarg f);
     void bank_free(t_bank* x);
     void bank_setup(void);
