@@ -20,9 +20,10 @@ t_int* bank_perform(t_int *w)
     switch(m->state){
         case _motif_state::m_base:
             while (n--) {
-                m->buf[m->len_spl] = *in++;
+                t_float ii = *in++;
+                m->buf[m->len_spl] = ii;
                 m->len_spl++;
-                *out++ = 0;
+                *out++ = x->is_active ? ii : 0;
             }
             m->len_syncs += 1.0f;
             if(x->tick_duration <= 0.0f)
@@ -31,7 +32,8 @@ t_int* bank_perform(t_int *w)
 
         case _motif_state::m_play:
             while (n--) {
-                *out++ = m->buf[m->pos_spl];
+                t_float ii = x->is_active ? *in++ : 0;
+                *out++ = m->buf[m->pos_spl] + ii;
                 m->pos_spl++;
                 if(m->pos_spl >= m->len_spl) m->pos_spl = 0;
             }
@@ -46,7 +48,7 @@ t_int* bank_perform(t_int *w)
         break;
 
         default:
-            while(n--) *out++ = 0;
+            while(n--) *out++ = x->is_active ? *in++ : 0;
         break;
     }
 
@@ -55,6 +57,7 @@ t_int* bank_perform(t_int *w)
             //if state play and n_state stop => reset pos etc, next state machine essentially 
             x->tick_action_when = 0;
             bank_outlet_mstats(x, 0);
+            if(x->tick_action_nstate == _motif_state::m_play) bank_motif_toStart(m);
             m->state = x->tick_action_nstate;
             x->tick_action_pending = 0;
         }
@@ -241,6 +244,11 @@ void bank_clear_motif(t_motif* m){
     m->pos_syncs  = 0.0f;
     m->len_spl    = 0.0f;
     m->len_syncs  = 0.0f;
+}
+
+void bank_motif_toStart(t_motif* m){
+    m->pos_syncs = 0;
+    m->pos_spl = 0;
 }
 
 void* bank_new(t_floatarg id){

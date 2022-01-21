@@ -70,6 +70,7 @@ extern "C"{
     void bank_onTransportReset(t_bank* x);
     void bank_onReset(t_bank* x);
     void bank_clear_motif(t_motif* m);
+    void bank_motif_toStart(t_motif* m);
     void* bank_new(t_floatarg f);
     void bank_free(t_bank* x);
     void bank_setup(void);
