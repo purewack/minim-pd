@@ -342,16 +342,10 @@ void* bank_new(t_floatarg id){
 
     post("new bank with id: %f", x->id);
 
-    x->worker_thread_alive = 1;
-    pthread_create(&x->worker_thread, NULL, bank_worker_thread, (void*)x);
-
     return (void*)x;
 }
 
 void bank_free(t_bank* x){
-    x->worker_thread_alive = 0;
-    pthread_join(x->worker_thread, NULL);
-    post("thread for bank %d terminated", x->id);
 
     inlet_free(x->i_tick_stats);
     outlet_free(x->o_loop_sig);
