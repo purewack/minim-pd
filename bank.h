@@ -30,6 +30,8 @@ enum _motif_state{
 
 extern "C"{
    
+    #include <pthread.h>
+    #include <unistd.h>
     static t_class *bank_class;
     typedef struct _bank{
         t_object    x_obj;
@@ -57,8 +59,12 @@ extern "C"{
         int         motifs_array_count;
         t_motif*    active_motif_ptr;
         int         active_motif_idx;
+
+        pthread_t   worker_thread;
+        int         worker_thread_alive;
     } t_bank;
 
+    void* bank_worker_thread(void* arg);
     void bank_outlet_sync(t_bank* x, int msync);
     void bank_outlet_mstats(t_bank* x, t_float ticklen);
     void bank_q(t_bank* x, int now);

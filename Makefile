@@ -2,7 +2,7 @@
 
 lib.name = motif
 
-class.sources = ticker.cpp bank.cpp plonk~.cpp
+class.sources = ticker.cpp bank.cpp plonk~.cpp inter.cpp
 
 # datafiles = help.pd README.txt LICENSE.txt
 
@@ -14,5 +14,7 @@ cflags = -stdlib=libc++ -mmacosx-version-min=10.9
 endef
 PDINCLUDEDIR = ./
 PDBINDIR = /mnt/c/Program Files/Purr Data/bin/
+
+ldflags += -pthread
 
 include Makefile.pdlibbuilder

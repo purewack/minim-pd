@@ -16,7 +16,7 @@ t_int* bank_perform(t_int *w)
 
     x->tick_current += 1;
     int msync = 0;
-    t_sample dub = m->isDubbing;
+    t_sample dub = m->isDubbing ? 1.0f : 0.0f;
     t_sample ins = 0;
 
     switch(m->state){
@@ -41,7 +41,7 @@ t_int* bank_perform(t_int *w)
                 bank_q(x, 0); 
             }
         break;
-          
+           
         case _motif_state::m_dub:
         case _motif_state::m_play:
             while (n--) {
@@ -272,6 +272,7 @@ void bank_onStop(t_bank* x){
         bank_q(x,0);
     break;
 
+    case _motif_state::m_dub:
     case _motif_state::m_play:
         x->tick_action_nstate = _motif_state::m_stop;
         bank_q(x, x->active_motif_ptr->isDubbing);
@@ -291,6 +292,7 @@ void bank_clear_motif(t_motif* m){
     m->len_spl    = 0;
     m->len_syncs  = 0;
     m->dataHead = 0;
+    m->isDubbing = 0;
     m->_data = m->_aData;
     m->_ndata = m->_bData;
 }
@@ -340,12 +342,19 @@ void* bank_new(t_floatarg id){
 
     post("new bank with id: %f", x->id);
 
+    x->worker_thread_alive = 1;
+    pthread_create(&x->worker_thread, NULL, bank_worker_thread, (void*)x);
+
     return (void*)x;
 }
 
 void bank_free(t_bank* x){
+    x->worker_thread_alive = 0;
+    pthread_join(x->worker_thread, NULL);
+    post("thread for bank %d terminated", x->id);
+
     inlet_free(x->i_tick_stats);
-     outlet_free(x->o_loop_sig);
+    outlet_free(x->o_loop_sig);
     outlet_free(x->o_m_state);
     outlet_free(x->o_sync);
     for(int i=0; i<4; i++){    
@@ -384,3 +393,13 @@ void bank_setup(void){
     class_addmethod(bank_class, (t_method) bank_onTickLen,    gensym("on_tick_len"),  A_DEFFLOAT, (t_atomtype)0);
 }
 
+void* bank_worker_thread(void* arg){
+    t_bank* x = (t_bank*)arg;
+
+    post("new thread for bank id: %d", x->id);
+
+    while(x->worker_thread_alive){
+        usleep(100000);
+    }
+    return NULL;
+}
