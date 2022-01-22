@@ -17,11 +17,13 @@ t_int* bank_perform(t_int *w)
     x->tick_current += 1;
     int msync = 0;
     t_sample dub = m->isDubbing;
+    t_sample ins = 0;
 
     switch(m->state){
         case _motif_state::m_base:
             while (n--) {
                 t_float ii = *in++;
+                *out++ = 0;
                 m->_aData[m->len_spl] = ii;
                 m->_bData[m->len_spl] = ii;
                 m->len_spl++;
@@ -43,8 +45,9 @@ t_int* bank_perform(t_int *w)
         case _motif_state::m_dub:
         case _motif_state::m_play:
             while (n--) {
+                ins = *in++;
                 *out++ = m->_data[m->dataHead];
-                m->_data[m->dataHead] += (*in++ * dub);
+                m->_data[m->dataHead] += (ins * dub);
                 m->pos_spl = (m->pos_spl+1) % m->len_spl;
                 m->dataHead = (m->dataHead+1) % m->len_spl;
             }

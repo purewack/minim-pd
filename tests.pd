@@ -1,4 +1,4 @@
-#N canvas 456 197 545 444 12;
+#N canvas 666 269 545 444 12;
 #X msg 15 147 deactivate;
 #X msg 7 123 activate;
 #X floatatom 220 230 5 0 0 0 - - -, f 5;
@@ -88,10 +88,8 @@
 #X connect 26 0 27 0;
 #X connect 27 0 28 0;
 #X connect 28 0 25 0;
+#X connect 29 0 3 0;
 #X connect 30 0 36 0;
-#X connect 35 0 3 0;
-#X connect 35 0 4 0;
-#X connect 35 0 13 0;
 #X connect 36 0 37 0;
 #X connect 37 0 16 0;
 #X connect 38 0 39 0;
