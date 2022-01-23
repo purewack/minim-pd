@@ -18,6 +18,7 @@ t_int* bank_perform(t_int *w)
     int msync = 0;
     t_sample dub = m->isDubbing ? 1.0f : 0.0f;
     t_sample ins = 0;
+    int dataHeadMod = m->isLong ? MOTIF_BUF_SIZE : m->len_spl;
 
     switch(m->state){
         case _motif_state::m_base:
@@ -49,7 +50,7 @@ t_int* bank_perform(t_int *w)
                 *out++ = m->_data[m->dataHead];
                 m->_data[m->dataHead] += (ins * dub);
                 m->pos_spl = (m->pos_spl+1) % m->len_spl;
-                m->dataHead = (m->dataHead+1) % m->len_spl;
+                m->dataHead = (m->dataHead+1) % dataHeadMod;
             }
 
             m->pos_syncs += 1;

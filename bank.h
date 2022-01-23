@@ -62,6 +62,12 @@ extern "C"{
 
         pthread_t   worker_thread;
         int         worker_thread_alive;
+
+        pthread_mutex_t mtx_refill;
+        pthread_cond_t  cond_refill;
+
+        pthread_mutex_t mtx_merge;
+        pthread_cond_t  cond_merge; 
     } t_bank;
 
     void* bank_worker_thread(void* arg);
