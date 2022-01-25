@@ -32,6 +32,8 @@ extern "C"{
    
     #include <pthread.h>
     #include <unistd.h>
+    #include <pthread.h>
+
     static t_class *bank_class;
     typedef struct _bank{
         t_object    x_obj;
@@ -62,12 +64,10 @@ extern "C"{
 
         pthread_t   worker_thread;
         int         worker_thread_alive;
-
-        pthread_mutex_t mtx_refill;
-        pthread_cond_t  cond_refill;
-
-        pthread_mutex_t mtx_merge;
-        pthread_cond_t  cond_merge; 
+        int         work_type; //1 refill, -1 unfill, 2 fetch 
+        int         work_type_inthread;
+        pthread_cond_t  cond_work;
+        pthread_mutex_t mtx_work; 
     } t_bank;
 
     void* bank_worker_thread(void* arg);

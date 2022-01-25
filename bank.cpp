@@ -50,7 +50,7 @@ t_int* bank_perform(t_int *w)
                 *out++ = m->_data[m->dataHead];
                 m->_data[m->dataHead] += (ins * dub);
                 m->pos_spl = (m->pos_spl+1) % m->len_spl;
-                m->dataHead = (m->dataHead+1) % dataHeadMod;
+                m->dataHead = (m->dataHead+1) % m->len_spl;
             }
 
             m->pos_syncs += 1;
@@ -84,11 +84,13 @@ t_int* bank_perform(t_int *w)
             else if(m->state == _motif_state::m_dub && x->tick_action_nstate == _motif_state::m_play){
                 //confirm dub
                 m->isDubbing = 0;
+                x->work_type = 1;
             }
             else if(m->state == _motif_state::m_dub && x->tick_action_nstate == _motif_state::m_stop){
                 //cancel
                 m->isDubbing = 0;
                 bank_motif_swapStreams(m);
+                x->work_type = 1;
                 x->tick_action_nstate = _motif_state::m_play;
             }
 
@@ -105,6 +107,15 @@ t_int* bank_perform(t_int *w)
         // bank_outlet_sync(x, msync);
         if(msync != x->tick_current)
         outlet_float(x->o_sync, float(x->tick_current * -1));
+    }
+
+    if(x->work_type){
+        if(pthread_mutex_trylock(&x->mtx_work)){
+            x->work_type_inthread = x->work_type;
+            x->work_type = 0;
+            pthread_cond_signal(&x->cond_work);
+            pthread_mutex_unlock(&x->mtx_work);
+        }
     }
     
     return (w+5);
@@ -340,13 +351,25 @@ void* bank_new(t_floatarg id){
     x->tick_start = 0;
     x->tick_next = 0;
     x->tick_current = 0;
+    x->work_type = 0;
+    x->work_type_inthread = 0;
 
     post("new bank with id: %f", x->id);
+
+    x->worker_thread_alive = 1;
+    pthread_create(&x->worker_thread, NULL, bank_worker_thread, x);
 
     return (void*)x;
 }
 
 void bank_free(t_bank* x){
+
+    pthread_mutex_lock(&x->mtx_work);
+    x->work_type = 0;
+    x->worker_thread_alive = 0;
+    pthread_mutex_unlock(&x->mtx_work);
+    pthread_join(x->worker_thread, NULL);
+
 
     inlet_free(x->i_tick_stats);
     outlet_free(x->o_loop_sig);
@@ -394,7 +417,21 @@ void* bank_worker_thread(void* arg){
     post("new thread for bank id: %d", x->id);
 
     while(x->worker_thread_alive){
-        usleep(100000);
+        pthread_mutex_lock(&x->mtx_work);
+        pthread_cond_wait(&x->cond_work, &x->mtx_work);
+        
+        t_motif* m = x->active_motif_ptr;
+        if(x->work_type_inthread == 1){
+            for(int i=0; i<m->len_spl; i++){
+                m->_ndata[i] = m->_data[i];
+            }
+            x->work_type_inthread = 0;
+            post("refilled %d.spls for motif %d in bank %d", m->len_spl, x->active_motif_idx, x->id);
+        }
+
+        pthread_mutex_unlock(&x->mtx_work);
     }
+
+    post("ending thread for bank id: %d", x->id);
     return NULL;
 }
