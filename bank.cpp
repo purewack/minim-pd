@@ -325,6 +325,11 @@ void bank_motif_swapStreams(t_motif* m){
         m->_ndata = m->_bData;
     }
 }
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <iostream>
+#include <filesystem>
 
 void* bank_new(t_floatarg id){
     t_bank* x = (t_bank*)pd_new(bank_class);
@@ -359,6 +364,26 @@ void* bank_new(t_floatarg id){
     x->worker_thread_alive = 1;
     pthread_create(&x->worker_thread, NULL, bank_worker_thread, x);
 
+
+    std::string temploc;
+    temploc = std::filesystem::temp_directory_path().string();
+
+    std::stringstream  fname;
+    fname << temploc << "tfile" << x->id << ".txt";
+    std::ofstream myfile;
+    myfile.open (fname.str().c_str());
+    myfile << "Hello.\n";
+    myfile << x->id << "\n";
+    myfile.close();
+
+    std::ifstream readfile;
+    readfile.open(fname.str().c_str());
+    std::string ss;
+    readfile >> ss;
+    readfile.close();
+
+    post("read: %s",ss.c_str());
+    
     return (void*)x;
 }
 
@@ -369,7 +394,6 @@ void bank_free(t_bank* x){
     x->worker_thread_alive = 0;
     pthread_mutex_unlock(&x->mtx_work);
     pthread_join(x->worker_thread, NULL);
-
 
     inlet_free(x->i_tick_stats);
     outlet_free(x->o_loop_sig);
