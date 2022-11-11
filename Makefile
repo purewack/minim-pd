@@ -13,7 +13,7 @@ define forDarwin
 cflags = -stdlib=libc++ -mmacosx-version-min=10.9
 endef
 PDINCLUDEDIR = ./
-PDBINDIR = /mnt/c/Program Files/Purr Data/bin/
+PDBINDIR = /c/Program Files/Pd/bin/
 
 ldflags += -pthread
 

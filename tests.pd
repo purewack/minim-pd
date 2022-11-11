@@ -1,7 +1,7 @@
-#N canvas 666 269 545 444 12;
+#N canvas -1816 515 545 410 12;
 #X msg 15 147 deactivate;
 #X msg 7 123 activate;
-#X floatatom 220 230 5 0 0 0 - - -, f 5;
+#X floatatom 220 230 5 0 0 0 - - - 0;
 #X obj 104 190 bank 1, f 8;
 #X obj 274 186 bank 2, f 8;
 #X msg 358 124 deactivate;
@@ -10,41 +10,38 @@
 #X msg 290 0 q_stop;
 #X msg 60 0 t_start, f 9;
 #X msg 347 0 get_pos;
-#X obj 218 343 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
--1 -1;
+#X obj 218 343 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000;
 #X msg 170 0 clear;
 #X obj 200 410 dac~;
 #X obj 218 370 plonk~ 1200;
-#X obj 131 343 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
--1 -1;
-#X obj 318 340 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
--1 -1;
+#X obj 131 343 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000;
+#X obj 318 340 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000;
 #X obj 308 370 plonk~ 600;
 #X obj 60 240 unpack f f f f;
 #X obj 350 230 unpack f f f f;
-#X floatatom 355 265 5 0 0 0 - - -, f 5;
-#X floatatom 397 266 5 0 0 0 - - -, f 5;
-#X floatatom 442 268 5 0 0 0 - - -, f 5;
-#X obj 441 298 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
--1 -1;
-#X floatatom 40 305 8 0 0 0 - - -, f 8;
+#X floatatom 355 265 5 0 0 0 - - - 0;
+#X floatatom 397 266 5 0 0 0 - - - 0;
+#X floatatom 442 268 5 0 0 0 - - - 0;
+#X obj 441 298 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000;
+#X floatatom 40 305 8 0 0 0 - - - 0;
 #X obj 480 90 osc~;
 #X obj 450 0 osc~ 1;
 #X obj 450 30 *~ 40;
 #X obj 480 60 +~ 440;
 #X obj 470 140 *~ 0.25;
-#X floatatom 341 298 7 0 0 0 - - -, f 7;
-#X floatatom 60 275 5 0 0 0 - - -, f 5;
-#X floatatom 100 275 5 0 0 0 - - -, f 5;
-#X floatatom 140 275 5 0 0 0 - - -, f 5;
-#X obj 140 305 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
--1 -1;
+#X floatatom 341 298 7 0 0 0 - - - 0;
+#X floatatom 60 275 5 0 0 0 - - - 0;
+#X floatatom 100 275 5 0 0 0 - - - 0;
+#X floatatom 140 275 5 0 0 0 - - - 0;
+#X obj 140 305 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000;
 #X obj 190 150 adc~;
 #X obj 390 324 > 0;
 #X obj 393 351 sel 1;
 #X obj 50 345 > 0;
 #X obj 54 375 sel 1;
 #X obj 131 369 plonk~ 900, f 11;
+#X msg 136 70 next_slot;
+#X msg 135 101 prev_slot;
 #X connect 0 0 3 0;
 #X connect 1 0 3 0;
 #X connect 2 0 3 1;
@@ -95,3 +92,5 @@
 #X connect 38 0 39 0;
 #X connect 39 0 15 0;
 #X connect 40 0 13 0;
+#X connect 41 0 3 0;
+#X connect 42 0 3 0;
