@@ -8,8 +8,12 @@
 typedef struct _motif{
     int state;
     int n_state;
+    bool gate;
+    bool onetime;
+
     int isDubbing;
     int isLong;
+    
     int len_syncs;
     int pos_syncs;
     int len_spl;

@@ -1,4 +1,4 @@
-#N canvas -1816 515 545 410 12;
+#N canvas 285 264 545 410 12;
 #X msg 15 147 deactivate;
 #X msg 7 123 activate;
 #X floatatom 220 230 5 0 0 0 - - - 0;
@@ -42,14 +42,18 @@
 #X obj 131 369 plonk~ 900, f 11;
 #X msg 136 70 next_slot;
 #X msg 135 101 prev_slot;
+#X msg 379 149 next_slot;
+#X msg 378 180 prev_slot;
 #X connect 0 0 3 0;
 #X connect 1 0 3 0;
 #X connect 2 0 3 1;
 #X connect 2 0 4 1;
 #X connect 3 0 13 0;
+#X connect 3 0 13 1;
 #X connect 3 1 24 0;
 #X connect 3 2 18 0;
 #X connect 4 0 13 1;
+#X connect 4 0 13 0;
 #X connect 4 1 30 0;
 #X connect 4 2 19 0;
 #X connect 5 0 4 0;
@@ -63,8 +67,8 @@
 #X connect 10 0 3 0;
 #X connect 10 0 4 0;
 #X connect 11 0 14 0;
-#X connect 12 0 3 0;
 #X connect 12 0 4 0;
+#X connect 12 0 3 0;
 #X connect 14 0 13 0;
 #X connect 14 0 13 1;
 #X connect 15 0 40 0;
@@ -85,8 +89,9 @@
 #X connect 26 0 27 0;
 #X connect 27 0 28 0;
 #X connect 28 0 25 0;
-#X connect 29 0 3 0;
 #X connect 30 0 36 0;
+#X connect 35 0 3 0;
+#X connect 35 0 4 0;
 #X connect 36 0 37 0;
 #X connect 37 0 16 0;
 #X connect 38 0 39 0;
@@ -94,3 +99,5 @@
 #X connect 40 0 13 0;
 #X connect 41 0 3 0;
 #X connect 42 0 3 0;
+#X connect 43 0 4 0;
+#X connect 44 0 4 0;

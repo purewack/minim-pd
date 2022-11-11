@@ -51,6 +51,8 @@ t_int* bank_perform(t_int *w)
                 m->_data[m->dataHead] += (ins * dub);
                 m->pos_spl = (m->pos_spl+1) % m->len_spl;
                 m->dataHead = (m->dataHead+1) % m->len_spl;
+                if(m->dataHead == 0 && x->active_motif_ptr->onetime)
+                    x->tick_action_nstate = _motif_state::m_stop;
             }
 
             m->pos_syncs += 1;
@@ -99,6 +101,7 @@ t_int* bank_perform(t_int *w)
         }
     }
 
+  
     if(x->tick_duration > 0 && x->tick_current >= x->tick_start+x->tick_duration)
     {
         x->tick_start = x->tick_current;
@@ -239,8 +242,16 @@ void bank_q(t_bank* x, int now){
     bank_outlet_mstats(x,0);
 }
 
-void bank_onLaunch(t_bank* x){
+void bank_onStart(t_bank* x){
     if(x->is_active == 0) return;
+
+    if(x->active_motif_ptr->gate){
+        
+        
+
+        post("%d [GATED] current motif state: %d", x->id, x->tick_action_nstate);
+        return;
+    }
 
     switch (x->active_motif_ptr->state)
     {
@@ -294,6 +305,17 @@ void bank_onStop(t_bank* x){
     bank_outlet_mstats(x,0);
     post("%d current motif state: %d", x->id, x->tick_action_nstate);
 }
+
+
+
+void bank_onStartOff(t_bank* x){
+    
+}
+
+void bank_onStopOff(t_bank* x){
+    
+}
+
 
 void bank_clear_motif(t_motif* m){
     m->state      = _motif_state::m_clear;
@@ -396,10 +418,14 @@ void bank_setup(void){
     CLASS_MAINSIGNALIN(bank_class, t_bank, f);
 
     class_addmethod(bank_class, (t_method) bank_dsp      ,gensym("dsp")    , A_CANT, (t_atomtype)0);
+
     class_addmethod(bank_class, (t_method) bank_onReset  ,gensym("clear")   ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onLaunch ,gensym("q_launch") ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onStop   ,gensym("q_stop")   ,(t_atomtype)0 );
     class_addmethod(bank_class, (t_method) bank_onTransportReset   ,gensym("t_start")   ,(t_atomtype)0 );
+
+    class_addmethod(bank_class, (t_method) bank_onStart ,gensym("btn_on_start") ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onStop   ,gensym("btn_on_stop")   ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onStartOff ,gensym("btn_off_start") ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onStopOff   ,gensym("btn_off_stop")   ,(t_atomtype)0 );
 
     class_addmethod(bank_class, (t_method) bank_onActivate   ,gensym("activate")   ,(t_atomtype)0 );
     class_addmethod(bank_class, (t_method) bank_onDeactivate   ,gensym("deactivate")   ,(t_atomtype)0 );
