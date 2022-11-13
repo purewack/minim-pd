@@ -93,7 +93,7 @@ t_int* bank_perform(t_int *w)
                 m->isDubbing = 0;
                 bank_motif_swapStreams(m);
                 x->work_type = 1;
-                x->tick_action_nstate = _motif_state::m_play;
+                x->tick_action_nstate = m->gate ? _motif_state::m_stop : _motif_state::m_play;
             }
 
             m->state = x->tick_action_nstate;
@@ -136,6 +136,16 @@ void bank_outlet_mstats(t_bank* x, t_float ticklen){
     //  SETFLOAT(x->a_m_stats,x->active_motif_ptr->len_syncs);
     //  SETFLOAT(x->a_m_stats,x->active_motif_ptr->pos_syncs);
     outlet_list(x->o_m_state, &s_list, c, x->a_m_stats);
+}
+
+//que up action time aligned
+void bank_q(t_bank* x, int now){
+    if(!now) //if not instant then schedule on next tick 
+        x->tick_action_when = x->tick_start+x->tick_duration;
+    else //else execute on next block cycle (q64)
+        x->tick_action_when = 0;
+    x->tick_action_pending = 1; //signal action pending
+    bank_outlet_mstats(x,0); // reflect stats on outlet
 }
 
 // void bank_outlet_sync(t_bank* x, int mstats){
@@ -195,7 +205,7 @@ void bank_onTickLen(t_bank* x, t_floatarg t){
     x->tick_current = 0;
     x->tick_next = t;
     if(x->active_motif_ptr->state == _motif_state::m_base){
-        x->active_motif_ptr->state = _motif_state::m_play;
+        x->active_motif_ptr->state = x->active_motif_ptr->gate ? _motif_state::m_play : _motif_state::m_stop;
         x->active_motif_ptr->pos_syncs = 0;
         x->active_motif_ptr->len_syncs = x->tick_duration;
         x->active_motif_ptr->len_spl = x->tick_duration * 64;
@@ -207,10 +217,11 @@ void bank_onTickLen(t_bank* x, t_floatarg t){
 void bank_onGetPos(t_bank* x){
     if(! x->is_active) return;
     float p = x->active_motif_ptr->len_syncs ? float(x->active_motif_ptr->pos_syncs) / float(x->active_motif_ptr->len_syncs) : 0.0f;
-    post("pos: %f , len : %f",p, x->active_motif_ptr->len_syncs);
-    post("bank %d tick len: %f", x->id, x->tick_duration);
+    post("pos: %f , len : %d",p, x->active_motif_ptr->len_syncs);
+    post("bank %d tick len: %d", x->id, x->tick_duration);
     post("state %d", x->active_motif_ptr->state);
-    post("mls:%f bls:%f", x->active_motif_ptr->last_sync, x->last_sync);
+    post("mls:%d bls:%f", x->active_motif_ptr->last_sync, x->last_sync);
+    post("gate%d", x->active_motif_ptr->gate);
 }
 
 void bank_onNextSlot(t_bank* x){
@@ -233,93 +244,148 @@ void bank_onPrevSlot(t_bank* x){
     post("%d current slot: %d", x->id, x->active_motif_idx);
 }
 
-void bank_q(t_bank* x, int now){
-    if(!now)
-        x->tick_action_when = x->tick_start+x->tick_duration;
-    else
-        x->tick_action_when = 0;
-    x->tick_action_pending = 1;
-    bank_outlet_mstats(x,0);
-}
 
-void bank_onStart(t_bank* x){
-    if(x->is_active == 0) return;
+
+
+
+void bank_onStateStartOn(t_bank* x){
+    x->stateBtnStart = true;
+    if(!x->active_motif_ptr->gate || !x->is_active) return;
 
     if(x->active_motif_ptr->gate){
-        
-        
+        if(x->active_motif_ptr->state == _motif_state::m_stop){
+            x->tick_action_nstate = _motif_state::m_play;
+            bank_q(x, 1);
+            post("start gate");
+        }
 
-        post("%d [GATED] current motif state: %d", x->id, x->tick_action_nstate);
-        return;
+    }
+    else{
+
+        // switch (x->active_motif_ptr->state)
+        // {
+        //     case _motif_state::m_stop:
+        //         x->tick_action_nstate = _motif_state::m_play;
+        //         bank_q(x, 0);
+        //     break;
+
+        //     case _motif_state::m_play:
+        //         x->tick_action_nstate = _motif_state::m_dub;
+        //         bank_q(x, 1); 
+        //     break;
+
+        //     case _motif_state::m_dub:
+        //         x->tick_action_nstate = _motif_state::m_play;
+        //         bank_q(x, 1); 
+        //     break;
+        // }
+        
     }
 
-    switch (x->active_motif_ptr->state)
-    {
-    case _motif_state::m_clear:
-        x->tick_action_nstate = _motif_state::m_base;
-        bank_q(x, 0);
-    break;
 
-    case _motif_state::m_base:
+    post("TOP_ON %d current motif state: %d", x->id, x->tick_action_nstate);
+}
+
+void bank_onStateStartOff(t_bank* x){
+    x->stateBtnStart = false;
+    if(!x->active_motif_ptr->gate || !x->is_active) return;
+
+    if(x->active_motif_ptr->gate){
+        if(x->active_motif_ptr->state == _motif_state::m_play
+        || x->active_motif_ptr->state == _motif_state::m_dub){
+            x->tick_action_nstate = _motif_state::m_stop;
+            bank_q(x, 1);
+            post("stop gate");
+        }
+
+    }
+    
+    post("TOP_OFF %d current motif state: %d", x->id, x->tick_action_nstate);
+}
+
+
+void bank_onStateStopOn(t_bank* x){
+    x->stateBtnStop = true;
+    if(x->is_active == 0) return;
+    
+    //initiate base rec
+    if(x->active_motif_ptr->state == _motif_state::m_clear){
+        x->tick_action_nstate = _motif_state::m_base;
+        bank_q(x, 1);
+        return;
+    }
+    //finish base rec
+    if(x->active_motif_ptr->state == _motif_state::m_base){
+        //if start button held, change mode to loop
         if(x->tick_duration < 0){
             t_float t = x->tick_duration * -1.0;
             bank_outlet_mstats(x, t);
             post("%d set new tick len %f", x->id, t);
         }
-    case _motif_state::m_stop:
-        x->tick_action_nstate = _motif_state::m_play;
-        bank_q(x, 0);
-    break;
-
-    case _motif_state::m_play:
-        x->tick_action_nstate = _motif_state::m_dub;
-        bank_q(x, 1); 
-    break;
-
-    case _motif_state::m_dub:
-        x->tick_action_nstate = _motif_state::m_play;
-        bank_q(x, 1); 
-    break;
+        if(x->stateBtnStart){
+            //loop        
+            x->tick_action_nstate = _motif_state::m_play;
+            bank_q(x, 1);
+        }
+        else{
+            //gated
+            x->active_motif_ptr->gate = true;
+            x->tick_action_nstate = _motif_state::m_stop;
+            bank_q(x, 1);
+        }
     }
 
-    post("%d current motif state: %d", x->id, x->tick_action_nstate);
+    if(x->active_motif_ptr->gate){
+        if(x->active_motif_ptr->state == _motif_state:: m_play){
+            x->tick_action_nstate = _motif_state::m_dub;
+            bank_q(x, 1);
+        }
+    }   
+    
+
+
+    // switch (x->active_motif_ptr->state)
+    // {
+    // case _motif_state::m_base:
+    //     x->tick_action_nstate = _motif_state::m_clear;
+    //     bank_q(x,0);
+    // break;
+
+    // case _motif_state::m_dub:
+    // case _motif_state::m_play:
+    //     x->tick_action_nstate = _motif_state::m_stop;
+    //     bank_q(x, x->active_motif_ptr->isDubbing);
+    // break;
+    // }
+
+    // bank_outlet_mstats(x,0);
+    post("BOT_ON %d current motif state: %d", x->id, x->tick_action_nstate);
 }
 
-void bank_onStop(t_bank* x){
-    if(x->is_active == 0) return;
+void bank_onStateStopOff(t_bank* x){
+    x->stateBtnStop = false;
+    if(!x->active_motif_ptr->gate || !x->is_active) return;
 
-    switch (x->active_motif_ptr->state)
-    {
-    case _motif_state::m_base:
-        x->tick_action_nstate = _motif_state::m_clear;
-        bank_q(x,0);
-    break;
-
-    case _motif_state::m_dub:
-    case _motif_state::m_play:
-        x->tick_action_nstate = _motif_state::m_stop;
-        bank_q(x, x->active_motif_ptr->isDubbing);
-    break;
+     
+    if(x->active_motif_ptr->gate){
+        if(x->active_motif_ptr->state == _motif_state:: m_dub){
+            x->tick_action_nstate = _motif_state::m_play;
+            bank_q(x, 1);
+        }
     }
-
-    bank_outlet_mstats(x,0);
-    post("%d current motif state: %d", x->id, x->tick_action_nstate);
+    post("BOT_OFF %d current motif state: %d", x->id, x->tick_action_nstate);
 }
 
 
 
-void bank_onStartOff(t_bank* x){
-    
-}
 
-void bank_onStopOff(t_bank* x){
-    
-}
 
 
 void bank_clear_motif(t_motif* m){
     m->state      = _motif_state::m_clear;
     m->n_state    = _motif_state::m_clear;
+    m->onetime    = 0;
+    m->gate    = 0;
     m->pos_spl    = 0;
     m->pos_ratio  = 0;
     m->pos_syncs  = 0;
@@ -376,7 +442,7 @@ void* bank_new(t_floatarg id){
     x->work_type = 0;
     x->work_type_inthread = 0;
 
-    post("new bank with id: %f", x->id);
+    post("v01 new bank with id: %d", x->id);
 
     x->worker_thread_alive = 1;
     pthread_create(&x->worker_thread, NULL, bank_worker_thread, x);
@@ -422,10 +488,10 @@ void bank_setup(void){
     class_addmethod(bank_class, (t_method) bank_onReset  ,gensym("clear")   ,(t_atomtype)0 );
     class_addmethod(bank_class, (t_method) bank_onTransportReset   ,gensym("t_start")   ,(t_atomtype)0 );
 
-    class_addmethod(bank_class, (t_method) bank_onStart ,gensym("btn_on_start") ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onStop   ,gensym("btn_on_stop")   ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onStartOff ,gensym("btn_off_start") ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onStopOff   ,gensym("btn_off_stop")   ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onStateStartOn ,gensym("btn_on_start") ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onStateStopOn   ,gensym("btn_on_stop")   ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onStateStartOff ,gensym("btn_off_start") ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onStateStopOff   ,gensym("btn_off_stop")   ,(t_atomtype)0 );
 
     class_addmethod(bank_class, (t_method) bank_onActivate   ,gensym("activate")   ,(t_atomtype)0 );
     class_addmethod(bank_class, (t_method) bank_onDeactivate   ,gensym("deactivate")   ,(t_atomtype)0 );

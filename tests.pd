@@ -1,4 +1,4 @@
-#N canvas 285 264 545 410 12;
+#N canvas 285 264 570 479 12;
 #X msg 15 147 deactivate;
 #X msg 7 123 activate;
 #X floatatom 220 230 5 0 0 0 - - - 0;
@@ -34,7 +34,7 @@
 #X floatatom 100 275 5 0 0 0 - - - 0;
 #X floatatom 140 275 5 0 0 0 - - - 0;
 #X obj 140 305 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000;
-#X obj 190 150 adc~;
+#X obj 183 140 adc~;
 #X obj 390 324 > 0;
 #X obj 393 351 sel 1;
 #X obj 50 345 > 0;

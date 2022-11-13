@@ -66,6 +66,9 @@ extern "C"{
         t_motif*    active_motif_ptr;
         int         active_motif_idx;
 
+        bool        stateBtnStart;
+        bool        stateBtnStop;
+
         pthread_t   worker_thread;
         int         worker_thread_alive;
         int         work_type; //1 refill, -1 unfill, 2 fetch 
@@ -85,7 +88,7 @@ extern "C"{
     void bank_onNextSlot(t_bank* x);
     void bank_onPrevSlot(t_bank* x);
     void bank_onLaunch(t_bank* x);
-    void bank_onStop(t_bank* x);
+    void bank_onStateStopOn(t_bank* x);
     void bank_onTransportReset(t_bank* x);
     void bank_onReset(t_bank* x);
     void bank_clear_motif(t_motif* m);
