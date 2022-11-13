@@ -1,5 +1,13 @@
 #include "bank.h"
 
+#define HOLD_TIME 1500 //sync ticks ~= 2s
+bool bank_isTopCtrlHeld(t_bank* x){
+    return x->stateBtnStart && ::abs(x->holdCounter) > HOLD_TIME;
+}
+bool bank_isBotCtrlHeld(t_bank* x){
+    return x->stateBtnStop && ::abs(x->holdCounter) > HOLD_TIME;
+}
+
 void bank_dsp(t_bank *x, t_signal **sp)
 {
   dsp_add(bank_perform, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
@@ -120,6 +128,20 @@ t_int* bank_perform(t_int *w)
             pthread_mutex_unlock(&x->mtx_work);
         }
     }
+
+    //hold button counter
+    if(x->holdCounter > 0 && !x->stateBtnStart)
+        x->holdCounter = 0;
+    if(x->holdCounter < 0 && !x->stateBtnStop)
+        x->holdCounter = 0;
+
+    if(x->holdCounter == 0 && x->stateBtnStart)
+        x->holdCounter = 1;
+    if(x->holdCounter == 0 && x->stateBtnStop)
+        x->holdCounter = -1;
+    
+    if(x->holdCounter > 0) x->holdCounter++;
+    if(x->holdCounter < 0) x->holdCounter--;
     
     return (w+5);
     // return (w+2);
