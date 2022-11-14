@@ -15,6 +15,7 @@ endef
 PDINCLUDEDIR = ./
 PDBINDIR = /c/Program Files/Pd/bin/
 
+cflags += -std=c++0x
 ldflags += -pthread
 
 include Makefile.pdlibbuilder

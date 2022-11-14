@@ -72,8 +72,8 @@ extern "C"{
         t_motif*    active_motif_ptr;
         int         active_motif_idx;
 
-        bool        stateBtnStart; //top ctrl
-        bool        stateBtnStop; //bot ctrl
+        bool        stateCTop; //top ctrl state of button
+        bool        stateCBot; //bot ctrl state of button
         long        holdCounter;// + for top ctrl, - for bot ctrl
 
         pthread_t   worker_thread;

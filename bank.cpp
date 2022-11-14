@@ -2,16 +2,15 @@
 
 #define HOLD_TIME 1500 //sync ticks ~= 2s
 bool bank_isTopCtrlHeld(t_bank* x){
-    return x->stateBtnStart && ::abs(x->holdCounter) > HOLD_TIME;
+    return x->stateCTop && std::abs(x->holdCounter) > HOLD_TIME;
 }
 bool bank_isBotCtrlHeld(t_bank* x){
-    return x->stateBtnStop && ::abs(x->holdCounter) > HOLD_TIME;
+    return x->stateCBot && std::abs(x->holdCounter) > HOLD_TIME;
 }
 
 void bank_dsp(t_bank *x, t_signal **sp)
 {
   dsp_add(bank_perform, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
-  //dsp_add(bank_perform, 1, x);
 }
 t_int* bank_perform(t_int *w)
 { 
@@ -27,6 +26,9 @@ t_int* bank_perform(t_int *w)
     t_sample dub = m->isDubbing ? 1.0f : 0.0f;
     t_sample ins = 0;
     int dataHeadMod = m->isLong ? MOTIF_BUF_SIZE : m->len_spl;
+
+    if(bank_isBotCtrlHeld(x) && m->state == _motif_state::m_stop)
+        bank_onReset(x);
 
     switch(m->state){
         case _motif_state::m_base:
@@ -130,14 +132,14 @@ t_int* bank_perform(t_int *w)
     }
 
     //hold button counter
-    if(x->holdCounter > 0 && !x->stateBtnStart)
+    if(x->holdCounter > 0 && !x->stateCTop)
         x->holdCounter = 0;
-    if(x->holdCounter < 0 && !x->stateBtnStop)
+    if(x->holdCounter < 0 && !x->stateCBot)
         x->holdCounter = 0;
 
-    if(x->holdCounter == 0 && x->stateBtnStart)
+    if(x->holdCounter == 0 && x->stateCTop)
         x->holdCounter = 1;
-    if(x->holdCounter == 0 && x->stateBtnStop)
+    if(x->holdCounter == 0 && x->stateCBot)
         x->holdCounter = -1;
     
     if(x->holdCounter > 0) x->holdCounter++;
@@ -271,7 +273,7 @@ void bank_onPrevSlot(t_bank* x){
 
 
 void bank_onStateStartOn(t_bank* x){
-    x->stateBtnStart = true;
+    x->stateCTop = true;
     if(!x->active_motif_ptr->gate || !x->is_active) return;
 
     if(x->active_motif_ptr->gate){
@@ -309,7 +311,7 @@ void bank_onStateStartOn(t_bank* x){
 }
 
 void bank_onStateStartOff(t_bank* x){
-    x->stateBtnStart = false;
+    x->stateCTop = false;
     if(!x->active_motif_ptr->gate || !x->is_active) return;
 
     if(x->active_motif_ptr->gate){
@@ -327,7 +329,7 @@ void bank_onStateStartOff(t_bank* x){
 
 
 void bank_onStateStopOn(t_bank* x){
-    x->stateBtnStop = true;
+    x->stateCBot = true;
     if(x->is_active == 0) return;
     
     //initiate base rec
@@ -344,7 +346,7 @@ void bank_onStateStopOn(t_bank* x){
             bank_outlet_mstats(x, t);
             post("%d set new tick len %f", x->id, t);
         }
-        if(x->stateBtnStart){
+        if(x->stateCTop){
             //loop        
             x->tick_action_nstate = _motif_state::m_play;
             bank_q(x, 1);
@@ -385,7 +387,7 @@ void bank_onStateStopOn(t_bank* x){
 }
 
 void bank_onStateStopOff(t_bank* x){
-    x->stateBtnStop = false;
+    x->stateCBot = false;
     if(!x->active_motif_ptr->gate || !x->is_active) return;
 
      
