@@ -341,19 +341,25 @@ void bank_onStateStopOn(t_bank* x){
     //finish base rec
     if(x->active_motif_ptr->state == _motif_state::m_base){
         //if start button held, change mode to loop
-        if(x->tick_duration < 0){
-            t_float t = x->tick_duration * -1.0;
-            bank_outlet_mstats(x, t);
-            post("%d set new tick len %f", x->id, t);
-        }
+        
         if(x->stateCTop){
+            if(x->tick_duration < 0){
+                t_float t = x->tick_duration * -1.0;
+                bank_outlet_mstats(x, t);
+                post("%d set new tick len %f", x->id, t);
+            }
             //loop        
+            x->active_motif_ptr->gate = false;
+            x->active_motif_ptr->synced = true;
+            x->active_motif_ptr->onetime = false;
             x->tick_action_nstate = _motif_state::m_play;
             bank_q(x, 1);
         }
         else{
             //gated
             x->active_motif_ptr->gate = true;
+            x->active_motif_ptr->synced = false;
+            x->active_motif_ptr->onetime = false;
             x->tick_action_nstate = _motif_state::m_stop;
             bank_q(x, 1);
         }
