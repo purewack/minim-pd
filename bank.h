@@ -2,18 +2,14 @@
 #include <string>
 #include "m_pd.h"
 
+#define VER "S/W/D/0"
 // void cpppost();
 // std::string complexcpp(std::string s);
 #define MOTIF_BUF_SIZE 4194304 //4MB = 1024*1024*4
 
-//sync tick = n64 block boundary timing
-//quan tick = n*sync ticks
 typedef struct _motif{
     int state;
     int n_state;
-    bool gate; //if play button let go, stop sound
-    bool onetime; //dont loop
-    bool synced; //honour quantize ticks
 
     int isDubbing;
     int isLong; //if over buf size, will require disk file for stream from and to
@@ -38,6 +34,11 @@ enum _motif_state{
     m_dub   = 3,
 };
 
+enum _motif_work_type{
+    REFILL = (1<<0),
+    SLOT = (1<<1)
+};
+
 extern "C"{
    
     #include <pthread.h>
@@ -57,8 +58,10 @@ extern "C"{
 
         t_atom      a_m_stats[5];
         
+        //sync tick = b64 boundary timing, 1 DSP loop
+        //quan tick = L*sync ticks
         int         is_active;// if not, does not take any input, still processes sound
-        int         tick_current;//current tick timer, all values stem from
+        int         tick_current;//current sync tick timer, all values stem from
         int         tick_duration;// quantize Tick
         int         tick_start;//when the last tick started
         int         tick_next;//when the next tick will happen
@@ -67,10 +70,15 @@ extern "C"{
         int         tick_action_nstate;//next motif state on action
         float       last_sync;//last time of sync tick
 
+        bool gate; //if play button let go, stop sound
+        bool onetime; //dont loop
+        bool synced; //honour quantize ticks
+
         t_motif**   motifs_array;
         int         motifs_array_count;
         t_motif*    active_motif_ptr;
         int         active_motif_idx;
+        int         slotToChange;
 
         bool        stateCTop; //top ctrl state of button
         bool        stateCBot; //bot ctrl state of button
@@ -78,16 +86,18 @@ extern "C"{
 
         pthread_t   worker_thread;
         int         worker_thread_alive;
-        int         work_type; //1 refill, -1 unfill, 2 fetch 
+        int         work_type; //1 refill, -1 unfill, 2 fetch, 3 slot change
         int         work_type_inthread;//internal buffer flag for thread
+
         pthread_cond_t  cond_work;
         pthread_mutex_t mtx_work; 
     } t_bank;
 
-    void* bank_worker_thread(void* arg);
+    void bank_q(t_bank* x);
+
     void bank_outlet_sync(t_bank* x, int msync);
     void bank_outlet_mstats(t_bank* x, t_float ticklen);
-    void bank_q(t_bank* x, int now);
+
     void bank_onActivate(t_bank* x);
     void bank_onDeactivate(t_bank* x);
     void bank_onTickLen(t_bank* x, t_floatarg t);
@@ -95,15 +105,21 @@ extern "C"{
     void bank_onNextSlot(t_bank* x);
     void bank_onPrevSlot(t_bank* x);
     void bank_onLaunch(t_bank* x);
-    void bank_onStateStopOn(t_bank* x);
     void bank_onTransportReset(t_bank* x);
     void bank_onReset(t_bank* x);
+    void bank_onOvertakeRecord(t_bank* x);
+
+    void bank_safeSlotChange(t_bank* x);
     void bank_clear_motif(t_motif* m);
     void bank_motif_toStart(t_motif* m);
     void bank_motif_swapStreams(t_motif* m);
+    
+    void bank_dsp(t_bank *x, t_signal **sp);
+    t_int* bank_perform(t_int *w);
+
     void* bank_new(t_floatarg f);
     void bank_free(t_bank* x);
     void bank_setup(void);
-    void bank_dsp(t_bank *x, t_signal **sp);
-    t_int* bank_perform(t_int *w);
+    
+    void* bank_worker_thread(void* arg);
 }
