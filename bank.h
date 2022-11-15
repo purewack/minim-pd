@@ -79,7 +79,7 @@ extern "C"{
         t_motif*    active_motif_ptr;
         int         active_motif_idx;
 
-        bool        stateCAtl; //top ctrl state of button
+        bool        stateCAlt; //top ctrl state of button
         bool        stateCMain; //bot ctrl state of button
         long        holdCounter;// + for top ctrl, - for bot ctrl
         long        debounceCounter;

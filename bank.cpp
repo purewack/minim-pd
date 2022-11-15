@@ -1,11 +1,11 @@
 #include "bank.h"
 
 
-bool bank_isTopCtrlHeld(t_bank* x){
-    return x->stateCAtl && std::abs(x->holdCounter) > HOLD_TIME;
-}
-bool bank_isBotCtrlHeld(t_bank* x){
+bool bank_isMainCtrlHeld(t_bank* x){
     return x->stateCMain && std::abs(x->holdCounter) > HOLD_TIME;
+}
+bool bank_isAltCtrlHeld(t_bank* x){
+    return x->stateCAlt && std::abs(x->holdCounter) > HOLD_TIME;
 }
 bool bank_hasQuanTick(t_bank* x){
     return x->tick_duration > 0;
@@ -53,7 +53,7 @@ t_int* bank_perform(t_int *w)
     //int dataHeadMod = m->isLong ? MOTIF_BUF_SIZE : m->len_spl;
 
     //reset of whole bank
-    if(bank_isBotCtrlHeld(x) && bank_activeMotifIsStop(x))
+    if(bank_isAltCtrlHeld(x) && bank_activeMotifIsStop(x))
         bank_onReset(x);
 
     //audio processing
@@ -173,12 +173,12 @@ t_int* bank_perform(t_int *w)
     }
 
     //hold button counter
-    if(x->holdCounter > 0 && !x->stateCAtl)
+    if(x->holdCounter > 0 && !x->stateCAlt)
         x->holdCounter = 0;
     if(x->holdCounter < 0 && !x->stateCMain)
         x->holdCounter = 0;
 
-    if(x->holdCounter == 0 && x->stateCAtl)
+    if(x->holdCounter == 0 && x->stateCAlt)
         x->holdCounter = 1;
     if(x->holdCounter == 0 && x->stateCMain)
         x->holdCounter = -1;
@@ -325,44 +325,6 @@ void bank_onPrevSlot(t_bank* x){
 }
 
 
-void bank_onControlAltOn(t_bank* x){
-    x->stateCAtl = true;
-    if(!x->is_active) return;
-
-    if(bank_activeMotifIsDub(x) && !x->gate){
-        if(!(x->work_type &= _motif_work_type::REFILL)){
-            x->tick_action_nstate = _motif_state::m_play;
-            bank_q(x);
-        }
-    }
-    else if(bank_activeMotifIsRunning(x) && !x->gate){
-        x->tick_action_nstate = _motif_state::m_dub;
-        bank_q(x);
-    }
-    else if(bank_activeMotifIsStop(x) && !bank_activeMotifIsClear(x)){
-        x->tick_action_nstate = _motif_state::m_play;
-        bank_q(x);
-    }
-   
-    post("TOP_ON %d current motif state: %d", x->id, x->tick_action_nstate);
-}
-
-void bank_onControlAltOff(t_bank* x){
-    x->stateCAtl = false;
-    if(!x->gate || !x->is_active) return;
-
-    if(x->gate){
-        if(bank_activeMotifIsRunning(x)){
-            x->tick_action_nstate = _motif_state::m_stop;
-            bank_q(x);
-            post("stop gate");
-        }
-    }
-    
-    post("TOP_OFF %d current motif state: %d", x->id, x->tick_action_nstate);
-}
-
-
 void bank_onControlMainOn(t_bank* x){
     x->stateCMain = true;
     if(!x->is_active) return;
@@ -370,7 +332,7 @@ void bank_onControlMainOn(t_bank* x){
     //initiate base rec
     if(bank_activeMotifIsClear(x)){
         x->tick_action_nstate = _motif_state::m_base;
-        if(x->stateCAtl) x->synced = true;
+        if(x->stateCAlt) x->synced = true;
         bank_q(x);
         post("base rec bank%d",x->id);
         return;
@@ -381,7 +343,7 @@ void bank_onControlMainOn(t_bank* x){
         //if start button held, change mode to loop
         
         post("base rec end bank%d",x->id);
-        if(x->stateCAtl){
+        if(x->stateCAlt){
             //post changes to sync listeners to update banks with new project quan length
             if(x->tick_duration < 0){
                 bank_postQuanUpdate(x);
@@ -408,12 +370,62 @@ void bank_onControlMainOn(t_bank* x){
     }
     
     if(x->gate){
+        //1
+        if(bank_activeMotifIsStop(x) && !bank_activeMotifIsClear(x)){
+            x->tick_action_nstate = _motif_state::m_play;
+            bank_q(x);
+        }
+    }
+    else{
+        //6
+        if(bank_activeMotifIsDub(x)){
+            if(!(x->work_type &= _motif_work_type::REFILL)){
+                x->tick_action_nstate = _motif_state::m_play;
+                bank_q(x);
+            }
+        }
+        //5
+        else if(bank_activeMotifIsRunning(x)){
+            x->tick_action_nstate = _motif_state::m_dub;
+            bank_q(x);
+        }
+        //7
+        else if(bank_activeMotifIsStop(x) && !bank_activeMotifIsClear(x)){
+            x->tick_action_nstate = _motif_state::m_play;
+            bank_q(x);
+        }
+    } 
+
+ }
+
+void bank_onControlMainOff(t_bank* x){
+    x->stateCMain = false;
+    if(!x->gate || !x->is_active) return;
+
+    if(x->gate){
+        //2
         if(bank_activeMotifIsRunning(x)){
+            x->tick_action_nstate = _motif_state::m_stop;
+            bank_q(x);
+            post("stop gate");
+        }
+    }
+}
+
+
+void bank_onControlAltOn(t_bank* x){
+    x->stateCAlt = true;
+    if(!x->is_active) return;
+
+    if(x->gate){
+        //3
+        if(bank_activeMotifIsRunning(x) && x->stateCMain){
             x->tick_action_nstate = _motif_state::m_dub;
             bank_q(x);
         }
     }
     else{
+        //8
         if(bank_activeMotifIsRunning(x)){
             x->tick_action_nstate = _motif_state::m_stop;
             auto s = x->synced;
@@ -421,26 +433,25 @@ void bank_onControlMainOn(t_bank* x){
             bank_q(x);
             x->synced = s;
         }
-    } 
-
-    // bank_outlet_mstats(x,0);
-    post("BOT_ON %d current motif state: %d", x->id, x->tick_action_nstate);
+    }
+   
 }
 
-void bank_onControlMainOff(t_bank* x){
-    x->stateCMain = false;
+void bank_onControlAltOff(t_bank* x){
+    x->stateCAlt = false;
     if(!x->gate || !x->is_active) return;
 
     if(x->gate){
-        if(bank_activeMotifIsDub(x)){
+        //4
+        if(bank_activeMotifIsDub(x) && x->stateCMain){
             if(!(x->work_type &= _motif_work_type::REFILL)){
                 x->tick_action_nstate = _motif_state::m_play;
                 bank_q(x);
             }
         }
     }
-    post("BOT_OFF %d current motif state: %d", x->id, x->tick_action_nstate);
 }
+
 
 void bank_onControlAlt(t_bank *x, t_floatarg state){
     if(x->debounceCounter) return;
@@ -534,8 +545,8 @@ void bank_motif_swapStreams(t_motif* m){
 void* bank_new(t_floatarg id){
     t_bank* x = (t_bank*)pd_new(bank_class);
     //f signal in
-    x->i_ctl_top = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_alt"));
-    x->i_ctl_bot = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_main"));
+    x->i_ctl_top = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_main"));
+    x->i_ctl_bot = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_alt"));
     x->i_sync = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("set_sync_tick"));
     x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
     x->o_sync = outlet_new(&x->x_obj,&s_anything);
