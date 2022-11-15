@@ -1,13 +1,29 @@
 
 #include "mapper.h"
 #include <stdlib.h>
+#include <stdarg.h>
+#include <string>
+
 
 void mapper_onInput(t_mapper *x,t_symbol *s, int argc, t_atom *argv){
-    
-    if(argc < 2 || argc > 3) return;
-    for(int r=0; r<x->count; r++){
-        if(x->respondents[r] == atom_getint(&argv[0]))
-            outlet_float(x->o_state[r], atom_getint(&argv[1]) > 0 ? 1.f : 0.f);
+    if(argc < 2) return;
+    if(s == gensym("set")){
+        for(int i=0; i<std::min(x->count,argc); i++){
+            x->respondents[i] = atom_getint(&argv[i]);
+            post("remapped -> [%d]%d",i,x->respondents[i]);
+        }
+    }
+    else if(s == gensym("change")){
+        int i = atom_getint(&argv[0]);
+        int v = atom_getint(&argv[1]);
+        x->respondents[i] = v;
+        post("changed -> [%d]%d",i,v);
+    }
+    else{
+        for(int r=0; r<x->count; r++){
+            if(x->respondents[r] == atom_getint(&argv[0]))
+                outlet_float(x->o_state[r], atom_getint(&argv[1]) > 0 ? 1.f : 0.f);
+        }
     }
 }
 
@@ -46,5 +62,5 @@ void mapper_setup(void){
         (t_atomtype)0
     );
 
-    class_addlist(mapper_class,(t_method)mapper_onInput);
+    class_addanything(mapper_class,(t_method)mapper_onInput);
 }
