@@ -2,10 +2,10 @@
 
 
 bool bank_isTopCtrlHeld(t_bank* x){
-    return x->stateCTop && std::abs(x->holdCounter) > HOLD_TIME;
+    return x->stateCAtl && std::abs(x->holdCounter) > HOLD_TIME;
 }
 bool bank_isBotCtrlHeld(t_bank* x){
-    return x->stateCBot && std::abs(x->holdCounter) > HOLD_TIME;
+    return x->stateCMain && std::abs(x->holdCounter) > HOLD_TIME;
 }
 bool bank_hasQuanTick(t_bank* x){
     return x->tick_duration > 0;
@@ -71,12 +71,12 @@ t_int* bank_perform(t_int *w)
             if(x->tick_duration <= 0)
                 x->tick_duration -= 1;
 
+            //fail safe when record length goes to max time
             if(m->len_spl >= MOTIF_BUF_SIZE){
                 m->len_spl = MOTIF_BUF_SIZE;
                 m->len_syncs = m->len_spl / 64;
                 x->tick_action_nstate = _motif_state::m_play;
-                bank_outlet_mstats(x, m->len_syncs);
-                bank_q(x); 
+                bank_onControlMainOn(x);
             }
         break;
            
@@ -109,7 +109,7 @@ t_int* bank_perform(t_int *w)
         if(x->tick_current >= x->tick_action_when){
             //if state play and n_state stop => reset pos etc, next state machine essentially 
             x->tick_action_when = 0;
-            bank_outlet_mstats(x, 0);
+            //bank_postSyncUpdate(x);
 
             if(m->state == _motif_state::m_stop && x->tick_action_nstate == _motif_state::m_play) 
                 bank_motif_toStart(m);
@@ -145,9 +145,9 @@ t_int* bank_perform(t_int *w)
         x->tick_start = x->tick_current;
         x->tick_next = x->tick_start + x->tick_duration;
         x->last_sync = x->tick_current;
-        // bank_outlet_sync(x, msync);
         if(msync != x->tick_current)
-        outlet_float(x->o_sync, float(x->tick_current * -1));
+        bank_postSyncUpdate(x);
+        //outlet_float(x->o_sync, float(x->tick_current * -1));
     }
 
     //signal worker thread that there is work to be done, i.e. confirm overdub data
@@ -173,14 +173,14 @@ t_int* bank_perform(t_int *w)
     }
 
     //hold button counter
-    if(x->holdCounter > 0 && !x->stateCTop)
+    if(x->holdCounter > 0 && !x->stateCAtl)
         x->holdCounter = 0;
-    if(x->holdCounter < 0 && !x->stateCBot)
+    if(x->holdCounter < 0 && !x->stateCMain)
         x->holdCounter = 0;
 
-    if(x->holdCounter == 0 && x->stateCTop)
+    if(x->holdCounter == 0 && x->stateCAtl)
         x->holdCounter = 1;
-    if(x->holdCounter == 0 && x->stateCBot)
+    if(x->holdCounter == 0 && x->stateCMain)
         x->holdCounter = -1;
     
     if(x->holdCounter > 0) x->holdCounter++;
@@ -196,34 +196,7 @@ t_int* bank_perform(t_int *w)
 
 
 
-
-
-
-void bank_outlet_mstats(t_bank* x, t_float ticklen){
-    int c = 3;
-    SETFLOAT(x->a_m_stats   ,x->active_motif_ptr->state);
-    SETFLOAT(x->a_m_stats+1 ,x->tick_action_pending ? x->tick_action_nstate : -1);
-    SETFLOAT(x->a_m_stats+2 ,x->tick_action_pending ? x->tick_action_when : -1);
-    
-    SETFLOAT(x->a_m_stats+c, ticklen);
-    if(ticklen > 0) c+=1;
-    //  SETFLOAT(x->a_m_stats,x->active_motif_ptr->len_syncs);
-    //  SETFLOAT(x->a_m_stats,x->active_motif_ptr->pos_syncs);
-    outlet_list(x->o_m_state, &s_list, c, x->a_m_stats);
-}
-
-//que up action time aligned if alignment data exists
-void bank_q(t_bank* x){
-    if(x->synced && x->tick_duration) //if not gated then schedule on next tick 
-        x->tick_action_when = x->tick_start+x->tick_duration;
-    else //else execute on next block cycle (q64)
-        x->tick_action_when = 0;
-    x->tick_action_pending = 1; //signal action pending
-    bank_outlet_mstats(x,0); // reflect stats on outlet
-}
-
-
-void bank_onTickLen(t_bank* x, t_floatarg t){
+void bank_setSyncTick(t_bank* x, t_floatarg t){
     if(x->tick_duration > 0) return;
     
     //banks with uninitiated quan tick data go through this routine once
@@ -237,19 +210,46 @@ void bank_onTickLen(t_bank* x, t_floatarg t){
         x->active_motif_ptr->len_syncs = x->tick_duration;
         x->active_motif_ptr->len_spl = x->tick_duration * 64;
         x->tick_action_nstate = x->gate ? _motif_state::m_play : _motif_state::m_stop;
-        bank_q(x);
     }
     post("bank %d tick len: %f tick len spl %d (%d pre)", x->id, t, x->active_motif_ptr->len_spl, m_len_spl);
     // bank_outlet_sync(x,1);
 }
 
-void bank_onGetPos(t_bank* x){
+void bank_postQuanUpdate(t_bank* x){
+    x->tick_duration *= -1;
+    SETFLOAT(x->a_sync_list+0, x->tick_duration);
+    outlet_anything(x->o_sync, gensym("q_info"), 1, x->a_sync_list);
+}
+
+void bank_postSyncUpdate(t_bank* x){
+    SETFLOAT(x->a_sync_list+0 ,x->tick_action_pending ? x->tick_action_when : -1);
+    SETFLOAT(x->a_sync_list+1 ,x->tick_start);
+    SETFLOAT(x->a_sync_list+2 ,x->tick_next);
+    SETFLOAT(x->a_sync_list+3 ,x->tick_duration);
+    outlet_anything(x->o_sync, gensym("s_info"), 4, x->a_sync_list);
+}
+
+//que up action time aligned if alignment data exists
+void bank_q(t_bank* x){
+    if(x->synced && x->tick_duration) {//if not gated then schedule on next tick 
+        x->tick_action_when = x->tick_start+x->tick_duration;
+    }
+    else //else execute on next block cycle (q64)
+        x->tick_action_when = 0;
+    x->tick_action_pending = 1; //signal action pending
+    bank_postSyncUpdate(x);
+}
+
+
+
+
+void bank_debugInfo(t_bank* x){
     if(! x->is_active) return;
     float p = x->active_motif_ptr->len_syncs ? float(x->active_motif_ptr->pos_syncs) / float(x->active_motif_ptr->len_syncs) : 0.0f;
+    post("active slot bank[id%d][slot%d]",x->id,x->active_motif_idx);
     post("pos: %f , len : %d",p, x->active_motif_ptr->len_syncs);
     post("bank %d tick len: %d", x->id, x->tick_duration);
     post("state %d", x->active_motif_ptr->state);
-    post("mls:%d bls:%f", x->active_motif_ptr->last_sync, x->last_sync);
     post("gate%d", x->gate);
 }
 
@@ -265,7 +265,6 @@ void bank_onReset(t_bank* x){
     x->tick_action_pending = 0;
     x->tick_action_nstate = 0;
     bank_onTransportReset(x);
-    bank_outlet_mstats(x,0);
     for(int m=0; m<x->motifs_array_count; m++)
         bank_clear_motif(x->motifs_array[m]);
         
@@ -295,15 +294,7 @@ void bank_onDeactivate(t_bank* x){
     post("%d deactivated", x->id);
 }
 
-void bank_signalSlotChange(t_bank* x, int slot){
-    x->slotToChange = slot;
-    bank_safeSlotChange(x);
-}
-
-void bank_safeSlotChange(t_bank* x){
-    int slot = x->slotToChange;
-    x->slotToChange = -1;
-
+void bank_safeSlotChange(t_bank* x, int slot){
     if(slot > x->motifs_array_count-1 || slot < 0){
         return;
     }
@@ -325,17 +316,17 @@ void bank_safeSlotChange(t_bank* x){
 
 void bank_onNextSlot(t_bank* x){
     if(! x->is_active) return;
-    bank_signalSlotChange(x,x->active_motif_idx + 1);
+    bank_safeSlotChange(x,x->active_motif_idx + 1);
 }
 
 void bank_onPrevSlot(t_bank* x){
     if(! x->is_active) return;
-    bank_signalSlotChange(x,x->active_motif_idx - 1);
+    bank_safeSlotChange(x,x->active_motif_idx - 1);
 }
 
 
-void bank_onControlTopOn(t_bank* x){
-    x->stateCTop = true;
+void bank_onControlAltOn(t_bank* x){
+    x->stateCAtl = true;
     if(!x->is_active) return;
 
     if(bank_activeMotifIsRunning(x) && !x->gate){
@@ -356,8 +347,8 @@ void bank_onControlTopOn(t_bank* x){
     post("TOP_ON %d current motif state: %d", x->id, x->tick_action_nstate);
 }
 
-void bank_onControlTopOff(t_bank* x){
-    x->stateCTop = false;
+void bank_onControlAltOff(t_bank* x){
+    x->stateCAtl = false;
     if(!x->gate || !x->is_active) return;
 
     if(x->gate){
@@ -372,15 +363,16 @@ void bank_onControlTopOff(t_bank* x){
 }
 
 
-void bank_onControlBotOn(t_bank* x){
-    x->stateCBot = true;
+void bank_onControlMainOn(t_bank* x){
+    x->stateCMain = true;
     if(!x->is_active) return;
     
     //initiate base rec
     if(bank_activeMotifIsClear(x)){
         x->tick_action_nstate = _motif_state::m_base;
-        if(x->stateCTop) x->synced = true;
+        if(x->stateCAtl) x->synced = true;
         bank_q(x);
+        post("base rec bank%d",x->id);
         return;
     }
 
@@ -388,18 +380,18 @@ void bank_onControlBotOn(t_bank* x){
     if(bank_activeMotifIsBase(x)){
         //if start button held, change mode to loop
         
-        if(x->stateCTop){
+        post("base rec end bank%d",x->id);
+        if(x->stateCAtl){
             //post changes to sync listeners to update banks with new project quan length
             if(x->tick_duration < 0){
-                t_float t = x->tick_duration * -1.0;
-                bank_outlet_mstats(x, t);
-                //bank_postTicklenChange(x,t);
-                post("bank %d set new tick len %f", x->id, t);
+                bank_postQuanUpdate(x);
+                post("bank %d set new tick len %f", x->id, x->tick_duration);
             }
+
             //loop        
             x->gate = false;
             x->onetime = false;
-            x->synced = bank_hasQuanTick(x) ? false : true;
+            x->synced = bank_hasQuanTick(x) ? true : false;
             x->tick_action_nstate = _motif_state::m_play;
             bank_q(x);
             x->synced = true;
@@ -432,8 +424,8 @@ void bank_onControlBotOn(t_bank* x){
     post("BOT_ON %d current motif state: %d", x->id, x->tick_action_nstate);
 }
 
-void bank_onControlBotOff(t_bank* x){
-    x->stateCBot = false;
+void bank_onControlMainOff(t_bank* x){
+    x->stateCMain = false;
     if(!x->gate || !x->is_active) return;
 
     if(x->gate){
@@ -447,18 +439,18 @@ void bank_onControlBotOff(t_bank* x){
     post("BOT_OFF %d current motif state: %d", x->id, x->tick_action_nstate);
 }
 
-void bank_onControlTop(t_bank *x, t_floatarg state){
+void bank_onControlAlt(t_bank *x, t_floatarg state){
     if(x->debounceCounter) return;
     x->debounceCounter = 1;
-    if(state > 0.f) bank_onControlTopOn(x);
-    else            bank_onControlTopOff(x);
+    if(state > 0.f) bank_onControlAltOn(x);
+    else            bank_onControlAltOff(x);
 }
 
-void bank_onControlBot(t_bank *x, t_floatarg state){
+void bank_onControlMain(t_bank *x, t_floatarg state){
     if(x->debounceCounter) return;
     x->debounceCounter = 1;
-    if(state > 0.f) bank_onControlBotOn(x);
-    else            bank_onControlBotOff(x);
+    if(state > 0.f) bank_onControlMainOn(x);
+    else            bank_onControlMainOff(x);
 }
 
 
@@ -539,12 +531,11 @@ void bank_motif_swapStreams(t_motif* m){
 void* bank_new(t_floatarg id){
     t_bank* x = (t_bank*)pd_new(bank_class);
     //f signal in
-    x->i_ctl_top = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_top"));
-    x->i_ctl_bot = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_bot"));
-    x->i_tick_stats = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_tick_len"));
+    x->i_ctl_top = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_alt"));
+    x->i_ctl_bot = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_main"));
+    x->i_sync = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("set_sync_tick"));
     x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
-    x->o_sync = outlet_new(&x->x_obj,&s_float);
-    x->o_m_state = outlet_new(&x->x_obj,&s_list);
+    x->o_sync = outlet_new(&x->x_obj,&s_anything);
 
     x->motifs_array = (t_motif**)malloc(4 * sizeof(t_motif*));
     for(int i=0; i<4; i++){
@@ -591,9 +582,8 @@ void bank_free(t_bank* x){
 
     inlet_free(x->i_ctl_top);
     inlet_free(x->i_ctl_bot);
-    inlet_free(x->i_tick_stats);
+    inlet_free(x->i_sync);
     outlet_free(x->o_loop_sig);
-    outlet_free(x->o_m_state);
     outlet_free(x->o_sync);
     for(int i=0; i<4; i++){    
         free(x->motifs_array[i]->_aData);
@@ -619,10 +609,10 @@ void bank_setup(void){
     class_addmethod(bank_class, (t_method) bank_dsp      ,gensym("dsp")    , A_CANT, (t_atomtype)0);
 
     class_addmethod(bank_class, (t_method) bank_onReset  ,gensym("clean")   ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onTransportReset   ,gensym("t_start")   ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onTransportReset   ,gensym("transport_start")   ,(t_atomtype)0 );
 
-    class_addmethod(bank_class, (t_method) bank_onControlTop ,gensym("on_ctl_top"), A_DEFFLOAT ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onControlBot ,gensym("on_ctl_bot"), A_DEFFLOAT ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onControlAlt ,gensym("on_ctl_alt"), A_DEFFLOAT ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onControlMain ,gensym("on_ctl_main"), A_DEFFLOAT ,(t_atomtype)0 );
     class_addmethod(bank_class, (t_method) bank_onOvertakeRecord   ,gensym("overtake_record")   ,(t_atomtype)0 );
 
     class_addmethod(bank_class, (t_method) bank_onActivate   ,gensym("activate")   ,(t_atomtype)0 );
@@ -630,7 +620,8 @@ void bank_setup(void){
 
     class_addmethod(bank_class, (t_method) bank_onNextSlot   ,gensym("next_slot")   ,(t_atomtype)0 );
     class_addmethod(bank_class, (t_method) bank_onPrevSlot   ,gensym("prev_slot")   ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onGetPos     ,gensym("get_pos")     ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_setSyncTick,    gensym("set_sync_tick"),  A_DEFFLOAT, (t_atomtype)0);
 
-    class_addmethod(bank_class, (t_method) bank_onTickLen,    gensym("on_tick_len"),  A_DEFFLOAT, (t_atomtype)0);
+    class_addmethod(bank_class, (t_method) bank_debugInfo     ,gensym("debug_info")     ,(t_atomtype)0 );
+
 }

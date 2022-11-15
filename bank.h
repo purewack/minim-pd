@@ -39,15 +39,10 @@ enum _motif_state{
 };
 
 enum _motif_work_type{
-    REFILL = (1<<0),
-    SLOT = (1<<1)
+    REFILL = (1<<0)
 };
 
 extern "C"{
-   
-    #include <pthread.h>
-    #include <unistd.h>
-    #include <pthread.h>
 
     static t_class *bank_class;
     typedef struct _bank{
@@ -57,12 +52,11 @@ extern "C"{
         t_float     f;
         t_inlet*    i_ctl_top;
         t_inlet*    i_ctl_bot;
-        t_inlet*    i_tick_stats;
+        t_inlet*    i_sync;
         t_outlet*   o_loop_sig;
-        t_outlet*   o_m_state;
         t_outlet*   o_sync; 
 
-        t_atom      a_m_stats[5];
+        t_atom      a_sync_list[5];
         
         //sync tick = b64 boundary timing, 1 DSP loop
         //quan tick = L*sync ticks
@@ -84,38 +78,35 @@ extern "C"{
         int         motifs_array_count;
         t_motif*    active_motif_ptr;
         int         active_motif_idx;
-        int         slotToChange;
 
-        bool        stateCTop; //top ctrl state of button
-        bool        stateCBot; //bot ctrl state of button
+        bool        stateCAtl; //top ctrl state of button
+        bool        stateCMain; //bot ctrl state of button
         long        holdCounter;// + for top ctrl, - for bot ctrl
         long        debounceCounter;
 
-        pthread_t   worker_thread;
-        int         worker_thread_alive;
-        int         work_type; //1 refill, -1 unfill, 2 fetch, 3 slot change
-        long        work_data;//internal buffer flag for thread
-
-        pthread_cond_t  cond_work;
-        pthread_mutex_t mtx_work; 
+        int         work_type; //1 refill, -1 unfill, 2 fetch
+        long        work_data;//count of data work task is still working on
     } t_bank;
 
     void bank_q(t_bank* x);
-
-    void bank_outlet_sync(t_bank* x, int msync);
-    void bank_outlet_mstats(t_bank* x, t_float ticklen);
+    void bank_postQuanUpdate(t_bank* x);
+    void bank_postSyncUpdate(t_bank* x);
 
     void bank_onActivate(t_bank* x);
     void bank_onDeactivate(t_bank* x);
-    void bank_onTickLen(t_bank* x, t_floatarg t);
-    void bank_onGetPos(t_bank* x);
+    void bank_setSyncTick(t_bank* x, t_floatarg t);
+    void bank_debugInfo(t_bank* x);
     void bank_onNextSlot(t_bank* x);
     void bank_onPrevSlot(t_bank* x);
     void bank_onLaunch(t_bank* x);
     void bank_onTransportReset(t_bank* x);
     void bank_onReset(t_bank* x);
     void bank_onOvertakeRecord(t_bank* x);
-
+    
+    void bank_onControlMainOn(t_bank* x);
+    void bank_onControlMainOff(t_bank* x);
+    void bank_onControlAltOn(t_bank* x);
+    void bank_onControlAltOff(t_bank* x);
     void bank_safeSlotChange(t_bank* x);
     void bank_clear_motif(t_motif* m);
     void bank_motif_toStart(t_motif* m);
