@@ -61,7 +61,7 @@ t_int* bank_perform(t_int *w)
     //audio processing
     switch(m->state){
         case _motif_state::m_base:
-            while (n--) {
+            for (int i=0; i<n; i++) {
                 t_float ii = *in++;
                 *out++ = 0;
                 m->_aData[m->len_spl] = ii;
@@ -84,7 +84,7 @@ t_int* bank_perform(t_int *w)
            
         case _motif_state::m_dub:
         case _motif_state::m_play:
-            while (n--) {
+            for (int i=0; i<n; i++) {
                 ins = *in++;
                 *out++ = m->_data[m->pos_spl];
                 m->_data[m->pos_spl] += (ins * dub);
@@ -101,7 +101,7 @@ t_int* bank_perform(t_int *w)
         break;
 
         default:
-            while(n--) *out++ = 0;
+            for (int i=0; i<n; i++)  *out++ = 0;
         break;
     }
 
@@ -158,11 +158,11 @@ t_int* bank_perform(t_int *w)
                 bank_safeSlotChange(x);
             }
             else{
+                pthread_cond_broadcast(&x->cond_work);
                 x->work_type_inthread |= x->work_type;
                 x->work_type = ~(_motif_work_type::REFILL);
             }
-            pthread_cond_signal(&x->cond_work);
-            pthread_mutex_unlock(&x->mtx_work);
+        pthread_mutex_unlock(&x->mtx_work);
         }
     }
 
@@ -302,13 +302,16 @@ void bank_safeSlotChange(t_bank* x){
         return;
     }
     
+    if(!bank_activeMotifIsClear(x)) {
+        bank_motif_toStart(x->active_motif_ptr);
+        x->active_motif_ptr->state = _motif_state::m_stop;
+    }
+    x->active_motif_ptr = x->motifs_array[slot];
     x->active_motif_idx = slot;
-    x->active_motif_ptr = x->motifs_array[x->active_motif_idx];
     
-    bank_motif_toStart(x->active_motif_ptr);
-    if(x->active_motif_ptr->len_spl) {
-        x->active_motif_ptr->n_state = _motif_state::m_play;
-        bank_q(x);
+    if(!bank_activeMotifIsClear(x)) {
+        bank_motif_toStart(x->active_motif_ptr);
+        x->active_motif_ptr->state = _motif_state::m_stop;
     }
 
     post("%d current slot: %d",x->id, x->active_motif_idx);
@@ -337,7 +340,7 @@ void bank_onControlTopOn(t_bank* x){
         x->tick_action_nstate = _motif_state::m_play;
         bank_q(x);
     }
-    else if(bank_activeMotifIsStop(x)){
+    else if(bank_activeMotifIsStop(x) && !bank_activeMotifIsClear(x)){
         x->tick_action_nstate = _motif_state::m_play;
         bank_q(x);
     }
@@ -501,8 +504,9 @@ void* bank_worker_thread(void* arg){
         pthread_mutex_lock(&x->mtx_work);
         pthread_cond_wait(&x->cond_work, &x->mtx_work);
         
-        t_motif* m = x->active_motif_ptr;
+        post("new work for worker thread");
         if(x->work_type_inthread & _motif_work_type::REFILL){
+            t_motif* m = x->active_motif_ptr;
             for(int i=0; i<m->len_spl; i++){
                 m->_ndata[i] = m->_data[i];
             }
@@ -548,16 +552,17 @@ void* bank_new(t_floatarg id){
     x->tick_start = 0;
     x->tick_next = 0;
     x->tick_current = 0;
-    x->work_type = 0;
-    x->work_type_inthread = 0;
     x->gate = false;
     x->onetime = false;
     x->synced = false;
     x->debounceCounter = 0;
 
     post("[%s] new bank with id: %d", VER, x->id);
-
+    pthread_mutex_init(&x->mtx_work, NULL);
+    pthread_cond_init(&x->cond_work, NULL);
     x->worker_thread_alive = 1;
+    x->work_type = 0;
+    x->work_type_inthread = 0;
     pthread_create(&x->worker_thread, NULL, bank_worker_thread, x);
 
     return (void*)x;
@@ -566,7 +571,7 @@ void* bank_new(t_floatarg id){
 void bank_free(t_bank* x){
 
     pthread_mutex_lock(&x->mtx_work);
-    pthread_cond_signal(&x->cond_work);
+    pthread_cond_broadcast(&x->cond_work);
     x->work_type = 0;
     x->worker_thread_alive = 0;
     pthread_mutex_unlock(&x->mtx_work);
