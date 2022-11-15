@@ -85,6 +85,7 @@ extern "C"{
         bool        stateCTop; //top ctrl state of button
         bool        stateCBot; //bot ctrl state of button
         long        holdCounter;// + for top ctrl, - for bot ctrl
+        long        debounceCounter;
 
         pthread_t   worker_thread;
         int         worker_thread_alive;

@@ -1,6 +1,7 @@
 #include "bank.h"
 
 //convenience checks
+#define DEBOUNCE_TIME 20 // ~40ms
 #define HOLD_TIME 1500 //sync ticks ~= 2s
 bool bank_isTopCtrlHeld(t_bank* x){
     return x->stateCTop && std::abs(x->holdCounter) > HOLD_TIME;
@@ -178,7 +179,10 @@ t_int* bank_perform(t_int *w)
     
     if(x->holdCounter > 0) x->holdCounter++;
     if(x->holdCounter < 0) x->holdCounter--;
-    
+
+    if(x->debounceCounter) x->debounceCounter++;
+    if(x->debounceCounter == DEBOUNCE_TIME) x->debounceCounter = 0;
+
     return (w+5);
     // return (w+2);
 }
@@ -431,11 +435,15 @@ void bank_onControlBotOff(t_bank* x){
 }
 
 void bank_onControlTop(t_bank *x, t_floatarg state){
+    if(x->debounceCounter) return;
+    x->debounceCounter = 1;
     if(state > 0.f) bank_onControlTopOn(x);
     else            bank_onControlTopOff(x);
 }
 
 void bank_onControlBot(t_bank *x, t_floatarg state){
+    if(x->debounceCounter) return;
+    x->debounceCounter = 1;
     if(state > 0.f) bank_onControlBotOn(x);
     else            bank_onControlBotOff(x);
 }
@@ -545,6 +553,7 @@ void* bank_new(t_floatarg id){
     x->gate = false;
     x->onetime = false;
     x->synced = false;
+    x->debounceCounter = 0;
 
     post("[%s] new bank with id: %d", VER, x->id);
 
