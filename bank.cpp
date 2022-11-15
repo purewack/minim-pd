@@ -329,15 +329,15 @@ void bank_onControlAltOn(t_bank* x){
     x->stateCAtl = true;
     if(!x->is_active) return;
 
-    if(bank_activeMotifIsRunning(x) && !x->gate){
-        x->tick_action_nstate = _motif_state::m_dub;
-        bank_q(x);
-    }
-    else if(bank_activeMotifIsDub(x) && !x->gate){
+    if(bank_activeMotifIsDub(x) && !x->gate){
         if(!(x->work_type &= _motif_work_type::REFILL)){
             x->tick_action_nstate = _motif_state::m_play;
             bank_q(x);
         }
+    }
+    else if(bank_activeMotifIsRunning(x) && !x->gate){
+        x->tick_action_nstate = _motif_state::m_dub;
+        bank_q(x);
     }
     else if(bank_activeMotifIsStop(x) && !bank_activeMotifIsClear(x)){
         x->tick_action_nstate = _motif_state::m_play;
@@ -416,7 +416,10 @@ void bank_onControlMainOn(t_bank* x){
     else{
         if(bank_activeMotifIsRunning(x)){
             x->tick_action_nstate = _motif_state::m_stop;
+            auto s = x->synced;
+            x->synced = bank_activeMotifIsDub(x) ? false : x->synced;
             bank_q(x);
+            x->synced = s;
         }
     } 
 
