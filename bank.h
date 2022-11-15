@@ -7,6 +7,10 @@
 // std::string complexcpp(std::string s);
 #define MOTIF_BUF_SIZE 4194304 //4MB = 1024*1024*4
 
+//convenience checks
+#define DEBOUNCE_TIME 20 // ~40ms
+#define HOLD_TIME 1500 //sync ticks ~= 2s
+#define REFILL_CHUNK 16
 typedef struct _motif{
     int state;
     int n_state;
@@ -90,7 +94,7 @@ extern "C"{
         pthread_t   worker_thread;
         int         worker_thread_alive;
         int         work_type; //1 refill, -1 unfill, 2 fetch, 3 slot change
-        int         work_type_inthread;//internal buffer flag for thread
+        long        work_data;//internal buffer flag for thread
 
         pthread_cond_t  cond_work;
         pthread_mutex_t mtx_work; 

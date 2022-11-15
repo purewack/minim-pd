@@ -1,8 +1,6 @@
 #include "bank.h"
 
-//convenience checks
-#define DEBOUNCE_TIME 20 // ~40ms
-#define HOLD_TIME 1500 //sync ticks ~= 2s
+
 bool bank_isTopCtrlHeld(t_bank* x){
     return x->stateCTop && std::abs(x->holdCounter) > HOLD_TIME;
 }
@@ -125,12 +123,14 @@ t_int* bank_perform(t_int *w)
                 //confirm dub
                 m->isDubbing = 0;
                 x->work_type |= _motif_work_type::REFILL;
+                x->work_data = m->len_spl;
             }
             else if(m->state == _motif_state::m_dub && x->tick_action_nstate == _motif_state::m_stop){
                 //cancel
                 m->isDubbing = 0;
                 bank_motif_swapStreams(m);
                 x->work_type |= _motif_work_type::REFILL;
+                x->work_data = m->len_spl;
                 x->tick_action_nstate = x->gate ? _motif_state::m_stop : _motif_state::m_play;
             }
 
@@ -152,17 +152,23 @@ t_int* bank_perform(t_int *w)
 
     //signal worker thread that there is work to be done, i.e. confirm overdub data
     if(x->work_type){
-        if(pthread_mutex_trylock(&x->mtx_work)){
-            if(x->work_type == _motif_work_type::SLOT){
-                x->work_type &= ~(_motif_work_type::SLOT);
-                bank_safeSlotChange(x);
+        if(x->work_type &= _motif_work_type::REFILL){
+            if(x->work_data == 0){
+                x->work_type &= ~(_motif_work_type::REFILL);
+                post("Refilled %d.spls for motif %d in bank %d", m->len_spl, x->active_motif_idx, x->id);
             }
             else{
-                pthread_cond_broadcast(&x->cond_work);
-                x->work_type_inthread |= x->work_type;
-                x->work_type = ~(_motif_work_type::REFILL);
+                for(int c=0; c<REFILL_CHUNK; c++){
+                    int j = m->len_spl - x->work_data;
+                    for(int i=0; i<64; i++){
+                        int ii = i+j;
+                        m->_ndata[ii] = m->_data[ii];
+                    }
+                    x->work_data -= 64;
+
+                    if(x->work_data == 0) break;
+                }
             }
-        pthread_mutex_unlock(&x->mtx_work);
         }
     }
 
@@ -291,7 +297,7 @@ void bank_onDeactivate(t_bank* x){
 
 void bank_signalSlotChange(t_bank* x, int slot){
     x->slotToChange = slot;
-    x->work_type |= _motif_work_type::SLOT;
+    bank_safeSlotChange(x);
 }
 
 void bank_safeSlotChange(t_bank* x){
@@ -337,8 +343,10 @@ void bank_onControlTopOn(t_bank* x){
         bank_q(x);
     }
     else if(bank_activeMotifIsDub(x) && !x->gate){
-        x->tick_action_nstate = _motif_state::m_play;
-        bank_q(x);
+        if(!(x->work_type &= _motif_work_type::REFILL)){
+            x->tick_action_nstate = _motif_state::m_play;
+            bank_q(x);
+        }
     }
     else if(bank_activeMotifIsStop(x) && !bank_activeMotifIsClear(x)){
         x->tick_action_nstate = _motif_state::m_play;
@@ -430,8 +438,10 @@ void bank_onControlBotOff(t_bank* x){
 
     if(x->gate){
         if(bank_activeMotifIsDub(x)){
-            x->tick_action_nstate = _motif_state::m_play;
-            bank_q(x);
+            if(!(x->work_type &= _motif_work_type::REFILL)){
+                x->tick_action_nstate = _motif_state::m_play;
+                bank_q(x);
+            }
         }
     }
     post("BOT_OFF %d current motif state: %d", x->id, x->tick_action_nstate);
@@ -495,31 +505,32 @@ void bank_motif_swapStreams(t_motif* m){
     }
 }
 
-void* bank_worker_thread(void* arg){
-    t_bank* x = (t_bank*)arg;
+// void* bank_worker_thread(void* arg){
+//     t_bank* x = (t_bank*)arg;
 
-    post("new thread for bank id: %d", x->id);
+//     post("new thread for bank id: %d", x->id);
 
-    while(x->worker_thread_alive){
-        pthread_mutex_lock(&x->mtx_work);
-        pthread_cond_wait(&x->cond_work, &x->mtx_work);
+//     while(x->worker_thread_alive){
+//         pthread_mutex_lock(&x->mtx_work);
+//         while(x->work_type_inthread == 0)
+//             pthread_cond_wait(&x->cond_work, &x->mtx_work);
         
-        post("new work for worker thread");
-        if(x->work_type_inthread & _motif_work_type::REFILL){
-            t_motif* m = x->active_motif_ptr;
-            for(int i=0; i<m->len_spl; i++){
-                m->_ndata[i] = m->_data[i];
-            }
-            x->work_type_inthread &= ~(_motif_work_type::REFILL);
-            post("refilled %d.spls for motif %d in bank %d", m->len_spl, x->active_motif_idx, x->id);
-        }
+//         post("new work for worker thread");
+//         if(x->work_type_inthread & _motif_work_type::REFILL){
+//             t_motif* m = x->active_motif_ptr;
+//             for(int i=0; i<m->len_spl; i++){
+//                 m->_ndata[i] = m->_data[i];
+//             }
+//             x->work_type_inthread &= ~(_motif_work_type::REFILL);
+//             post("refilled %d.spls for motif %d in bank %d", m->len_spl, x->active_motif_idx, x->id);
+//         }
 
-        pthread_mutex_unlock(&x->mtx_work);
-    }
+//         pthread_mutex_unlock(&x->mtx_work);
+//     }
 
-    post("ending thread for bank id: %d", x->id);
-    return NULL;
-}
+//     post("ending thread for bank id: %d", x->id);
+//     return NULL;
+// }
 
 
 
@@ -558,25 +569,25 @@ void* bank_new(t_floatarg id){
     x->debounceCounter = 0;
 
     post("[%s] new bank with id: %d", VER, x->id);
-    pthread_mutex_init(&x->mtx_work, NULL);
-    pthread_cond_init(&x->cond_work, NULL);
-    x->worker_thread_alive = 1;
-    x->work_type = 0;
-    x->work_type_inthread = 0;
-    pthread_create(&x->worker_thread, NULL, bank_worker_thread, x);
+    // pthread_mutex_init(&x->mtx_work, NULL);
+    // pthread_cond_init(&x->cond_work, NULL);
+    // x->worker_thread_alive = 1;
+    // x->work_type = 0;
+    // x->work_type_inthread = 0;
+    // pthread_create(&x->worker_thread, NULL, bank_worker_thread, x);
 
     return (void*)x;
 }
 
 void bank_free(t_bank* x){
 
-    pthread_mutex_lock(&x->mtx_work);
-    pthread_cond_broadcast(&x->cond_work);
-    x->work_type = 0;
-    x->worker_thread_alive = 0;
-    pthread_mutex_unlock(&x->mtx_work);
-    pthread_join(x->worker_thread, NULL);
-    post("bank [%d] worker thread ended",x->id);
+    // pthread_mutex_lock(&x->mtx_work);
+    // pthread_cond_broadcast(&x->cond_work);
+    // x->work_type = 0;
+    // x->worker_thread_alive = 0;
+    // pthread_mutex_unlock(&x->mtx_work);
+    // pthread_join(x->worker_thread, NULL);
+    // post("bank [%d] worker thread ended",x->id);
 
     inlet_free(x->i_ctl_top);
     inlet_free(x->i_ctl_bot);
