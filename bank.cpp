@@ -321,7 +321,6 @@ void bank_onPrevSlot(t_bank* x){
 }
 
 
-
 void bank_onControlTopOn(t_bank* x){
     x->stateCTop = true;
     if(!x->is_active) return;
@@ -431,6 +430,17 @@ void bank_onControlBotOff(t_bank* x){
     post("BOT_OFF %d current motif state: %d", x->id, x->tick_action_nstate);
 }
 
+void bank_onControlTop(t_bank *x, t_floatarg state){
+    if(state > 0.f) bank_onControlTopOn(x);
+    else            bank_onControlTopOff(x);
+}
+
+void bank_onControlBot(t_bank *x, t_floatarg state){
+    if(state > 0.f) bank_onControlBotOn(x);
+    else            bank_onControlBotOff(x);
+}
+
+
 void bank_onOvertakeRecord(t_bank* x){
     if(bank_activeMotifIsDub(x)){
         x->active_motif_ptr->n_state = _motif_state::m_stop;
@@ -506,6 +516,8 @@ void* bank_worker_thread(void* arg){
 void* bank_new(t_floatarg id){
     t_bank* x = (t_bank*)pd_new(bank_class);
     //f signal in
+    x->i_ctl_top = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_top"));
+    x->i_ctl_bot = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_bot"));
     x->i_tick_stats = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_tick_len"));
     x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
     x->o_sync = outlet_new(&x->x_obj,&s_float);
@@ -552,6 +564,8 @@ void bank_free(t_bank* x){
     pthread_join(x->worker_thread, NULL);
     post("bank [%d] worker thread ended",x->id);
 
+    inlet_free(x->i_ctl_top);
+    inlet_free(x->i_ctl_bot);
     inlet_free(x->i_tick_stats);
     outlet_free(x->o_loop_sig);
     outlet_free(x->o_m_state);
@@ -582,10 +596,8 @@ void bank_setup(void){
     class_addmethod(bank_class, (t_method) bank_onReset  ,gensym("clean")   ,(t_atomtype)0 );
     class_addmethod(bank_class, (t_method) bank_onTransportReset   ,gensym("t_start")   ,(t_atomtype)0 );
 
-    class_addmethod(bank_class, (t_method) bank_onControlTopOn ,gensym("ctl_top_on") ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onControlTopOff   ,gensym("ctl_top_off")   ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onControlBotOn ,gensym("ctl_bot_on") ,(t_atomtype)0 );
-    class_addmethod(bank_class, (t_method) bank_onControlBotOff   ,gensym("ctl_bot_off")   ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onControlTop ,gensym("on_ctl_top"), A_DEFFLOAT ,(t_atomtype)0 );
+    class_addmethod(bank_class, (t_method) bank_onControlBot ,gensym("on_ctl_bot"), A_DEFFLOAT ,(t_atomtype)0 );
     class_addmethod(bank_class, (t_method) bank_onOvertakeRecord   ,gensym("overtake_record")   ,(t_atomtype)0 );
 
     class_addmethod(bank_class, (t_method) bank_onActivate   ,gensym("activate")   ,(t_atomtype)0 );

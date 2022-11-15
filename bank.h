@@ -51,6 +51,8 @@ extern "C"{
         int         id;
 
         t_float     f;
+        t_inlet*    i_ctl_top;
+        t_inlet*    i_ctl_bot;
         t_inlet*    i_tick_stats;
         t_outlet*   o_loop_sig;
         t_outlet*   o_m_state;
