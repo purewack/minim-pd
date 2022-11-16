@@ -50,8 +50,8 @@ extern "C"{
         int         id;
 
         t_float     f;
-        t_inlet*    i_ctl_top;
-        t_inlet*    i_ctl_bot;
+        t_inlet*    i_trigger;
+        t_inlet*    i_control;
         t_inlet*    i_sync;
         t_outlet*   o_loop_sig;
         t_outlet*   o_sync; 
@@ -79,9 +79,10 @@ extern "C"{
         t_motif*    active_motif_ptr;
         int         active_motif_idx;
 
-        bool        stateCAlt; //top ctrl state of button
-        bool        stateCMain; //bot ctrl state of button
-        long        holdCounter;// + for top ctrl, - for bot ctrl
+        bool        stateTrigger; //main ctrl state of button
+        bool        stateCAlt; //alt ctrl state of button
+        bool        stateCShift; 
+        long        holdCounter;// + for main ctrl, - for alt ctrl
         long        debounceCounter;
 
         int         work_type; //1 refill, -1 unfill, 2 fetch
@@ -103,8 +104,8 @@ extern "C"{
     void bank_onReset(t_bank* x);
     void bank_onOvertakeRecord(t_bank* x);
     
-    void bank_onControlMainOn(t_bank* x);
-    void bank_onControlMainOff(t_bank* x);
+    void bank_onTriggerOn(t_bank* x);
+    void bank_onTriggerOff(t_bank* x);
     void bank_onControlAltOn(t_bank* x);
     void bank_onControlAltOff(t_bank* x);
     void bank_safeSlotChange(t_bank* x);
