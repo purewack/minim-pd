@@ -1,4 +1,4 @@
 * loops when stopped are out of sync!!!!
 * loops slide out of sync over time, wrong len
-* bank~ creation errors
+[done] bank~ creation errors
 * overdub should start if alt is held and playing of sample begins
