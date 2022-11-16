@@ -2,7 +2,7 @@
 
 lib.name = motif
 
-class.sources = ticker.cpp bank.cpp plonk~.cpp inter.cpp
+class.sources = bank.cpp ticker.cpp mapper.cpp plonk~.cpp 
 
 # datafiles = help.pd README.txt LICENSE.txt
 
@@ -15,8 +15,9 @@ define forDarwin
 cflags += -stdlib=libc++ -mmacosx-version-min=10.9
 endef
 PDINCLUDEDIR = ./
-PDBINDIR = /mnt/c/Program Files/Purr Data/bin/
+PDBINDIR = /c/Program Files/Pd/bin/
 
+cflags += -std=c++0x
 ldflags += -pthread
 
 include Makefile.pdlibbuilder
