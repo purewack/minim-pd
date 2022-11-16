@@ -1,9 +1,10 @@
-#N canvas 599 50 710 675 12;
+#N canvas 725 163 710 675 12;
 #X msg 231 177 deactivate;
 #X msg 231 152 activate;
-#X floatatom 602 225 5 0 0 0 - - - 0;
+#X floatatom 602 225 5 0 0 0 - - -, f 5;
 #X obj 319 620 dac~;
-#X obj 372 535 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000;
+#X obj 372 535 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc
+#000000 #000000;
 #X obj 81 248 adc~;
 #X obj 226 -25 notein;
 #X obj 224 9 pack f f;
@@ -18,7 +19,8 @@
 #X msg 136 2 40 0;
 #X msg 130 -20 40 1;
 #X obj 316 -6 spigot;
-#X obj 348 -40 tgl 19 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000 0 1;
+#X obj 348 -40 tgl 19 0 empty empty empty 0 -10 0 12 #fcfcfc #000000
+#000000 0 1;
 #X text 546 173 Global QuanTick Len;
 #X obj 333 77 mapper 41 37;
 #X msg 348 175 deactivate;
@@ -45,14 +47,15 @@
 #X obj 367 349 route q_info s_info;
 #X obj 508 349 route q_info s_info;
 #X obj 226 402 unpack f f f f f;
-#X floatatom 225 430 5 0 0 0 - - - 0;
-#X floatatom 250 451 5 0 0 0 - - - 0;
-#X floatatom 277 431 5 0 0 0 - - - 0;
-#X floatatom 300 453 5 0 0 0 - - - 0;
-#X floatatom 327 433 5 0 0 0 - - - 0;
-#X obj 138 171 bng 19 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
+#X floatatom 225 430 5 0 0 0 - - -, f 5;
+#X floatatom 250 451 5 0 0 0 - - -, f 5;
+#X floatatom 277 431 5 0 0 0 - - -, f 5;
+#X floatatom 300 453 5 0 0 0 - - -, f 5;
+#X floatatom 327 433 5 0 0 0 - - -, f 5;
+#X obj 138 171 bng 19 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc
+#000000 #000000;
 #X obj 220 320 bank~ 1, f 8;
-#X obj 347 322 bank~ 2, f 8;
+#X obj 350 320 bank~ 2, f 8;
 #X obj 478 322 bank~ 3, f 8;
 #X connect 0 0 52 0;
 #X connect 1 0 52 0;
