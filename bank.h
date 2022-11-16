@@ -2,15 +2,15 @@
 
 #include "m_pd.h"
 
-#define VER "S/W/D/0"
+#define VER "S/W/R/0"
 // void cpppost();
 // std::string complexcpp(std::string s);
-#define MOTIF_BUF_SIZE 4194304 //4MB = 1024*1024*4
+#define MOTIF_BUF_SIZE 4194304 //Total mem = banks * 2 * BUF_SIZE(4MB = 1024*1024*4)
 
 //convenience checks
 #define DEBOUNCE_TIME 20 // ~40ms
 #define HOLD_TIME 1500 //sync ticks ~= 2s
-#define REFILL_CHUNK 16
+#define REFILL_CHUNK 64
 typedef struct _motif{
     int state;
     int n_state;

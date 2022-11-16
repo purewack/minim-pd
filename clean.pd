@@ -1,7 +1,0 @@
-#N canvas 994 364 450 276 10;
-#X obj 180 140 inter;
-#X obj 180 170 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc
-#000000 #000000;
-#X msg 180 110 0;
-#X connect 0 0 1 0;
-#X connect 2 0 0 0;

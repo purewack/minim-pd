@@ -1,5 +1,7 @@
 #include "bank.h"
-
+#include <unistd.h>
+#include <stdlib.h>
+#include <cmath>
 
 bool bank_isMainCtrlHeld(t_bank* x){
     return x->stateCMain && std::abs(x->holdCounter) > HOLD_TIME;
@@ -53,8 +55,10 @@ t_int* bank_perform(t_int *w)
     //int dataHeadMod = m->isLong ? MOTIF_BUF_SIZE : m->len_spl;
 
     //reset of whole bank
-    if(bank_isAltCtrlHeld(x) && bank_activeMotifIsStop(x))
-        bank_onReset(x);
+    if(bank_isAltCtrlHeld(x) && bank_activeMotifIsStop(x)){
+        bank_clear_motif(m);
+        post("Clear motif[%d] bank[%d]",x->active_motif_idx,x->id);
+    }
 
     //audio processing
     switch(m->state){
@@ -197,7 +201,8 @@ t_int* bank_perform(t_int *w)
 
 
 void bank_setSyncTick(t_bank* x, t_floatarg t){
-    if(x->tick_duration > 0) return;
+    if(t == x->tick_duration) return;
+    if(t == 0) return;
     
     //banks with uninitiated quan tick data go through this routine once
     //normalize recorded sample len to sync len
@@ -226,7 +231,8 @@ void bank_postSyncUpdate(t_bank* x){
     SETFLOAT(x->a_sync_list+1 ,x->tick_start);
     SETFLOAT(x->a_sync_list+2 ,x->tick_next);
     SETFLOAT(x->a_sync_list+3 ,x->tick_duration);
-    outlet_anything(x->o_sync, gensym("s_info"), 4, x->a_sync_list);
+    SETFLOAT(x->a_sync_list+4 ,x->active_motif_ptr->state);
+    outlet_anything(x->o_sync, gensym("s_info"), 5, x->a_sync_list);
 }
 
 //que up action time aligned if alignment data exists
@@ -265,6 +271,7 @@ void bank_onReset(t_bank* x){
     x->tick_action_pending = 0;
     x->tick_action_nstate = 0;
     bank_onTransportReset(x);
+    bank_postSyncUpdate(x);
     for(int m=0; m<x->motifs_array_count; m++)
         bank_clear_motif(x->motifs_array[m]);
         
@@ -609,7 +616,7 @@ void bank_free(t_bank* x){
 
 void bank_setup(void){
     bank_class = class_new(
-        gensym("bank"),
+        gensym("bank~"),
         (t_newmethod)bank_new,
         (t_method)bank_free,
         sizeof(t_bank),
@@ -619,7 +626,7 @@ void bank_setup(void){
     );
     
     CLASS_MAINSIGNALIN(bank_class, t_bank, f);
-
+    class_sethelpsymbol(bank_class, gensym("bank_tilde-help"));
     class_addmethod(bank_class, (t_method) bank_dsp      ,gensym("dsp")    , A_CANT, (t_atomtype)0);
 
     class_addmethod(bank_class, (t_method) bank_onReset  ,gensym("clean")   ,(t_atomtype)0 );
