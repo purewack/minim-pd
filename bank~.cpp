@@ -10,7 +10,7 @@ bool bank_isAltCtrlHeld(t_bank* x){
     return x->stateCAlt && std::abs(x->holdCounter) > HOLD_TIME;
 }
 bool bank_hasQuanTick(t_bank* x){
-    return x->tick_duration > 0;
+    return x->hasQuantick;
 }
 bool bank_activeMotifIsClear(t_bank* x){
     return x->active_motif_ptr->state == _motif_state::m_clear;
@@ -67,7 +67,7 @@ t_int* bank_perform(t_int *w)
                 m->isLong = m->len_spl - MOTIF_BUF_SIZE/2; //if positive, true
             }
             m->len_syncs += 1;
-            if(x->tick_duration <= 0)
+            if(!x->hasQuantick)
                 x->tick_duration -= 1;
 
             //fail safe when record length goes to max time
@@ -115,10 +115,17 @@ t_int* bank_perform(t_int *w)
             if((m->state == _motif_state::m_clear || m->state == _motif_state::m_stop) && x->tick_action_nstate == _motif_state::m_play) 
                 bank_motif_toStart(m);
             
-            else if(m->state == _motif_state::m_base && x->tick_action_nstate == _motif_state::m_play ){
+            else if(m->state == _motif_state::m_base && x->tick_action_nstate == _motif_state::m_play ){  
                 x->active_motif_ptr->pos_syncs = 0;
                 x->active_motif_ptr->len_syncs = x->tick_current - x->when_base;
+                if(!x->hasQuantick){
+                    bank_onTransportReset(x);
+                    x->hasQuantick = true;
+                    x->tick_duration+=1;
+                    x->active_motif_ptr->len_syncs-=1;
+                } 
                 x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
+                //master quan tick recorder fix len
             }
 
             else if((m->state == _motif_state::m_play || m->state == _motif_state::m_stop) && x->tick_action_nstate == _motif_state::m_dub){
@@ -211,6 +218,7 @@ void bank_setSyncTick(t_bank* x, t_floatarg t){
     
     //banks with uninitiated quan tick data go through this routine once
     //normalize recorded sample len to sync len
+    x->hasQuantick = true;
     int m_len_spl = x->active_motif_ptr->len_spl;
     x->tick_duration = t;
     x->tick_current = -1; //set sync tick in other banks will be out by 1 tick so need to compensate
@@ -251,8 +259,8 @@ void bank_debugInfo(t_bank* x){
     if(! x->is_active) return;
     float p = x->active_motif_ptr->len_syncs ? float(x->active_motif_ptr->pos_syncs) / float(x->active_motif_ptr->len_syncs) : 0.0f;
     post("active slot bank[id%d][slot%d]",x->id,x->active_motif_idx);
-    post("pos: %f , len : %d",p, x->active_motif_ptr->len_syncs);
-    post("bank %d tick len: %d", x->id, x->tick_duration);
+    post("posPer: %f , posA:%d, len : %d",p, x->active_motif_ptr->pos_syncs, x->active_motif_ptr->len_syncs);
+    post("bank %d tick len: %d, tick %d", x->id, x->tick_duration, x->tick_current);
     post("state %d", x->active_motif_ptr->state);
     post("gate%d", x->gate);
 }
@@ -268,6 +276,7 @@ void bank_onReset(t_bank* x){
     x->tick_duration = 0;
     x->tick_action_pending = 0;
     x->tick_action_nstate = 0;
+    x->hasQuantick = false;
     bank_onTransportReset(x);
     bank_postSyncUpdate(x);
     for(int m=0; m<x->motifs_array_count; m++)
@@ -354,11 +363,11 @@ void bank_onTriggerOn(t_bank* x){
         //if start button held, change mode to loop
         
         if(x->stateCAlt){
-            //post changes to sync listeners to update banks with new project quan length
-            if(x->tick_duration < 0){
+             //post changes to sync listeners to update banks with new project quan length
+            if(!x->hasQuantick){
                 x->tick_duration *= -1;
                 bank_postQuanUpdate(x);
-                post("bank %d setting new tick len %f", x->id, x->tick_duration);
+                post("bank %d setting new tick len %d", x->id, x->tick_duration);
             }
 
             //loop        
@@ -368,6 +377,7 @@ void bank_onTriggerOn(t_bank* x){
             x->tick_action_nstate = _motif_state::m_play;
             bank_q(x);
             x->synced = true;
+
         }
         else{
             //gated
@@ -579,12 +589,13 @@ void* bank_tilde_new(t_floatarg id){
     x->tick_duration = 0;
     x->tick_start = 0;
     x->tick_next = 0;
-    x->tick_current = 0;
+    x->tick_current = -1;
     x->gate = false;
     x->onetime = false;
     x->synced = false;
     x->debounceCounter = 0;
     x->stateCShift = 0;
+    x->hasQuantick = false;
 
     post("[%s] new bank with id: %d", VER, x->id);
     // pthread_mutex_init(&x->mtx_work, NULL);

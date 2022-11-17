@@ -69,6 +69,7 @@ extern "C"{
         int         tick_action_when;//when action should be exec
         int         tick_action_nstate;//next motif state on action
         int         when_base;//last time of sync tick
+        bool        hasQuantick;
 
         bool gate; //if play button let go, stop sound
         bool onetime; //dont loop
