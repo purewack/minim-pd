@@ -54,13 +54,16 @@ extern "C"{
         t_inlet*    i_control;
         t_inlet*    i_sync;
         t_outlet*   o_loop_sig;
+        t_outlet*   o_info;
         t_outlet*   o_sync; 
 
-        t_atom      a_sync_list[5];
+        t_atom      a_info_list[5];
         
         //sync tick = b64 boundary timing, 1 DSP loop
         //quan tick = L*sync ticks
-        int         is_active;// if not, does not take any input, still processes sound
+        bool        isActive;// if not, does not take any input, still processes sound
+        int         populatedCount;
+        bool        hasQuantick;
         int         tick_current;//current sync tick timer, all values stem from
         int         tick_duration;// quantize Tick
         int         tick_start;//when the last tick started
@@ -69,7 +72,6 @@ extern "C"{
         int         tick_action_when;//when action should be exec
         int         tick_action_nstate;//next motif state on action
         int         when_base;//last time of sync tick
-        bool        hasQuantick;
 
         bool gate; //if play button let go, stop sound
         bool onetime; //dont loop
@@ -91,8 +93,8 @@ extern "C"{
     } t_bank;
 
     void bank_q(t_bank* x);
+    void bank_postStateUpdate(t_bank* x);
     void bank_postQuanUpdate(t_bank* x);
-    void bank_postSyncUpdate(t_bank* x);
 
     void bank_onActivate(t_bank* x);
     void bank_onDeactivate(t_bank* x);
