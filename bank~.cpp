@@ -92,7 +92,6 @@ t_int* bank_perform(t_int *w)
             m->pos_syncs += 1;
             if(m->pos_syncs >= m->len_syncs){
                 m->pos_syncs = 0;
-                m->last_sync = x->tick_current;
                 msync = x->tick_current;
             }
         break;
@@ -109,9 +108,18 @@ t_int* bank_perform(t_int *w)
             //if state play and n_state stop => reset pos etc, next state machine essentially 
             x->tick_action_when = 0;
             //bank_postSyncUpdate(x);
+            if(m->state == _motif_state::m_clear || x->tick_action_nstate == _motif_state::m_base){
+                x->when_base = x->tick_current;
+            }
 
-            if(m->state == _motif_state::m_stop && x->tick_action_nstate == _motif_state::m_play) 
+            if((m->state == _motif_state::m_clear || m->state == _motif_state::m_stop) && x->tick_action_nstate == _motif_state::m_play) 
                 bank_motif_toStart(m);
+            
+            else if(m->state == _motif_state::m_base && x->tick_action_nstate == _motif_state::m_play ){
+                x->active_motif_ptr->pos_syncs = 0;
+                x->active_motif_ptr->len_syncs = x->tick_current - x->when_base;
+                x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
+            }
 
             else if((m->state == _motif_state::m_play || m->state == _motif_state::m_stop) && x->tick_action_nstate == _motif_state::m_dub){
                 //start dub
@@ -138,6 +146,7 @@ t_int* bank_perform(t_int *w)
 
             m->state = x->tick_action_nstate;
             x->tick_action_pending = 0;
+            post("pending action done bank %d",x->id);
         }
     }
 
@@ -146,10 +155,8 @@ t_int* bank_perform(t_int *w)
     {
         x->tick_start = x->tick_current;
         x->tick_next = x->tick_start + x->tick_duration;
-        x->last_sync = x->tick_current;
         if(msync != x->tick_current)
         bank_postSyncUpdate(x);
-        //outlet_float(x->o_sync, float(x->tick_current * -1));
     }
 
     //signal worker thread that there is work to be done, i.e. confirm overdub data
@@ -199,27 +206,20 @@ t_int* bank_perform(t_int *w)
 
 
 void bank_setSyncTick(t_bank* x, t_floatarg t){
-    if(t == x->tick_duration) return;
+    if(x->tick_duration > 0) return;
     if(t == 0) return;
     
     //banks with uninitiated quan tick data go through this routine once
     //normalize recorded sample len to sync len
     int m_len_spl = x->active_motif_ptr->len_spl;
     x->tick_duration = t;
-    x->tick_current = 0;
+    x->tick_current = -1; //set sync tick in other banks will be out by 1 tick so need to compensate
     x->tick_next = t;
-    if(bank_activeMotifIsBase(x)){
-        x->active_motif_ptr->pos_syncs = 0;
-        x->active_motif_ptr->len_syncs = x->tick_duration;
-        x->active_motif_ptr->len_spl = x->tick_duration * 64;
-        x->tick_action_nstate = x->gate ? _motif_state::m_play : _motif_state::m_stop;
-    }
     post("bank %d has new tick len: %f tick len spl %d (%d pre)", x->id, t, x->active_motif_ptr->len_spl, m_len_spl);
     // bank_outlet_sync(x,1);
 }
 
 void bank_postQuanUpdate(t_bank* x){
-    x->tick_duration *= -1;
     SETFLOAT(x->a_sync_list+0, x->tick_duration);
     outlet_anything(x->o_sync, gensym("q_info"), 1, x->a_sync_list);
 }
@@ -334,18 +334,18 @@ void bank_onTriggerOn(t_bank* x){
     x->stateTrigger = true;
     if(!x->is_active) return;
 
-    //reset of whole bank
-    if(x->stateCShift && bank_activeMotifIsStop(x)){
-        bank_clear_motif(m);
-        post("Clear motif[%d] bank[%d]",x->active_motif_idx,x->id);
-    }
+    // //reset of whole bank
+    // if(x->stateCShift && bank_activeMotifIsStop(x)){
+    //     bank_clear_motif(x->active_motif_ptr);
+    //     post("Clear motif[%d] bank[%d]",x->active_motif_idx,x->id);
+    // }
     
     //initiate base rec
     if(bank_activeMotifIsClear(x)){
         x->tick_action_nstate = _motif_state::m_base;
         if(x->stateCAlt) x->synced = true;
         bank_q(x);
-        post("base rec bank%d",x->id);
+        post("base rec bank %d [%s]",x->id, x->synced ? "SYNC" : "FREE");
         return;
     }
 
@@ -353,10 +353,10 @@ void bank_onTriggerOn(t_bank* x){
     if(bank_activeMotifIsBase(x)){
         //if start button held, change mode to loop
         
-        post("base rec end bank%d",x->id);
         if(x->stateCAlt){
             //post changes to sync listeners to update banks with new project quan length
             if(x->tick_duration < 0){
+                x->tick_duration *= -1;
                 bank_postQuanUpdate(x);
                 post("bank %d setting new tick len %f", x->id, x->tick_duration);
             }
@@ -377,6 +377,7 @@ void bank_onTriggerOn(t_bank* x){
             x->tick_action_nstate = _motif_state::m_stop;
             bank_q(x);
         }
+        post("base rec end bank %d [%s]",x->id, x->synced ? "SYNC" : "FREE");
         return;
     }
     
@@ -464,11 +465,11 @@ void bank_onControlAltOff(t_bank* x){
 }
 
 
-void bank_onControlAlt(t_bank *x, t_symbol ctl){
+void bank_onControlAlt(t_bank *x, t_floatarg state){
     if(x->debounceCounter) return;
     x->debounceCounter = 1;
-    if(ctl == gensym("control_alt_on")) bank_onControlAltOn(x);
-    else if(ctl == gensym("control_alt_off")) bank_onControlAltOff(x);
+    if(state > 0.f) bank_onControlAltOn(x);
+    else            bank_onControlAltOff(x);
 }
 
 void bank_onControlMain(t_bank *x, t_floatarg state){
@@ -556,8 +557,8 @@ void bank_motif_swapStreams(t_motif* m){
 void* bank_tilde_new(t_floatarg id){
     t_bank* x = (t_bank*)pd_new(bank_tilde_class);
     //f signal in
-    x->i_trigger = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_trigger"));
-    x->i_control = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_symbol, gensym("on_control"));
+    x->i_trigger = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_main"));
+    x->i_control = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_alt"));
     x->i_sync = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("set_sync_tick"));
     x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
     x->o_sync = outlet_new(&x->x_obj,&s_anything);
@@ -636,8 +637,8 @@ void bank_tilde_setup(void){
     class_addmethod(bank_tilde_class, (t_method) bank_onReset  ,gensym("clean")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onTransportReset   ,gensym("transport_start")   ,(t_atomtype)0 );
 
-    class_addmethod(bank_tilde_class, (t_method) bank_onControlMain ,gensym("on_trigger"), A_DEFFLOAT ,(t_atomtype)0 );
-    class_addmethod(bank_tilde_class, (t_method) bank_onControlAlt ,gensym("on_controll"), A_DEFSYM ,(t_atomtype)0 );
+    class_addmethod(bank_tilde_class, (t_method) bank_onControlAlt ,gensym("on_ctl_alt"), A_DEFFLOAT ,(t_atomtype)0 );
+    class_addmethod(bank_tilde_class, (t_method) bank_onControlMain ,gensym("on_ctl_main"), A_DEFFLOAT ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onOvertakeRecord   ,gensym("overtake_record")   ,(t_atomtype)0 );
 
     class_addmethod(bank_tilde_class, (t_method) bank_onActivate   ,gensym("activate")   ,(t_atomtype)0 );
