@@ -268,36 +268,6 @@ void bank_debugInfo(t_bank* x){
 
 
 
-
-void bank_onReset(t_bank* x){
-    x->gate = false;
-    x->synced = false;
-    x->onetime = false;
-    x->tick_duration = 0;
-    x->tick_action_pending = 0;
-    x->tick_action_nstate = 0;
-    x->hasQuantick = false;
-    bank_onTransportReset(x);
-    bank_postSyncUpdate(x);
-    for(int m=0; m<x->motifs_array_count; m++)
-        bank_clear_motif(x->motifs_array[m]);
-        
-    post("Cleared all motifs in bank %d", x->id);
-}
-
-void bank_onTransportReset(t_bank* x){
-    x->tick_start = 0;
-    x->tick_current = 0;
-    x->tick_action_when = 0;
-    x->tick_next = x->tick_duration;
-    t_motif* m = x->active_motif_ptr;
-    if(!bank_activeMotifIsClear(x)){
-        m->state = _motif_state::m_stop;
-        m->pos_syncs = 0;
-    }
-    // bank_outlet_sync(x,1);
-}
-
 void bank_onActivate(t_bank* x){
     x->is_active = 1;
     post("%d activated", x->id);
@@ -500,7 +470,54 @@ void bank_onOvertakeRecord(t_bank* x){
 
 
 
+void bank_onDelete(t_bank* x){
+    x->gate = false;
+    x->synced = false;
+    x->onetime = false;
+    // x->tick_duration = 0;
+    x->tick_action_pending = 0;
+    x->tick_action_nstate = 0;
+    // x->hasQuantick = false;
+    bank_postSyncUpdate(x);
+    //bank_onTransportReset(x);
+    bank_clear_motif(x->active_motif_ptr);
+        
+    post("Deleted motif %d in bank %d",x->active_motif_idx, x->id);
+}
 
+void bank_onReset(t_bank* x){
+    x->gate = false;
+    x->synced = false;
+    x->onetime = false;
+    x->tick_duration = 0;
+    x->tick_action_pending = 0;
+    x->tick_action_nstate = 0;
+    x->hasQuantick = false;
+    bank_onTransportReset(x);
+    bank_postSyncUpdate(x);
+    for(int m=0; m<x->motifs_array_count; m++)
+        bank_clear_motif(x->motifs_array[m]);
+        
+    post("Cleared all motifs in bank %d", x->id);
+}
+
+void bank_onTransportReset(t_bank* x){
+    x->tick_start = 0;
+    //x->tick_current = 0;
+    x->tick_action_when = 0;
+    x->tick_next = x->tick_duration;
+    t_motif* m = x->active_motif_ptr;
+    if(!bank_activeMotifIsClear(x)){
+        m->state = _motif_state::m_stop;
+        m->pos_syncs = 0;
+    }
+    // bank_outlet_sync(x,1);
+}
+
+void bank_onTransportStop(t_bank* x){
+    x->tick_current = 0;
+    bank_onTransportReset(x);
+}
 
 void bank_clear_motif(t_motif* m){
     m->state      = _motif_state::m_clear;
@@ -645,8 +662,10 @@ void bank_tilde_setup(void){
     CLASS_MAINSIGNALIN(bank_tilde_class, t_bank, f);
     class_addmethod(bank_tilde_class, (t_method) bank_dsp      ,gensym("dsp")    , A_CANT, (t_atomtype)0);
 
+    class_addmethod(bank_tilde_class, (t_method) bank_onDelete  ,gensym("delete")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onReset  ,gensym("clean")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onTransportReset   ,gensym("transport_start")   ,(t_atomtype)0 );
+    class_addmethod(bank_tilde_class, (t_method) bank_onTransportStop   ,gensym("transport_stop")   ,(t_atomtype)0 );
 
     class_addmethod(bank_tilde_class, (t_method) bank_onControlAlt ,gensym("on_ctl_alt"), A_DEFFLOAT ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onControlMain ,gensym("on_ctl_main"), A_DEFFLOAT ,(t_atomtype)0 );

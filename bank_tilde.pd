@@ -61,6 +61,9 @@
 #X obj 417 442 bng 19 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 443 443 bng 19 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 467 442 bng 19 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
+#X msg 513 225 delete;
+#X msg 397 222 delete;
+#X msg 289 222 delete;
 #X connect 0 0 45 0;
 #X connect 1 0 45 0;
 #X connect 2 0 45 3;
@@ -75,6 +78,7 @@
 #X connect 7 0 34 0;
 #X connect 7 0 48 0;
 #X connect 9 0 3 0;
+#X connect 9 0 3 1;
 #X connect 10 0 45 0;
 #X connect 12 0 11 0;
 #X connect 13 0 8 0;
@@ -128,6 +132,7 @@
 #X connect 49 0 46 0;
 #X connect 49 0 47 0;
 #X connect 49 0 3 1;
+#X connect 49 0 3 0;
 #X connect 50 0 48 0;
 #X connect 51 0 48 0;
 #X connect 52 0 48 0;
@@ -139,3 +144,6 @@
 #X connect 58 0 45 0;
 #X connect 58 0 46 0;
 #X connect 58 0 47 0;
+#X connect 62 0 47 0;
+#X connect 63 0 46 0;
+#X connect 64 0 45 0;
