@@ -330,12 +330,7 @@ void bank_onTriggerOn(t_bank* x){
     x->stateTrigger = true;
     if(!x->isActive) return;
 
-    // //reset of whole bank
-    // if(x->stateCShift && bank_activeMotifIsStop(x)){
-    //     bank_clear_motif(x->active_motif_ptr);
-    //     post("Clear motif[%d] bank[%d]",x->active_motif_idx,x->id);
-    // }
-    
+   
     //initiate base rec
     if(bank_activeMotifIsClear(x)){
         //[2] 
@@ -428,9 +423,16 @@ void bank_onTriggerOn(t_bank* x){
 
 void bank_onTriggerOff(t_bank* x){
     x->stateTrigger = false;
-    if(!x->gate || !x->isActive) return;
-    if(bank_activeMotifIsStop(x) && x->onetime) return;
+    if(!x->isActive) return;
 
+    //reset of whole bank
+    if(bank_isAltCtrlHeld(x)){
+        bank_onDelete(x);
+        bank_postUnlatchUpdate(x);
+    }
+
+    if(bank_activeMotifIsStop(x) && x->onetime) return;
+    
     if(x->gate){
         x->active_motif_ptr->isDone = false;
         //[12]

@@ -105,6 +105,7 @@ extern "C"{
     void bank_onLaunch(t_bank* x);
     void bank_onTransportReset(t_bank* x);
     void bank_onReset(t_bank* x);
+    void bank_onDelete(t_bank* x);
     void bank_onOvertakeRecord(t_bank* x);
     
     void bank_onTriggerOn(t_bank* x);
