@@ -17,7 +17,8 @@ typedef struct _motif{
 
     int isDubbing;
     int isLong; //if over buf size, will require disk file for stream from and to
-    
+    int isDone;
+
     int len_syncs; //number of sync ticks loop spans
     int pos_syncs; //playhead position in sync ticks
     int len_spl;// loop spans in absolute samples
@@ -26,7 +27,6 @@ typedef struct _motif{
     int last_sync;//sync time of last tick
 
     //buffer management
-    int dataHead;
     t_sample *_aData, *_bData, *_data, *_ndata;
 } t_motif;
 

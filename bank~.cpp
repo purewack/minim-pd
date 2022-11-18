@@ -49,7 +49,6 @@ t_int* bank_perform(t_int *w)
     int            n =             (int)(w[4]);
 
     x->tick_current += 1;
-    int msync = 0;
     t_sample dub = m->isDubbing ? 1.0f : 0.0f;
     t_sample ins = 0;
     //int dataHeadMod = m->isLong ? MOTIF_BUF_SIZE : m->len_spl;
@@ -81,20 +80,25 @@ t_int* bank_perform(t_int *w)
            
         case _motif_state::m_dub:
         case _motif_state::m_play:
-            for (int i=0; i<n; i++) {
-                ins = *in++;
-                *out++ = m->_data[m->pos_spl];
-                m->_data[m->pos_spl] += (ins * dub);
-                m->pos_spl = (m->pos_spl+1) % m->len_spl;
-                if(m->pos_spl == 0 && x->onetime) 
-                    x->tick_action_nstate = _motif_state::m_stop;
+        
+            if(m->isDone && x->onetime){
+                for (int i=0; i<n; i++)  *out++ = 0;
+            } 
+            else{
+                for (int i=0; i<n; i++) {
+                    ins = *in++;
+                    *out++ = m->_data[m->pos_spl];
+                    m->_data[m->pos_spl] += (ins * dub);
+                    m->pos_spl = (m->pos_spl+1) % m->len_spl;  
+                }
+                m->pos_syncs += 1;
+
+                if(m->pos_syncs >= m->len_syncs){
+                    if(x->onetime) m->isDone = 1;
+                    m->pos_syncs = 0;
+                }
             }
 
-            m->pos_syncs += 1;
-            if(m->pos_syncs >= m->len_syncs){
-                m->pos_syncs = 0;
-                msync = x->tick_current;
-            }
         break;
 
         default:
@@ -370,7 +374,7 @@ void bank_onTriggerOn(t_bank* x){
             //gated
             x->gate = true;
             x->synced = false;
-            x->onetime = false;
+            x->onetime = true;
             x->tick_action_nstate = _motif_state::m_stop;
             bank_q(x);
         }
@@ -425,8 +429,10 @@ void bank_onTriggerOn(t_bank* x){
 void bank_onTriggerOff(t_bank* x){
     x->stateTrigger = false;
     if(!x->gate || !x->isActive) return;
+    if(bank_activeMotifIsStop(x) && x->onetime) return;
 
     if(x->gate){
+        x->active_motif_ptr->isDone = false;
         //[12]
         //[15]
         if(bank_activeMotifIsRunning(x)){
@@ -451,7 +457,7 @@ void bank_onControlAltOn(t_bank* x){
     }
     else{
         //[9]
-        if(bank_activeMotifIsRunning(x)){
+        if(bank_activeMotifIsDub(x)){
             bank_postUnlatchUpdate(x);
             x->tick_action_nstate = _motif_state::m_stop;
             auto s = x->synced;
@@ -473,7 +479,7 @@ void bank_onControlAltOff(t_bank* x){
                 x->tick_action_nstate = _motif_state::m_play;
                 bank_q(x);
             }
-        }
+        };
     }
 }
 
@@ -571,8 +577,8 @@ void bank_clear_motif(t_motif* m){
     m->pos_syncs  = 0;
     m->len_spl    = 0;
     m->len_syncs  = 0;
-    m->dataHead = 0;
     m->isDubbing = 0;
+    m->isDone = 0;
     m->_data = m->_aData;
     m->_ndata = m->_bData;
 }
@@ -580,7 +586,6 @@ void bank_clear_motif(t_motif* m){
 void bank_motif_toStart(t_motif* m){
     m->pos_syncs = 0;
     m->pos_spl = 0;
-    m->dataHead = 0;
 }
 
 void bank_motif_swapStreams(t_motif* m){
