@@ -214,7 +214,7 @@ t_int* bank_perform(t_int *w)
 
 void bank_setSyncTick(t_bank* x, t_floatarg t){
     if(x->tick_duration > 0) return;
-    if(t == 0) return;
+    if(t <= 0) return;
     
     //banks with uninitiated quan tick data go through this routine once
     //normalize recorded sample len to sync len
@@ -227,20 +227,27 @@ void bank_setSyncTick(t_bank* x, t_floatarg t){
     // bank_outlet_sync(x,1);
 }
 
-void bank_postQuanUpdate(t_bank* x){
+void bank_postBase(t_bank* x){
     SETFLOAT(x->a_info_list+0, x->isActive);
     SETFLOAT(x->a_info_list+1, x->populatedCount);
     SETFLOAT(x->a_info_list+2, x->tick_action_nstate);
     SETFLOAT(x->a_info_list+3, x->active_motif_ptr->state);
+}
+
+void bank_postUnlatchUpdate(t_bank* x){
+    x->stateCAlt = false;
+    bank_postBase(x);
+    SETFLOAT(x->a_info_list+4, 0);
+    outlet_list(x->o_info, &s_list, 5, x->a_info_list);
+}
+void bank_postQuanUpdate(t_bank* x){
+    bank_postBase(x);
     SETFLOAT(x->a_info_list+4, x->tick_duration);
     outlet_list(x->o_info, &s_list, 5, x->a_info_list);
 }
 
 void bank_postStateUpdate(t_bank* x){
-    SETFLOAT(x->a_info_list+0, x->isActive);
-    SETFLOAT(x->a_info_list+1, x->populatedCount);
-    SETFLOAT(x->a_info_list+2, x->tick_action_nstate);
-    SETFLOAT(x->a_info_list+3, x->active_motif_ptr->state);
+    bank_postBase(x);
     outlet_list(x->o_info, &s_list, 4, x->a_info_list);
 }
 
@@ -329,8 +336,10 @@ void bank_onTriggerOn(t_bank* x){
     
     //initiate base rec
     if(bank_activeMotifIsClear(x)){
+        //[2] 
+        //[3]
         x->tick_action_nstate = _motif_state::m_base;
-        if(x->stateCAlt) x->synced = true;
+        if(!x->stateCAlt) x->synced = true;
         bank_q(x);
         post("base rec bank %d [%s]",x->id, x->synced ? "SYNC" : "FREE");
         return;
@@ -339,8 +348,9 @@ void bank_onTriggerOn(t_bank* x){
     //finish base rec
     if(bank_activeMotifIsBase(x)){
         //if start button held, change mode to loop
-        
-        if(x->stateCAlt){
+        //[4]
+        //[5]
+        if(!x->stateCAlt){
              //post changes to sync listeners to update banks with new project quan length
             if(!x->hasQuantick){
                 x->tick_duration *= -1;
@@ -358,6 +368,7 @@ void bank_onTriggerOn(t_bank* x){
 
         }
         else{
+            x->stateCAlt = 0;
             //gated
             x->gate = true;
             x->synced = false;
@@ -371,28 +382,42 @@ void bank_onTriggerOn(t_bank* x){
     }
     
     if(x->gate){
-        //1
+        //[11]
+        //[16]
         if(bank_activeMotifIsStop(x) && !bank_activeMotifIsClear(x)){
             x->tick_action_nstate = x->stateCAlt ? _motif_state::m_dub : _motif_state::m_play;
             bank_q(x);
         }
     }
     else{
-        //6
+
+        //[8]
         if(bank_activeMotifIsDub(x)){
             if(!(x->work_type &= _motif_work_type::REFILL)){
                 x->tick_action_nstate = _motif_state::m_play;
                 bank_q(x);
+                x->tick_action_when = 0;
             }
         }
-        //5
-        else if(bank_activeMotifIsRunning(x)){
-            x->tick_action_nstate = _motif_state::m_dub;
-            bank_q(x);
-        }
-        //7
+        
+        //[6]
+        //[7]
+        else if(bank_activeMotifIsPlay(x)){
+            if(x->tick_action_nstate == _motif_state::m_stop){
+                x->tick_action_nstate = _motif_state::m_dub;
+                bank_q(x);
+                x->tick_action_when = 0;
+            }
+            else{
+                x->tick_action_nstate = _motif_state::m_stop;
+                bank_q(x);
+            }
+        }    
+    
+        //[10]
         else if(bank_activeMotifIsStop(x) && !bank_activeMotifIsClear(x)){
             x->tick_action_nstate = _motif_state::m_play;
+            bank_postUnlatchUpdate(x);
             bank_q(x);
         }
     } 
@@ -404,10 +429,12 @@ void bank_onTriggerOff(t_bank* x){
     if(!x->gate || !x->isActive) return;
 
     if(x->gate){
-        //2
+        //[12]
+        //[15]
         if(bank_activeMotifIsRunning(x)){
             x->tick_action_nstate = _motif_state::m_stop;
             bank_q(x);
+            bank_postUnlatchUpdate(x);
             post("stop gate");
         }
     }
@@ -419,15 +446,16 @@ void bank_onControlAltOn(t_bank* x){
     if(!x->isActive) return;
 
     if(x->gate){
-        //3
+        //[13]
         if(bank_activeMotifIsPlay(x) && x->stateTrigger){
             x->tick_action_nstate = _motif_state::m_dub;
             bank_q(x);
         }
     }
     else{
-        //8
+        //[9]
         if(bank_activeMotifIsRunning(x)){
+            bank_postUnlatchUpdate(x);
             x->tick_action_nstate = _motif_state::m_stop;
             auto s = x->synced;
             x->synced = bank_activeMotifIsDub(x) ? false : x->synced;
@@ -443,7 +471,7 @@ void bank_onControlAltOff(t_bank* x){
     if(!x->gate || !x->isActive) return;
 
     if(x->gate){
-        //4
+        //[14]
         if(bank_activeMotifIsDub(x) && x->stateTrigger){
             if(!(x->work_data &= _motif_work_type::REFILL)){
                 x->tick_action_nstate = _motif_state::m_play;
@@ -457,8 +485,11 @@ void bank_onControlAltOff(t_bank* x){
 void bank_onControlAlt(t_bank *x, t_floatarg state){
     if(x->debounceCounter) return;
     x->debounceCounter = 1;
-    if(state > 0.f) bank_onControlAltOn(x);
-    else            bank_onControlAltOff(x);
+    if(state > 0.f)
+    x->stateCAlt = !x->stateCAlt;
+    
+    if(x->stateCAlt) bank_onControlAltOn(x);
+    else             bank_onControlAltOff(x);
 }
 
 void bank_onControlMain(t_bank *x, t_floatarg state){
