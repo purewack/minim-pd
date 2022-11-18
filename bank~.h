@@ -54,8 +54,8 @@ extern "C"{
         t_inlet*    i_control;
         t_inlet*    i_sync;
         t_outlet*   o_loop_sig;
-        t_outlet*   o_info;
-        t_outlet*   o_sync; 
+        t_outlet*   o_control;
+        t_outlet*   o_info; 
 
         t_atom      a_info_list[5];
         

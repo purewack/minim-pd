@@ -236,9 +236,7 @@ void bank_postBase(t_bank* x){
 
 void bank_postUnlatchUpdate(t_bank* x){
     x->stateCAlt = false;
-    bank_postBase(x);
-    SETFLOAT(x->a_info_list+4, 0);
-    outlet_list(x->o_info, &s_list, 5, x->a_info_list);
+    outlet_float(x->o_control, 0);
 }
 void bank_postQuanUpdate(t_bank* x){
     bank_postBase(x);
@@ -368,7 +366,7 @@ void bank_onTriggerOn(t_bank* x){
 
         }
         else{
-            x->stateCAlt = 0;
+            bank_postUnlatchUpdate(x);
             //gated
             x->gate = true;
             x->synced = false;
@@ -442,7 +440,6 @@ void bank_onTriggerOff(t_bank* x){
 
 
 void bank_onControlAltOn(t_bank* x){
-    x->stateCAlt = true;
     if(!x->isActive) return;
 
     if(x->gate){
@@ -467,7 +464,6 @@ void bank_onControlAltOn(t_bank* x){
 }
 
 void bank_onControlAltOff(t_bank* x){
-    x->stateCAlt = false;
     if(!x->gate || !x->isActive) return;
 
     if(x->gate){
@@ -489,7 +485,11 @@ void bank_onControlAlt(t_bank *x, t_floatarg state){
     x->stateCAlt = !x->stateCAlt;
     
     if(x->stateCAlt) bank_onControlAltOn(x);
-    else             bank_onControlAltOff(x);
+    else{
+        bank_onControlAltOff(x);
+    }
+    outlet_float(x->o_control, x->stateCAlt);
+    post("bank [%d] alt:%d",x->id,x->stateCAlt);
 }
 
 void bank_onControlMain(t_bank *x, t_floatarg state){
@@ -507,6 +507,9 @@ void bank_onOvertakeRecord(t_bank* x){
     }
 }
 
+void bank_onUnlatch(t_bank* x){
+    x->stateCAlt = false;
+}
 
 
 
@@ -526,6 +529,8 @@ void bank_onDelete(t_bank* x){
 }
 
 void bank_onReset(t_bank* x){
+    x->stateCAlt = false;
+    bank_postUnlatchUpdate(x);
     x->gate = false;
     x->synced = false;
     x->onetime = false;
@@ -627,7 +632,9 @@ void* bank_tilde_new(t_floatarg id){
     x->i_control = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_alt"));
     x->i_sync = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("set_sync_tick"));
     x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
+    x->o_control = outlet_new(&x->x_obj, &s_float);
     x->o_info = outlet_new(&x->x_obj,&s_list);
+    
 
     x->motifs_array = (t_motif**)malloc(4 * sizeof(t_motif*));
     for(int i=0; i<4; i++){
@@ -678,7 +685,8 @@ void bank_tilde_free(t_bank* x){
     inlet_free(x->i_control);
     inlet_free(x->i_sync);
     outlet_free(x->o_loop_sig);
-    outlet_free(x->o_sync);
+    outlet_free(x->o_control);
+    outlet_free(x->o_info);
     for(int i=0; i<4; i++){    
         free(x->motifs_array[i]->_aData);
         free(x->motifs_array[i]->_bData);
@@ -712,6 +720,7 @@ void bank_tilde_setup(void){
 
     class_addmethod(bank_tilde_class, (t_method) bank_onActivate   ,gensym("activate")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onDeactivate   ,gensym("deactivate")   ,(t_atomtype)0 );
+    class_addmethod(bank_tilde_class, (t_method) bank_onUnlatch   ,gensym("unlatch")   ,(t_atomtype)0 );
 
     class_addmethod(bank_tilde_class, (t_method) bank_onNextSlot   ,gensym("next_slot")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onPrevSlot   ,gensym("prev_slot")   ,(t_atomtype)0 );
