@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <cmath>
 
+void bank_postUnlatchUpdate(t_bank* x);
+
 bool bank_isMainCtrlHeld(t_bank* x){
     return x->stateTrigger && std::abs(x->holdCounter) > HOLD_TIME;
 }
@@ -154,6 +156,7 @@ t_int* bank_perform(t_int *w)
                 x->work_type |= _motif_work_type::REFILL;
                 x->work_data = m->len_spl;
                 x->tick_action_nstate = x->gate ? _motif_state::m_stop : _motif_state::m_play;
+                bank_postUnlatchUpdate(x);
             }
 
             m->state = x->tick_action_nstate;
@@ -365,7 +368,7 @@ void bank_onTriggerOn(t_bank* x){
 
         }
         else{
-            bank_postUnlatchUpdate(x);
+            //bank_postUnlatchUpdate(x);
             //gated
             x->gate = true;
             x->synced = false;
@@ -425,11 +428,11 @@ void bank_onTriggerOff(t_bank* x){
     x->stateTrigger = false;
     if(!x->isActive) return;
 
-    //reset of whole bank
-    if(bank_isAltCtrlHeld(x)){
-        bank_onDelete(x);
-        bank_postUnlatchUpdate(x);
-    }
+    // //reset of whole bank
+    // if(bank_isAltCtrlHeld(x)){
+    //     bank_onDelete(x);
+    //     bank_postUnlatchUpdate(x);
+    // }
 
     if(bank_activeMotifIsStop(x) && x->onetime) return;
     
@@ -440,7 +443,6 @@ void bank_onTriggerOff(t_bank* x){
         if(bank_activeMotifIsRunning(x)){
             x->tick_action_nstate = _motif_state::m_stop;
             bank_q(x);
-            bank_postUnlatchUpdate(x);
             post("stop gate");
         }
     }
