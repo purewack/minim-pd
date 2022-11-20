@@ -1,11 +1,5 @@
 #include "minim.h"
 
-// midiprobe.cpp
-#include <iostream>
-#include <cstdlib>
-#include "RtMidi.h"
-#include "RtAudio.h"
-
 int main()
 {
   RtMidiIn  *midiin = 0;
@@ -74,6 +68,11 @@ int main()
     }
   }
 
+  initGFXSystem();
+  postGFXCommand("cls;recto:0:0:100:100;rectf:30:20:300:100");
+  std::string in;
+  std::cin >> in;
+  endGFXSystem();
 
   return 0;
 }
