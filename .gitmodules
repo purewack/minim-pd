@@ -1,0 +1,9 @@
+[submodule "minim/deps/libpd"]
+	path = minim/deps/libpd
+	url = https://github.com/libpd/libpd.git
+[submodule "minim/deps/raylib"]
+	path = minim/deps/raylib
+	url = https://github.com/raysan5/raylib.git
+[submodule "minim/deps/rtmidi"]
+	path = minim/deps/rtmidi
+	url = https://github.com/thestk/rtmidi
