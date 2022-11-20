@@ -7,3 +7,6 @@
 [submodule "minim/deps/rtmidi"]
 	path = minim/deps/rtmidi
 	url = https://github.com/thestk/rtmidi
+[submodule "minim/deps/rtaudio"]
+	path = minim/deps/rtaudio
+	url = https://github.com/thestk/rtaudio
