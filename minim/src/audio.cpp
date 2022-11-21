@@ -20,6 +20,7 @@ int audio_init(){
             libpd_init();
             libpd_add_to_search_path("../deps/libpd/pure-data/extra");
             libpd_add_to_search_path("../../");
+            libpd_add_to_search_path("../res");
             libpd_init_audio(0, 2, 44100);
             libpd_start_message(1); 
             libpd_add_float(1.0f);
