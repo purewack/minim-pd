@@ -69,7 +69,7 @@ int main()
   }
 
   initGFXSystem();
-  postGFXCommand("cls;recto:0:0:100:100;rectf:30:20:300:100");
+  postCommand("g=1[cls;recto:0:0:20:20;rectf:20:20:30:30]g=2[cls;recto:20:20:100:20;rectf:110:110:50:50]");
   std::string in;
   std::cin >> in;
   endGFXSystem();

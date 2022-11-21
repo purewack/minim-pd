@@ -24,7 +24,9 @@
 #include <limits>
 #endif
 
+#define MGFX_
+#define MGFX_OK 0
 
 int initGFXSystem();
 int endGFXSystem();
-int postGFXCommand(std::string s);
+int postCommand(std::string s);
