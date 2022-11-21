@@ -8,6 +8,7 @@
 #X msg 203 109 bang;
 #X obj 202 85 loadbang;
 #X obj 219 180 plonk~ 2000;
+#X obj 312 157 ticker;
 #X connect 1 0 2 0;
 #X connect 2 0 3 0;
 #X connect 3 0 4 0;
