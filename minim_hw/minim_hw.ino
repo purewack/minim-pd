@@ -3,7 +3,7 @@
 #include "libdarray.h"
 #include "gfx.h"
 
-lcd_t lcd;
+gfx_t gfx;
 
 int ctx = 0;
 int ctx_add = 0;
@@ -114,7 +114,7 @@ void draw_ssd1306(){
   post_ssd1306();
 
   for(int j=0; j<8; j++){
-    auto bb = j<4 ? lcd.fbuf_top : lcd.fbuf_bot;
+    auto bb = j<4 ? gfx.fbuf_top : gfx.fbuf_bot;
     auto pp = (j%4)*8;
     sarray_clear(imsgdata);
       sarray_push(imsgdata,(uint8)0x40);//cmd byte
@@ -162,11 +162,11 @@ void setup(){
     }
 
     ctx_switch(2);
-      lcd_clear();
-      lcd_drawHline(0,5,10);
-      lcd_drawVline(5,0,10);
-      lcd_drawLine(0,0,10,10);
-      lcd_drawRectSize(20,20,90,30);
+      gfx_clear();
+      gfx_drawHline(0,5,10);
+      gfx_drawVline(5,0,10);
+      gfx_drawLine(0,0,10,10);
+      gfx_drawRectSize(20,20,90,30);
       draw_ssd1306();
 
     // imsg.addr = ctx_add;
