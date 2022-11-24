@@ -45,7 +45,7 @@ void begin_ssd1306(){
     sarray_clear(imsgdata);
     sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xD3);//disp offset
-    sarray_push(imsgdata,(uint8)0x40);//start line
+    sarray_push(imsgdata,(uint8)0x41);//start line
     sarray_push(imsgdata,(uint8)0x8D);//sharge
     sarray_push(imsgdata,(uint8)0x14);
     imsg.length = imsgdata.count;
