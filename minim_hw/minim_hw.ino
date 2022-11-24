@@ -1,12 +1,16 @@
 #include <libmaple/gpio.h>
 #include <libmaple/i2c.h>
 #include "libdarray.h"
+#include "gfx.h"
+
+lcd_t lcd;
 
 int ctx = 0;
 int ctx_add = 0;
 i2c_dev* ctx_dev;
 i2c_msg imsg;
 sarray_t<uint8> imsgdata;
+
 
 void ctx_switch(int c){
     ctx = c;
@@ -26,10 +30,16 @@ void ctx_switch(int c){
     }
 }
 
+void post_ssd1306(){
+  imsg.addr = ctx_add;
+  imsg.length = imsgdata.count;
+  imsg.data = (uint8*)imsgdata.buf;
+  i2c_master_xfer(ctx_dev,&imsg,1,0);
+}
+
 void begin_ssd1306(){
     
     //multiplex
-    imsg.addr = ctx_add;
     sarray_clear(imsgdata);
     sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xAE);//display off
@@ -37,65 +47,48 @@ void begin_ssd1306(){
     sarray_push(imsgdata,(uint8)0x80);
     sarray_push(imsgdata,(uint8)0xA8);// ration
     sarray_push(imsgdata,(uint8)0x3F);
-    imsg.length = imsgdata.count;
-    imsg.data = (uint8*)imsgdata.buf;
-    i2c_master_xfer(ctx_dev,&imsg,1,0);
+    post_ssd1306();
     
-    imsg.addr = ctx_add;
     sarray_clear(imsgdata);
     sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xD3);//disp offset
-    sarray_push(imsgdata,(uint8)0x41);//start line
+    sarray_push(imsgdata,(uint8)0x40);//start line
     sarray_push(imsgdata,(uint8)0x8D);//sharge
     sarray_push(imsgdata,(uint8)0x14);
-    imsg.length = imsgdata.count;
-    imsg.data = (uint8*)imsgdata.buf;
-    i2c_master_xfer(ctx_dev,&imsg,1,0);
+    post_ssd1306();
  
-    imsg.addr = ctx_add;
     sarray_clear(imsgdata);
     sarray_push(imsgdata,(uint8)0x00);
     sarray_push(imsgdata,(uint8)0x20);
     sarray_push(imsgdata,(uint8)0x00);
     sarray_push(imsgdata,(uint8)0xA1);
     sarray_push(imsgdata,(uint8)0xC8);
-    imsg.length = imsgdata.count;
-    imsg.data = (uint8*)imsgdata.buf;
-    i2c_master_xfer(ctx_dev,&imsg,1,0);
+    post_ssd1306();
     
-    imsg.addr = ctx_add;
     sarray_clear(imsgdata);
     sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xDA);//coms pins set
     sarray_push(imsgdata,(uint8)0x12);
     sarray_push(imsgdata,(uint8)0x81);//contrast set
     sarray_push(imsgdata,(uint8)0xCF);
-    imsg.length = imsgdata.count;
-    imsg.data = (uint8*)imsgdata.buf;
-    i2c_master_xfer(ctx_dev,&imsg,1,0);
-    
-    imsg.addr = ctx_add;
+    post_ssd1306();
+
     sarray_clear(imsgdata);
     sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xd9);//precharge
     sarray_push(imsgdata,(uint8)0xF1);
-    imsg.length = imsgdata.count;
-    imsg.data = (uint8*)imsgdata.buf;
-    i2c_master_xfer(ctx_dev,&imsg,1,0);
+    post_ssd1306();
 
-    imsg.addr = ctx_add;
     sarray_clear(imsgdata);
+    sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0x21);//col add
     sarray_push(imsgdata,(uint8)0x00);
     sarray_push(imsgdata,(uint8)0x7F);
     sarray_push(imsgdata,(uint8)0x22);//page add
     sarray_push(imsgdata,(uint8)0x00);
     sarray_push(imsgdata,(uint8)0x07);
-    imsg.length = imsgdata.count;
-    imsg.data = (uint8*)imsgdata.buf;
-    i2c_master_xfer(ctx_dev,&imsg,1,0);
+    post_ssd1306();
     
-    imsg.addr = ctx_add;
     sarray_clear(imsgdata);
     sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xD8);
@@ -104,10 +97,35 @@ void begin_ssd1306(){
     sarray_push(imsgdata,(uint8)0xA6);
     sarray_push(imsgdata,(uint8)0x2E);
     sarray_push(imsgdata,(uint8)0xAF);
-    imsg.length = imsgdata.count;
-    imsg.data = (uint8*)imsgdata.buf;
-    i2c_master_xfer(ctx_dev,&imsg,1,0);
+    post_ssd1306();
     
+}
+
+void draw_ssd1306(){
+
+  sarray_clear(imsgdata);
+    sarray_push(imsgdata,(uint8)0x00);//cmd byte
+    sarray_push(imsgdata,(uint8)0x21);//col add
+    sarray_push(imsgdata,(uint8)0x00);
+    sarray_push(imsgdata,(uint8)0x7F);
+    sarray_push(imsgdata,(uint8)0x22);//page add
+    sarray_push(imsgdata,(uint8)0x00);
+    sarray_push(imsgdata,(uint8)0x07);
+  post_ssd1306();
+
+  for(int j=0; j<8; j++){
+    auto bb = j<4 ? lcd.fbuf_top : lcd.fbuf_bot;
+    auto pp = (j%4)*8;
+    sarray_clear(imsgdata);
+      sarray_push(imsgdata,(uint8)0x40);//cmd byte
+      for(int d=0; d<128; d++){
+        uint32_t dd = bb[d];
+        dd &= (0xff<<pp);
+        dd >>= pp;
+        sarray_push(imsgdata,(uint8)dd);
+      }
+    post_ssd1306();
+  }
 }
 
 void being_gpio(){
@@ -144,26 +162,22 @@ void setup(){
     }
 
     ctx_switch(2);
+      lcd_clear();
+      lcd_drawHline(0,5,10);
+      lcd_drawVline(5,0,10);
+      lcd_drawLine(0,0,10,10);
+      lcd_drawRectSize(20,20,90,30);
+      draw_ssd1306();
 
-    imsg.addr = ctx_add;
-    sarray_clear(imsgdata);
-    sarray_push(imsgdata,(uint8)0x40);
-    for(int i=0;i<128;i++){
-      sarray_push(imsgdata,(uint8)0x00);//data cmd byte
-    }
-    imsg.length = imsgdata.count;
-    imsg.data = (uint8*)imsgdata.buf;
-    i2c_master_xfer(ctx_dev,&imsg,1,0);
-
-    imsg.addr = ctx_add;
-    sarray_clear(imsgdata);
-    sarray_push(imsgdata,(uint8)0x40);
-    for(int i=0;i<128;i++){
-      sarray_push(imsgdata,(uint8)0xff);//data cmd byte
-    }
-    imsg.length = imsgdata.count;
-    imsg.data = (uint8*)imsgdata.buf;
-    i2c_master_xfer(ctx_dev,&imsg,1,0);
+    // imsg.addr = ctx_add;
+    // sarray_clear(imsgdata);
+    // sarray_push(imsgdata,(uint8)0x40);
+    // for(int i=0;i<128;i++){
+    //   sarray_push(imsgdata,(uint8)0xff);//data cmd byte
+    // }
+    // imsg.length = imsgdata.count;
+    // imsg.data = (uint8*)imsgdata.buf;
+    // i2c_master_xfer(ctx_dev,&imsg,1,0);
 
 } 
 
