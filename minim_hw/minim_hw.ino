@@ -187,13 +187,13 @@ void loop(){
     auto in = io.bscan_down;
     io.bscan_down = 0;
 
-    bool top = (in & 0x3E0);
+    bool top = !(in & 0x3E0);
     int rows = (in & 0x1f) | ((in & 0x3E0)>>5);
     
     gfx.rotated = 1;
     gfx_clear();
     gfx_drawRectSize(0,0,64,128);
-    gfx_drawRectSize(4,4+64*top,56,56);
+    gfx_fillSection(4+64*top,56,4,56,1);
     gfx_drawLine(0,0,64,64);
 
     for(int i=0; i<5; i++){

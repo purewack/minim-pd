@@ -17,3 +17,4 @@ void gfx_drawHline(int x, int y, int w);
 void gfx_drawVline(int x, int y, int h);
 void gfx_drawLine(int x, int y, int x2, int y2);
 void gfx_drawRectSize(int x, int y, int w, int h);
+void gfx_fillSection(int yoff, int ylen, int xoff, int xlen, int fill);

@@ -93,3 +93,46 @@ void gfx_drawRectSize(int x, int y, int w, int h){
   gfx_drawLine(x,y+h-1,x+w,y+h);
   gfx_drawLine(x+w-1,y,x+w,y+h);
 }
+
+void gfx_fillSection(int yoff, int ylen, int xoff, int xlen, int fill){
+    if(gfx.rotated){
+        auto a = yoff;
+        yoff = 64-xoff-xlen;
+        xoff = a;
+         a = ylen;
+        ylen = xlen;
+        xlen = a;
+    }
+
+  if(yoff < 0){
+    ylen -= -yoff;
+    yoff = 0;
+  }
+
+  if(yoff > 32){
+    yoff -= 32;
+    int bb = ((1<<ylen)-1);
+    for(int i=xoff; i<xoff+xlen; i++){
+      if(fill)
+      gfx.fbuf_bot[i] |= (bb<<(yoff));
+      else
+      gfx.fbuf_bot[i] &= (~(bb<<(yoff)));
+    }
+  }
+  else{
+    int yy = yoff+ylen;
+    int bt = ((1<<ylen)-1);
+    int bb = yy > 32 ? ((1<<(yy-32))-1) : 0;
+    for(int i=xoff; i<xoff+xlen; i++){
+      if(fill){
+        gfx.fbuf_top[i] |= (bt<<yoff);
+        gfx.fbuf_bot[i] |= bb;
+      }
+      else{
+        gfx.fbuf_top[i] &= (~(bt<<yoff));
+        gfx.fbuf_bot[i] &= (~bb);
+      }
+    }
+  }
+  
+}
