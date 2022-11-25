@@ -17,7 +17,7 @@ void ctx_switch(int c){
     ctx = c;
     if(ctx == 0 || ctx == 1) {
       ctx_add = ctx == 0 ? 0x3C : 0x3D; 
-      AFIO_BASE->MAPR = 0;
+      C_BIT(AFIO_BASE->MAPR,1);
       ctx_dev = I2C1;
     }
     else if(ctx == 2){
@@ -26,7 +26,7 @@ void ctx_switch(int c){
     } 
     else if(ctx == 3 || ctx == 4) {
       ctx_add = ctx == 3 ? 0x3C : 0x3D; 
-      AFIO_BASE->MAPR |= AFIO_REMAP_I2C1;
+      S_BIT(AFIO_BASE->MAPR,1);
       ctx_dev = I2C1;
     }
 }
@@ -130,7 +130,7 @@ void draw_ssd1306(){
   }
 }
 
-void being_gpio(){
+void begin_gpio(){
   afio_init();
   afio_cfg_debug_ports(AFIO_DEBUG_NONE);
   gpio_set_mode(GPIOB,7,GPIO_AF_OUTPUT_OD);
@@ -146,9 +146,11 @@ void setup(){
     imsgdata.buf = (uint8*)malloc(sizeof(uint8)*(2 + 128*8));
     imsgdata.lim = 130;
     sarray_clear(imsgdata);
+    
+    begin_gpio();
+    io_mux_init();
 
-    being_gpio();
-    //io_mux_init();
+    Serial.begin(9600);
 
     i2c_init(I2C1);
     i2c_init(I2C2);
@@ -157,8 +159,6 @@ void setup(){
     // i2c_peripheral_enable(I2C1);
     // i2c_peripheral_enable(I2C2);
 
-    Serial.begin(9600);
-
     for(int i=0; i<5; i++){
       ctx_switch(i);
       begin_ssd1306();
@@ -166,30 +166,42 @@ void setup(){
       gfx_drawRectSize(0,0,128,64);
       draw_ssd1306();
     }
+    ctx_switch(0);
     
 
-      ctx_switch(3);
-    // imsg.addr = ctx_add;
-    // sarray_clear(imsgdata);
-    // sarray_push(imsgdata,(uint8)0x40);
-    // for(int i=0;i<128;i++){
-    //   sarray_push(imsgdata,(uint8)0xff);//data cmd byte
-    // }
-    // imsg.length = imsgdata.count;
-    // imsg.data = (uint8*)imsgdata.buf;
-    // i2c_master_xfer(ctx_dev,&imsg,1,0);
-
+    Serial.println("ready");
 } 
 
-int xdd = 0;
+bool states[2][5];
+
 void loop(){
-  for(int i=0; i<5; i++){
+  if(io.bscan_down){
+    auto in = io.bscan_down;
+    io.bscan_down = 0;
+
+    bool top = (in & 0x3E0);
+    int rows = (in & 0x1f) | ((in & 0x3E0)>>5);
+    
     gfx_clear();
-    gfx_drawRectSize(10,10,xdd,xdd);
-    ctx_switch(i);
+    gfx_drawRectSize(0,0,128,64);
+    gfx_drawRectSize(4+64 - 64*top,4,56,56);
+
+    for(int i=0; i<5; i++){
+      if(rows&(1<<i)){
+        ctx_switch(i);
+        break;
+      }
+    }
     draw_ssd1306();
+    
   }
-  xdd = (xdd+1)%30;
+ 
+  // if(io.bscan_down){
+  //   Serial.print("down ");
+  //   Serial.println(io.bscan_down,BIN);
+  //   io.bscan_down = 0;
+  // }
+  delay(1);
 }
 
 

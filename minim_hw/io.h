@@ -6,6 +6,7 @@
 #include <libmaple/gpio.h>
 #include <libmaple/spi.h>
 #include <libmaple/delay.h>
+#include <Arduino.h>
 
 struct hw_t
 {

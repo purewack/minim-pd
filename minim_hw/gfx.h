@@ -4,6 +4,7 @@
 
 struct gfx_t {
   int inited = 0;
+  int rotated = 0;
   volatile int transferring = 0;
 
   uint32_t fbuf_top[128]; // 128 vertical columns
