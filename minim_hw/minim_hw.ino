@@ -2,6 +2,7 @@
 #include <libmaple/i2c.h>
 #include "libdarray.h"
 #include "gfx.h"
+#include "io.h"
 
 gfx_t gfx;
 
@@ -35,6 +36,7 @@ void post_ssd1306(){
   imsg.length = imsgdata.count;
   imsg.data = (uint8*)imsgdata.buf;
   i2c_master_xfer(ctx_dev,&imsg,1,0);
+  while(ctx_dev->state == I2C_STATE_BUSY){}
 }
 
 void begin_ssd1306(){
@@ -112,7 +114,7 @@ void draw_ssd1306(){
     sarray_push(imsgdata,(uint8)0x00);
     sarray_push(imsgdata,(uint8)0x07);
   post_ssd1306();
-
+  
   for(int j=0; j<8; j++){
     auto bb = j<4 ? gfx.fbuf_top : gfx.fbuf_bot;
     auto pp = (j%4)*8;
@@ -124,7 +126,7 @@ void draw_ssd1306(){
         dd >>= pp;
         sarray_push(imsgdata,(uint8)dd);
       }
-    post_ssd1306();
+      post_ssd1306();
   }
 }
 
@@ -141,16 +143,17 @@ void being_gpio(){
 
 void setup(){
 
-    imsgdata.buf = (uint8*)malloc(sizeof(uint8)*130);
+    imsgdata.buf = (uint8*)malloc(sizeof(uint8)*(2 + 128*8));
     imsgdata.lim = 130;
     sarray_clear(imsgdata);
 
     being_gpio();
+    //io_mux_init();
 
     i2c_init(I2C1);
     i2c_init(I2C2);
-    i2c_master_enable(I2C1, I2C_FAST_MODE, 400000);
-    i2c_master_enable(I2C2, I2C_FAST_MODE, 400000);
+    i2c_master_enable(I2C1, I2C_FAST_MODE, 1000000);
+    i2c_master_enable(I2C2, I2C_FAST_MODE, 1000000);
     // i2c_peripheral_enable(I2C1);
     // i2c_peripheral_enable(I2C2);
 
@@ -159,16 +162,13 @@ void setup(){
     for(int i=0; i<5; i++){
       ctx_switch(i);
       begin_ssd1306();
-    }
-
-    ctx_switch(2);
       gfx_clear();
-      gfx_drawHline(0,5,10);
-      gfx_drawVline(5,0,10);
-      gfx_drawLine(0,0,10,10);
-      gfx_drawRectSize(20,20,90,30);
+      gfx_drawRectSize(0,0,128,64);
       draw_ssd1306();
+    }
+    
 
+      ctx_switch(3);
     // imsg.addr = ctx_add;
     // sarray_clear(imsgdata);
     // sarray_push(imsgdata,(uint8)0x40);
@@ -181,8 +181,15 @@ void setup(){
 
 } 
 
+int xdd = 0;
 void loop(){
-  
+  for(int i=0; i<5; i++){
+    gfx_clear();
+    gfx_drawRectSize(10,10,xdd,xdd);
+    ctx_switch(i);
+    draw_ssd1306();
+  }
+  xdd = (xdd+1)%30;
 }
 
 
