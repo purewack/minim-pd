@@ -7,6 +7,7 @@ void gfx_clear(){
   }
 }
 void gfx_drawHline(int x, int y, int w){
+if(w < 0) {w *= -1; x -= w;}
   if(y<0) return;
   if(y>63) return;
   for(int i=x; i<x+w; i++){
@@ -20,6 +21,7 @@ void gfx_drawHline(int x, int y, int w){
   }
 }
 void gfx_drawVline(int x, int y, int h){  
+if(h < 0) {h *= -1; y -= h;}
   if(x<0) return;
   if(x>127) return;
   int e = y+h > 64 ? 64 : y+h;
@@ -34,6 +36,15 @@ void gfx_drawVline(int x, int y, int h){
   }
 }
 void gfx_drawLine(int x, int y, int x2, int y2){
+    if(gfx.rotated){
+        auto a = y;
+        y = -x+63;
+        x = a;
+        a = y2;
+        y2 = -x2+63;
+        x2 = a;
+    }
+
   const int dy = (y2-y);
   const int dx = (x2-x);
   const int nx = dx < 0 ? dx*-1 : dx;
@@ -77,9 +88,8 @@ void gfx_drawLine(int x, int y, int x2, int y2){
 }
 
 void gfx_drawRectSize(int x, int y, int w, int h){
-  //gfx_draw_rect_base(x,y,w,h,0);
-  gfx_drawHline(x,y,w);
-  gfx_drawVline(x,y,h);
-  gfx_drawHline(x,y+h-1,w);
-  gfx_drawVline(x+w-1,y,h);
+  gfx_drawLine(x,y,x+w,y);
+  gfx_drawLine(x,y,x,y+h);
+  gfx_drawLine(x,y+h-1,x+w,y+h);
+  gfx_drawLine(x+w-1,y,x+w,y+h);
 }

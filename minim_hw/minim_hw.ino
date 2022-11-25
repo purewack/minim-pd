@@ -162,8 +162,16 @@ void setup(){
     for(int i=0; i<5; i++){
       ctx_switch(i);
       begin_ssd1306();
+      gfx.rotated = 1;
       gfx_clear();
-      gfx_drawRectSize(0,0,128,64);
+      gfx_drawLine(32,32,32,0);
+      gfx_drawLine(32,32,64,0);
+      gfx_drawLine(32,32,64,32);
+      gfx_drawLine(32,32,64,64);
+      gfx_drawLine(32,32,32,64);
+      gfx_drawLine(32,32,0,64);
+      gfx_drawLine(32,32,0,32);
+      gfx_drawLine(32,32,0,0);
       draw_ssd1306();
     }
     ctx_switch(0);
@@ -182,9 +190,11 @@ void loop(){
     bool top = (in & 0x3E0);
     int rows = (in & 0x1f) | ((in & 0x3E0)>>5);
     
+    gfx.rotated = 1;
     gfx_clear();
-    gfx_drawRectSize(0,0,128,64);
-    gfx_drawRectSize(4+64 - 64*top,4,56,56);
+    gfx_drawRectSize(0,0,64,128);
+    gfx_drawRectSize(4,4+64*top,56,56);
+    gfx_drawLine(0,0,64,64);
 
     for(int i=0; i<5; i++){
       if(rows&(1<<i)){
