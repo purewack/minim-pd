@@ -3,6 +3,11 @@
 #include "libdarray.h"
 #include "gfx.h"
 #include "io.h"
+#include <USBMIDI.h>
+#include <USBComposite.h>
+
+uint8 midi_base = 35;
+USBMIDI usbmidi;
 
 gfx_t gfx;
 
@@ -142,6 +147,11 @@ void begin_gpio(){
 }
 
 void setup(){
+  
+    USBComposite.setProductId(0x0030);
+    // put your setup code here, to run once:
+    Serial.begin(115200);
+    usbmidi.begin();
 
     imsgdata.buf = (uint8*)malloc(sizeof(uint8)*(2 + 128*8));
     imsgdata.lim = 130;
@@ -150,29 +160,29 @@ void setup(){
     begin_gpio();
     io_mux_init();
 
-    Serial.begin(9600);
-
     i2c_init(I2C1);
     i2c_init(I2C2);
     i2c_master_enable(I2C1, I2C_FAST_MODE, 1000000);
     i2c_master_enable(I2C2, I2C_FAST_MODE, 1000000);
     // i2c_peripheral_enable(I2C1);
     // i2c_peripheral_enable(I2C2);
-
+    delay(200);
+    
     for(int i=0; i<5; i++){
       ctx_switch(i);
       begin_ssd1306();
       gfx.rotated = 1;
       gfx_clear();
-      gfx_drawLine(32,32,32,0);
-      gfx_drawLine(32,32,64,0);
-      gfx_drawLine(32,32,64,32);
-      gfx_drawLine(32,32,64,64);
-      gfx_drawLine(32,32,32,64);
-      gfx_drawLine(32,32,0,64);
-      gfx_drawLine(32,32,0,32);
-      gfx_drawLine(32,32,0,0);
+      // gfx_drawLine(32,32,32,0);
+      // gfx_drawLine(32,32,64,0);
+      // gfx_drawLine(32,32,64,32);
+      // gfx_drawLine(32,32,64,64);
+      // gfx_drawLine(32,32,32,64);
+      // gfx_drawLine(32,32,0,64);
+      // gfx_drawLine(32,32,0,32);
+      // gfx_drawLine(32,32,0,0);
       draw_ssd1306();
+      delay(100);
     }
     ctx_switch(0);
     
@@ -183,34 +193,34 @@ void setup(){
 bool states[2][5];
 
 void loop(){
-  if(io.bscan_down){
-    auto in = io.bscan_down;
-    io.bscan_down = 0;
+  if(int a = usbmidi.available()){
+    uint32 aa = usbmidi.readPacket();
+    char *b = (char*)&aa;
+    Serial.println(b[1],DEC);
+    Serial.println(b[2],DEC);
+    Serial.println(b[3],DEC);
 
-    bool top = !(in & 0x3E0);
-    int rows = (in & 0x1f) | ((in & 0x3E0)>>5);
-    
-    gfx.rotated = 1;
-    gfx_clear();
-    gfx_drawRectSize(0,0,64,128);
-    gfx_fillSection(4+64*top,56,4,56,1);
-    gfx_drawLine(0,0,64,64);
+    if(b[1] == 0x90){
+      int ctx = b[2]-midi_base;
+      bool bot = (ctx < 5);
+      ctx %= 5;
 
-    for(int i=0; i<5; i++){
-      if(rows&(1<<i)){
-        ctx_switch(i);
-        break;
-      }
+      Serial.println(ctx,DEC);
+      Serial.println(bot,DEC);
+      states[1-bot][ctx] = b[3];
+      gfx.rotated = 1;
+      gfx_clear();
+      gfx_drawRectSize(0,0,64,128);
+      if(states[1][ctx])
+        gfx_fillSection(4,56,4,56,1);
+      if(states[0][ctx])
+        gfx_fillSection(4+64,56,4,56,1);
+      ctx_switch(ctx%5);
+      draw_ssd1306();
     }
-    draw_ssd1306();
-    
+    Serial.println("----");
   }
- 
-  // if(io.bscan_down){
-  //   Serial.print("down ");
-  //   Serial.println(io.bscan_down,BIN);
-  //   io.bscan_down = 0;
-  // }
+
   delay(1);
 }
 
