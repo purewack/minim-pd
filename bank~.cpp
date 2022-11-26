@@ -534,7 +534,7 @@ void bank_onDelete(t_bank* x){
     //bank_onTransportReset(x);
     bank_clear_motif(x->active_motif_ptr);
     x->populatedCount--;
-        
+    bank_postStateUpdate(x);
     post("Deleted motif %d in bank %d",x->active_motif_idx, x->id);
 }
 
