@@ -140,6 +140,16 @@ void gfx_fillSection(int yoff, int ylen, int xoff, int xlen, int fill){
 
 void drawPixel(int x, int y, int scale, int tx, int ty){
 
+  if(gfx.rotated){
+    auto a = tx;
+    tx = ty;
+    ty = -a;
+
+    a = x;
+    x = y;
+    y = (64/scale)-a;
+  }
+
   auto sxx = scale*x;
   auto syy = scale*y;
   if(syy+(scale-1) < 0) return;
@@ -165,31 +175,6 @@ bool isPixel8(int x, int y, const uint8_t* buf, int len){
 
 void gfx_drawBitmap8(int x, int y, int w, int h, int scale, int blen, const uint8_t* buf){
 
-  // if(gfx.rotated){
-  //   auto a = x;
-  //   y = 64-x-w;
-  //   x = y;
-  //   a = w;
-  //   w = h;
-  //   h = a;
-  // }
-
-  // if(x < 0){
-  //   w += x;
-  //   x = 0;
-  // }
-  // if(y < 0){
-  //   h += y;
-  //   y = 0;
-  // }
-  
-  // auto dd = (x+w)-128;
-  // if(dd) w -= dd;
-
-  // dd = (y+h)-64;
-  // if(dd) h -= dd;
-  auto ox = 0;//x*(scale-1);
-  auto oy = 0;//y*(scale-1);
   for(int xx=0; xx<w; xx++){
     for(int yy=0; yy<h; yy++){
       if(isPixel8(xx,yy,buf,blen))

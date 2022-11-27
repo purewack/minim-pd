@@ -182,7 +182,8 @@ void setup(){
       gfx.rotated = 1;
       gfx_clear();
       gfx_drawRectSize(0,0,64,128);
-      gfx_drawBitmap8(20, 10, 40, 15, i+1, 4, pat);
+      gfx_drawLine(0,0,20,10);
+      gfx_drawBitmap8(20, 10, 15, 15, i+1, 4, pat);
       draw_ssd1306();
       delay(100);
     }
