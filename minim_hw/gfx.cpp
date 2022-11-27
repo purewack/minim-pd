@@ -138,7 +138,7 @@ void gfx_fillSection(int yoff, int ylen, int xoff, int xlen, int fill){
   
 }
 
-void drawPixel(int x, int y, int scale, int tx, int ty){
+void drawPixel(int x, int y, int tx, int ty){
 
   if(gfx.rotated){
     auto a = tx;
@@ -147,20 +147,20 @@ void drawPixel(int x, int y, int scale, int tx, int ty){
 
     a = x;
     x = y;
-    y = (64/scale)-a;
+    y = (64/gfx.scale)-a;
   }
 
-  auto sxx = scale*x;
-  auto syy = scale*y;
-  if(syy+(scale-1) < 0) return;
-  if(sxx+(scale-1) < 0) return;
+  auto sxx = gfx.scale*x;
+  auto syy = gfx.scale*y;
+  if(syy+(gfx.scale-1) < 0) return;
+  if(sxx+(gfx.scale-1) < 0) return;
 
   //repeat for scaled x columns 
-  for(int sx=sxx; sx<scale+sxx; sx++){
+  for(int sx=sxx; sx<gfx.scale+sxx; sx++){
     //create pixel scaled y tall
     if(tx+sx >= 128) return;
     if(tx+sx < 0) return;
-    for(int s=0; s<scale; s++){
+    for(int s=0; s<gfx.scale; s++){
       if(syy+s+ty<32)
         gfx.fbuf_top[sx+tx] |= (1<<(syy+s+ty));
       else
@@ -170,27 +170,27 @@ void drawPixel(int x, int y, int scale, int tx, int ty){
 }
 
 
-void gfx_drawBitmap8(int x, int y, int w, int h, int scale, int blen, const uint8_t* buf){
+void gfx_drawBitmap8(int x, int y, int w, int h, int blen, const uint8_t* buf){
   for(int xx=0; xx<w; xx++){
     for(int yy=0; yy<h; yy++){
       if(buf[xx%blen] & (1<<(yy%8)))
-        drawPixel(xx,yy,scale,x,y);
+        drawPixel(xx,yy,x,y);
     }
   }
 }
-void gfx_drawBitmap16(int x, int y, int w, int h, int scale, int blen, const uint16_t* buf){
+void gfx_drawBitmap16(int x, int y, int w, int h, int blen, const uint16_t* buf){
   for(int xx=0; xx<w; xx++){
     for(int yy=0; yy<h; yy++){
       if(buf[xx%blen] & (1<<(yy%16)))
-        drawPixel(xx,yy,scale,x,y);
+        drawPixel(xx,yy,x,y);
     }
   }
 }
-void gfx_drawBitmap32(int x, int y, int w, int h, int scale, int blen, const uint32_t* buf){
+void gfx_drawBitmap32(int x, int y, int w, int h, int blen, const uint32_t* buf){
   for(int xx=0; xx<w; xx++){
     for(int yy=0; yy<h; yy++){
       if(buf[xx%blen] & (1<<(yy%32)))
-        drawPixel(xx,yy,scale,x,y);
+        drawPixel(xx,yy,x,y);
     }
   }
 }
