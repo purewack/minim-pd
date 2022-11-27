@@ -169,15 +169,27 @@ void drawPixel(int x, int y, int scale, int tx, int ty){
   }
 }
 
-bool isPixel8(int x, int y, const uint8_t* buf, int len){
-  return buf[x%len] & (1<<(y%8));
-}
 
 void gfx_drawBitmap8(int x, int y, int w, int h, int scale, int blen, const uint8_t* buf){
-
   for(int xx=0; xx<w; xx++){
     for(int yy=0; yy<h; yy++){
-      if(isPixel8(xx,yy,buf,blen))
+      if(buf[xx%blen] & (1<<(yy%8)))
+        drawPixel(xx,yy,scale,x,y);
+    }
+  }
+}
+void gfx_drawBitmap16(int x, int y, int w, int h, int scale, int blen, const uint16_t* buf){
+  for(int xx=0; xx<w; xx++){
+    for(int yy=0; yy<h; yy++){
+      if(buf[xx%blen] & (1<<(yy%16)))
+        drawPixel(xx,yy,scale,x,y);
+    }
+  }
+}
+void gfx_drawBitmap32(int x, int y, int w, int h, int scale, int blen, const uint32_t* buf){
+  for(int xx=0; xx<w; xx++){
+    for(int yy=0; yy<h; yy++){
+      if(buf[xx%blen] & (1<<(yy%32)))
         drawPixel(xx,yy,scale,x,y);
     }
   }

@@ -19,3 +19,5 @@ void gfx_drawLine(int x, int y, int x2, int y2);
 void gfx_drawRectSize(int x, int y, int w, int h);
 void gfx_fillSection(int yoff, int ylen, int xoff, int xlen, int fill);
 void gfx_drawBitmap8(int x, int y, int w, int h, int scale, int blen, const uint8_t* buf);
+void gfx_drawBitmap16(int x, int y, int w, int h, int scale, int blen, const uint16_t* buf);
+void gfx_drawBitmap32(int x, int y, int w, int h, int scale, int blen, const uint32_t* buf);
