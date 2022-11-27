@@ -194,3 +194,25 @@ void gfx_drawBitmap32(int x, int y, int w, int h, int blen, const uint32_t* buf)
     }
   }
 }
+
+
+#include "gfx/fontsmall.h"
+
+void gfx_drawChar(char ch, int x, int y){
+  ch = (ch < ' ' || ch > 126) ? 0 : (ch-' '+1);
+  gfx_drawBitmap8(x,y,
+    fontsmall_wide,
+    fontsmall_tall,
+    fontsmall_wide,
+    &fontsmall_data[int(ch)*8]
+  );
+}
+
+
+void gfx_drawString(char* str, int x, int y){
+  int ii = 0;
+	while(str[ii] != 0){
+		gfx_drawChar(str[ii], x + ii*6*gfx.scale, y);
+    ii++;
+	}
+}

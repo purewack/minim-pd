@@ -22,3 +22,5 @@ void gfx_fillSection(int yoff, int ylen, int xoff, int xlen, int fill);
 void gfx_drawBitmap8(int x, int y, int w, int h, int blen, const uint8_t* buf);
 void gfx_drawBitmap16(int x, int y, int w, int h, int blen, const uint16_t* buf);
 void gfx_drawBitmap32(int x, int y, int w, int h, int blen, const uint32_t* buf);
+void gfx_drawChar(char ch, int x, int y);
+void gfx_drawString(char* str, int x, int y);
