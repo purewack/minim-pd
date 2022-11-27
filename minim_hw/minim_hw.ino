@@ -171,11 +171,15 @@ void setup(){
     for(int i=0; i<5; i++){
       ctx_switch(i);
       begin_ssd1306();
+      gfx.modexor = 1;
+      gfx.scale = 2;
       gfx.rotated = 1;
       gfx_clear();
+      
       gfx_drawRectSize(0,0,64,128);
-      gfx.scale = 2;
-      gfx_drawString("Hello",0,0);
+      gfx_drawString("Hello",7,0);
+      gfx_fillSection(0,0,20,20);
+      gfx_drawLine(0,0,30,30);
       draw_ssd1306();
       delay(100);
     }
@@ -229,9 +233,9 @@ void loop(){
       gfx_clear();
       gfx_drawRectSize(0,0,64,128);
       if(states[1][ctx])
-        gfx_fillSection(4,56,4,56,1);
+        gfx_fillSection(4,4,56,56);
       if(states[0][ctx])
-        gfx_fillSection(4+64,56,4,56,1);
+        gfx_fillSection(4,4+64,56,56);
       ctx_switch(ctx%5);
       draw_ssd1306();
     }

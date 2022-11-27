@@ -15,34 +15,39 @@ if(w < 0) {w *= -1; x -= w;}
     if(i<0) continue;
     if(i>127) continue;
 
-    if(y<32)
-      gfx.fbuf_top[i] |= (1<<y);
+    auto bb = (y<32) ? gfx.fbuf_top : gfx.fbuf_bot;
+    auto bbpx = (1<<(y%32));
+    if(gfx.modexor)
+      bb[i] ^= bbpx;
     else
-      gfx.fbuf_bot[i] |= (1<<(y-32));
+      bb[i] |= bbpx;
   }
 }
 void gfx_drawVline(int x, int y, int h){  
-if(h < 0) {h *= -1; y -= h;}
+if(h < 0) {h *= -1; y -= h-1;}
   if(x<0) return;
   if(x>127) return;
-  int e = y+h > 64 ? 64 : y+h;
+  int e = y+h > 63 ? 63 : y+h;
   for(int i=y; i<e; i++){
     if(i<0) continue;
     if(i>63) continue;
 
-    if(i<32)
-      gfx.fbuf_top[x] |= (1<<(i));
+    auto bb = (i<32) ? gfx.fbuf_top : gfx.fbuf_bot;
+    auto bbpx = (1<<(i%32));
+    if(gfx.modexor)
+      bb[x] ^= bbpx;
     else
-      gfx.fbuf_bot[x] |= (1<<(i-32));
+      bb[x] |= bbpx;
   }
 }
 void gfx_drawLine(int x, int y, int x2, int y2){
+  
     if(gfx.rotated){
         auto a = y;
-        y = -x+63;
+        y = 64-x;
         x = a;
         a = y2;
-        y2 = -x2+63;
+        y2 = 64-x2;
         x2 = a;
     }
 
@@ -89,13 +94,28 @@ void gfx_drawLine(int x, int y, int x2, int y2){
 }
 
 void gfx_drawRectSize(int x, int y, int w, int h){
-  gfx_drawLine(x,y,x+w,y);
-  gfx_drawLine(x,y,x,y+h);
-  gfx_drawLine(x,y+h-1,x+w,y+h);
-  gfx_drawLine(x+w-1,y,x+w,y+h);
+  //gfx.modexor = 0;
+  if(gfx.rotated){
+    gfx_drawHline(y,63-x,h);//W
+    gfx_drawHline(y,63-x-w+1,h);//E
+    gfx_drawVline(y,63-x-w+2,w-2);//N
+    gfx_drawVline(y+h-1,63-x-w+2,w-2);//S
+  }
+  else{
+    gfx_drawHline(x,y,w);//N
+    gfx_drawVline(x,y+1,h-1);//W
+    gfx_drawHline(x+1,y+h-1,w-1);//S
+    gfx_drawVline(x+w-1,y+1,h-2);//E
+  }
+
+  //gfx_drawLine(x,y,w,y);//N
+  // gfx_drawLine(x,y+1,x,h-1);//W
+  // gfx_drawLine(x+1,y+h-1,w-1,y+h-1);//S
+  // gfx_drawLine(x+w-1,y+1,x+w-1,h-2);//E
+  
 }
 
-void gfx_fillSection(int yoff, int ylen, int xoff, int xlen, int fill){
+void gfx_fillSection(int xoff, int yoff, int xlen, int ylen){
     if(gfx.rotated){
         auto a = yoff;
         yoff = 64-xoff-xlen;
@@ -114,10 +134,10 @@ void gfx_fillSection(int yoff, int ylen, int xoff, int xlen, int fill){
     yoff -= 32;
     int bb = ((1<<ylen)-1);
     for(int i=xoff; i<xoff+xlen; i++){
-      if(fill)
-      gfx.fbuf_bot[i] |= (bb<<(yoff));
+      if(gfx.modexor)
+        gfx.fbuf_bot[i] ^= (bb<<(yoff));
       else
-      gfx.fbuf_bot[i] &= (~(bb<<(yoff)));
+        gfx.fbuf_bot[i] |= (bb<<(yoff));
     }
   }
   else{
@@ -125,13 +145,13 @@ void gfx_fillSection(int yoff, int ylen, int xoff, int xlen, int fill){
     int bt = ((1<<ylen)-1);
     int bb = yy > 32 ? ((1<<(yy-32))-1) : 0;
     for(int i=xoff; i<xoff+xlen; i++){
-      if(fill){
-        gfx.fbuf_top[i] |= (bt<<yoff);
-        gfx.fbuf_bot[i] |= bb;
+      if(gfx.modexor){
+        gfx.fbuf_top[i] ^= (bt<<yoff);
+        gfx.fbuf_bot[i] ^= bb;
       }
       else{
-        gfx.fbuf_top[i] &= (~(bt<<yoff));
-        gfx.fbuf_bot[i] &= (~bb);
+        gfx.fbuf_top[i] |= (bt<<yoff);
+        gfx.fbuf_bot[i] |= bb;
       }
     }
   }
@@ -161,10 +181,12 @@ void drawPixel(int x, int y, int tx, int ty){
     if(tx+sx >= 128) return;
     if(tx+sx < 0) return;
     for(int s=0; s<gfx.scale; s++){
-      if(syy+s+ty<32)
-        gfx.fbuf_top[sx+tx] |= (1<<(syy+s+ty));
+      auto bb = (syy+s+ty<32) ? gfx.fbuf_top : gfx.fbuf_bot;
+      auto bbpx = (1<<((syy+s+ty)%32));
+      if(gfx.modexor)
+        bb[sx+tx] ^= bbpx;
       else
-        gfx.fbuf_bot[sx+tx] |= (1<<(syy+s+ty-32));
+        bb[sx+tx] |= bbpx;
     }
   }
 }
