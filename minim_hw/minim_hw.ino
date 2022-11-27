@@ -168,27 +168,28 @@ void setup(){
     // i2c_peripheral_enable(I2C2);
     delay(200);
     
+    uint8_t pat[4] = {
+      0b11111111,
+      0b10110000,
+      0b10001100,
+      0b10000011
+    };
+    //gfx_fillSection(2,30,2,30,1);
+
     for(int i=0; i<5; i++){
       ctx_switch(i);
       begin_ssd1306();
       gfx.rotated = 1;
       gfx_clear();
       gfx_drawRectSize(0,0,64,128);
-      // gfx_drawLine(32,32,32,0);
-      // gfx_drawLine(32,32,64,0);
-      // gfx_drawLine(32,32,64,32);
-      // gfx_drawLine(32,32,64,64);
-      // gfx_drawLine(32,32,32,64);
-      // gfx_drawLine(32,32,0,64);
-      // gfx_drawLine(32,32,0,32);
-      // gfx_drawLine(32,32,0,0);
+      gfx_drawBitmap8(20, 10, 40, 15, i+1, 4, pat);
       draw_ssd1306();
       delay(100);
     }
-    ctx_switch(0);
     
 
     Serial.println("ready");
+    while(1){}
 } 
 
 bool states[2][5];
