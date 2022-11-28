@@ -270,7 +270,9 @@ void collectSysex(char* b, int offset){
   for(int i = offset; i<3; i++){
     if(b[1+i] == 0xf7 && sysex){
       sysex = false;
+      usbmidi.sendControlChange(0,127,1);
       parseCommand(sysex_string.buf,sysex_string.count);
+      usbmidi.sendControlChange(0,127,0);
     }
     else
       sarray_push(sysex_string,b[1+i]);
