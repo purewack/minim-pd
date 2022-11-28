@@ -183,7 +183,7 @@ void setup(){
     gfx.modexor = 1;
     gfx.rotated = 1;
     gfx_clear();
-    gfx_drawRectSize(0,0,64,128);
+    //gfx_drawRectSize(0,0,64,128);
     for(int i=0; i<5; i++){
       ctx_switch(i);
       begin_ssd1306();
@@ -198,31 +198,34 @@ void setup(){
 
 int parseCommand(const char* bytes, int len){
     for(int i=0; i<len; i++){
-        if(bytes[i] == 'm'){
-            cmd_mode = bytes[++i];
-            //printf("MODE %d\n",cmd_mode); 
+        if(bytes[i] == 'x'){
+        	cmd_mode = bytes[++i];
         }
-        if(cmd_mode == MODE_SYS){
-            if(bytes[i] == 'r'){
-                int in = bytes[++i];
-                int out = bytes[++i];
-                //printf("\t* route audio %d -> %d\n",in,out); 
-            }
+        if(cmd_mode == 0){
+          	draw_ssd1306();
         }
         else if(cmd_mode == MODE_GFX){
             if(bytes[i] == 'G'){
-                //printf("\t* context switch to %d\n",bytes[++i]); 
-                ctx_switch(bytes[++i]);
+                int ctx = bytes[++i];
+                ctx_switch(ctx);
             }
+            else if(bytes[i] == 'S'){
+                int scale = bytes[++i];
+                gfx.scale = scale; 
+            }
+			else if(bytes[i] == 'I'){
+                int m = bytes[++i];;
+                gfx.modexor = m; 
+            }
+
             else if(bytes[i] == 'c'){
                 //printf("\t* cls\n"); 
                 gfx_clear();
             }
-            else if(bytes[i] == 'S'){
-                int scale = bytes[++i];
-                //printf("\t* set scale to %d\n",scale);
-                gfx.scale = scale; 
+            else if(bytes[i] == 'u'){
+                draw_ssd1306();
             }
+
             else if(bytes[i] == 'l'){
                 int x = bytes[++i];
                 int y = bytes[++i];
@@ -242,6 +245,7 @@ int parseCommand(const char* bytes, int len){
                 else
                   gfx_drawRectSize(x,y,w,h);
                 //printf("\t* rect @ (%d,%d) of [%d,%d] %s\n",x,y,w,h,fill ? "filled" : "lines"); 
+                
             }
             else if(bytes[i] == 's'){
                 //printf("\t* string [%s]\n",&bytes[++i]);
@@ -264,7 +268,7 @@ int parseCommand(const char* bytes, int len){
 
 void collectSysex(char* b, int offset){
   for(int i = offset; i<3; i++){
-    if(b[1+i] == 0xf7){
+    if(b[1+i] == 0xf7 && sysex){
       sysex = false;
       parseCommand(sysex_string.buf,sysex_string.count);
     }
@@ -321,7 +325,7 @@ void loop(){
         ctx_switch(ctx%5);
         draw_ssd1306();
       }
-      else if(b[1] == 0xf0){
+      else if(b[1] == 0xf0 && !sysex){
         sysex = true;
         sarray_clear(sysex_string);
         collectSysex(b, 1);
