@@ -146,6 +146,12 @@ void begin_gpio(){
   gpio_set_mode(GPIOB,8,GPIO_AF_OUTPUT_OD);
 }
 
+
+bool states[2][5];
+bool sysex = false;
+char* sysex_string;
+uint8_t sysex_string_len;
+
 void setup(){
   
     USBComposite.setProductId(0x0030);
@@ -153,6 +159,9 @@ void setup(){
     Serial.begin(115200);
     usbmidi.begin();
 
+    sysex_string = (char*)malloc(sizeof(char)*256);
+    sysex_string_len = 0;
+    sysex = false;
     imsgdata.buf = (uint8*)malloc(sizeof(uint8)*(2 + 128*8));
     imsgdata.lim = 130;
     sarray_clear(imsgdata);
@@ -168,27 +177,37 @@ void setup(){
     // i2c_peripheral_enable(I2C2);
     delay(200);
 
+    gfx.modexor = 1;
+    gfx.rotated = 1;
+    gfx_clear();
+    gfx_drawRectSize(0,0,64,128);
     for(int i=0; i<5; i++){
       ctx_switch(i);
       begin_ssd1306();
-      gfx.modexor = 1;
-      gfx.scale = 2;
-      gfx.rotated = 1;
-      gfx_clear();
-      
-      gfx_drawRectSize(0,0,64,128);
-      gfx_drawString("Hello",7,0);
-      gfx_fillSection(0,0,20,20);
-      gfx_drawLine(0,0,30,30);
       draw_ssd1306();
       delay(100);
     }
 
     Serial.println("ready");
-    while(1){}
 } 
 
-bool states[2][5];
+
+void parseSysex(){
+  Serial.println(sysex_string);
+}
+
+void collectSysex(char* b, int offset){
+  for(int i = offset; i<3; i++){
+    if(b[1+i] == 0xf7){
+      sysex = false;
+      parseSysex();
+    }
+    else if(sysex_string_len < 255){
+      sysex_string[sysex_string_len] = b[1+i];
+      sysex_string_len++;
+    }
+  }
+}
 
 void loop(){
   if(io.bscan_down){
@@ -217,29 +236,38 @@ void loop(){
   if(int a = usbmidi.available()){
     uint32 aa = usbmidi.readPacket();
     char *b = (char*)&aa;
-    Serial.println(b[1],DEC);
-    Serial.println(b[2],DEC);
-    Serial.println(b[3],DEC);
+    // Serial.println(b[1],DEC);
+    // Serial.println(b[2],DEC);
+    // Serial.println(b[3],DEC);
 
-    if(b[1] == 0x90){
-      int ctx = b[2]-midi_base;
-      bool bot = (ctx < 5);
-      ctx %= 5;
+    if(!sysex){
+      if(b[1] == 0x90){
+        int ctx = b[2]-midi_base;
+        bool bot = (ctx < 5);
+        ctx %= 5;
 
-      Serial.println(ctx,DEC);
-      Serial.println(bot,DEC);
-      states[1-bot][ctx] = b[3];
-      gfx.rotated = 1;
-      gfx_clear();
-      gfx_drawRectSize(0,0,64,128);
-      if(states[1][ctx])
-        gfx_fillSection(4,4,56,56);
-      if(states[0][ctx])
-        gfx_fillSection(4,4+64,56,56);
-      ctx_switch(ctx%5);
-      draw_ssd1306();
+        states[1-bot][ctx] = b[3];
+        gfx.rotated = 1;
+        gfx_clear();
+        gfx_drawRectSize(0,0,64,128);
+        if(states[1][ctx])
+          gfx_fillSection(4,4,56,56);
+        if(states[0][ctx])
+          gfx_fillSection(4,4+64,56,56);
+        ctx_switch(ctx%5);
+        draw_ssd1306();
+      }
+      else if(b[1] == 0xf0){
+        sysex = true;
+        sysex_string_len = 0;
+        collectSysex(b, 1);
+      }
     }
-    Serial.println("----");
+    else{
+      collectSysex(b, 0);
+    }
+    
+    // Serial.println("----");
   }
 
   delay(1);
