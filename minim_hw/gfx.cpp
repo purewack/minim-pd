@@ -231,7 +231,7 @@ void gfx_drawChar(char ch, int x, int y){
 }
 
 
-void gfx_drawString(char* str, int x, int y){
+void gfx_drawString(const char* str, int x, int y){
   int ii = 0;
 	while(str[ii] != 0){
 		gfx_drawChar(str[ii], x + ii*6*gfx.scale, y);

@@ -10,13 +10,18 @@ uint8 midi_base = 35;
 USBMIDI usbmidi;
 
 gfx_t gfx;
-
 int ctx = 0;
 int ctx_add = 0;
 i2c_dev* ctx_dev;
 i2c_msg imsg;
 sarray_t<uint8> imsgdata;
 
+sarray_t<char> sysex_string;
+bool states[2][5];
+bool sysex = false;
+const int MODE_SYS = 1;
+const int MODE_GFX = 2;
+int cmd_mode = 0;
 
 void ctx_switch(int c){
     ctx = c;
@@ -147,10 +152,6 @@ void begin_gpio(){
 }
 
 
-bool states[2][5];
-bool sysex = false;
-char* sysex_string;
-uint8_t sysex_string_len;
 
 void setup(){
   
@@ -159,9 +160,11 @@ void setup(){
     Serial.begin(115200);
     usbmidi.begin();
 
-    sysex_string = (char*)malloc(sizeof(char)*256);
-    sysex_string_len = 0;
+    sysex_string.buf = (char*)malloc(sizeof(char)*128);
+    sysex_string.lim = 128;
+    sarray_clear(sysex_string);
     sysex = false;
+
     imsgdata.buf = (uint8*)malloc(sizeof(uint8)*(2 + 128*8));
     imsgdata.lim = 130;
     sarray_clear(imsgdata);
@@ -192,20 +195,81 @@ void setup(){
 } 
 
 
-void parseSysex(){
-  Serial.println(sysex_string);
+
+int parseCommand(const char* bytes, int len){
+    for(int i=0; i<len; i++){
+        if(bytes[i] == 'm'){
+            cmd_mode = bytes[++i];
+            //printf("MODE %d\n",cmd_mode); 
+        }
+        if(cmd_mode == MODE_SYS){
+            if(bytes[i] == 'r'){
+                int in = bytes[++i];
+                int out = bytes[++i];
+                //printf("\t* route audio %d -> %d\n",in,out); 
+            }
+        }
+        else if(cmd_mode == MODE_GFX){
+            if(bytes[i] == 'G'){
+                //printf("\t* context switch to %d\n",bytes[++i]); 
+                ctx_switch(bytes[++i]);
+            }
+            else if(bytes[i] == 'c'){
+                //printf("\t* cls\n"); 
+                gfx_clear();
+            }
+            else if(bytes[i] == 'S'){
+                int scale = bytes[++i];
+                //printf("\t* set scale to %d\n",scale);
+                gfx.scale = scale; 
+            }
+            else if(bytes[i] == 'l'){
+                int x = bytes[++i];
+                int y = bytes[++i];
+                int x2 = bytes[++i];
+                int y2 = bytes[++i];
+                //printf("\t* line (%d,%d) -> (%d,%d)\n",x,y,x2,y2); 
+                gfx_drawLine(x,y,x2,y2);
+            }
+            else if(bytes[i] == 'r'){
+                int x = bytes[++i];
+                int y = bytes[++i];
+                int w = bytes[++i];
+                int h = bytes[++i];
+                int fill = bytes[++i];
+                if(fill)
+                  gfx_fillSection(x,y,w,h);
+                else
+                  gfx_drawRectSize(x,y,w,h);
+                //printf("\t* rect @ (%d,%d) of [%d,%d] %s\n",x,y,w,h,fill ? "filled" : "lines"); 
+            }
+            else if(bytes[i] == 's'){
+                //printf("\t* string [%s]\n",&bytes[++i]);
+                int x = bytes[++i];
+                int y = bytes[++i];
+                const char* str = &bytes[++i];
+                gfx_drawString(str,x,y); 
+                int j = 0;
+                while(bytes[i+j] != 0) j++;
+                i+=j;
+            }
+        }
+        else{
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 void collectSysex(char* b, int offset){
   for(int i = offset; i<3; i++){
     if(b[1+i] == 0xf7){
       sysex = false;
-      parseSysex();
+      parseCommand(sysex_string.buf,sysex_string.count);
     }
-    else if(sysex_string_len < 255){
-      sysex_string[sysex_string_len] = b[1+i];
-      sysex_string_len++;
-    }
+    else
+      sarray_push(sysex_string,b[1+i]);
   }
 }
 
@@ -259,7 +323,7 @@ void loop(){
       }
       else if(b[1] == 0xf0){
         sysex = true;
-        sysex_string_len = 0;
+        sarray_clear(sysex_string);
         collectSysex(b, 1);
       }
     }
