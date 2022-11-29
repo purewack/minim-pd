@@ -1,6 +1,6 @@
 
 extern "C" {
-#include "../m_pd.h"
+#include "../src/m_pd.h"
 #include <stdlib.h>
 
 static t_class *oled_class;

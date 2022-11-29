@@ -14,7 +14,7 @@ cflags = -std=c++17
 define forDarwin
 cflags += -stdlib=libc++ -mmacosx-version-min=10.9
 endef
-PDINCLUDEDIR = ./
+PDINCLUDEDIR = ./src/
 PDBINDIR = /c/Program Files/Pd/bin/
 
 cflags += -std=c++0x
