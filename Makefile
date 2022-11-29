@@ -1,8 +1,8 @@
- # Makefile for mylib
+ # Makefile for minim
 
-lib.name = motif
+lib.name = minim
 
-class.sources = bank~.cpp ticker.cpp mapper.cpp plonk~.cpp 
+class.sources = src/bank~.cpp src/ticker.cpp src/mapper.cpp src/plonk~.cpp 
 
 # datafiles = help.pd README.txt LICENSE.txt
 
