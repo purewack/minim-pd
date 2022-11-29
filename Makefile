@@ -2,7 +2,7 @@
 
 lib.name = motif
 
-class.sources = bank~.cpp ticker.cpp mapper.cpp plonk~.cpp 
+class.sources = bank~.cpp ticker.cpp mapper.cpp plonk~.cpp minim_hw/oled.cpp
 
 # datafiles = help.pd README.txt LICENSE.txt
 
