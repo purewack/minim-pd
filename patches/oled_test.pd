@@ -1,0 +1,10 @@
+#N canvas 406 492 450 300 12;
+#X obj 114 220 oled 2;
+#X obj 117 254 print;
+#X obj 207 246 midiout;
+#X msg 125 184 clear \, line 10 10 50 5 \, send;
+#X msg 30 121 clear \, rect 0 0 10 10 \, fill 30 30 4 4 \, line 0 0 30 30 \, line 0 50 50 50 \, S 1 \, string 0 40 hello \, S 2 \, s 0 50 Hello \, xor 1 \, box 0 60 64 8 1 \, send;
+#X connect 0 0 1 0;
+#X connect 0 0 2 0;
+#X connect 3 0 0 0;
+#X connect 4 0 0 0;
