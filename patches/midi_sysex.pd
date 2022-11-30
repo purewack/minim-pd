@@ -1,4 +1,4 @@
-#N canvas 554 275 979 586 10;
+#N canvas 340 310 979 586 10;
 #X obj 79 73 noteout;
 #X obj 425 332 midiout;
 #X msg 104 26 3;
@@ -39,6 +39,9 @@
 #X obj 97 126 bng 16 250 50 0 empty empty empty 0 -8 0 10 #fcfcfc #000000 #000000;
 #X msg 123 135 stop;
 #X msg 171 332 240 \, 71 \, 0 \, 247;
+#X obj 652 497 midiout;
+#X msg 559 406 240 \, 120 \, 3 \, 108 \, 0 \, 4 \, 1 \, 0 \, 15 \, 15 \, 2 \, 0 \, 0 \, 15 247;
+#X msg 569 444 240 \, 120 \, 2 \, 99 \, 83 \, 2 \, 98 \, 32 \, 3 \, 0 \, 32 \, 32 \, 0 \, 1 \, 117 \, 247;
 #X connect 2 0 0 1;
 #X connect 3 0 0 1;
 #X connect 4 0 0 0;
@@ -83,3 +86,5 @@
 #X connect 37 0 30 0;
 #X connect 38 0 30 0;
 #X connect 39 0 32 0;
+#X connect 41 0 40 0;
+#X connect 42 0 40 0;

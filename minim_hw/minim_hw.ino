@@ -21,7 +21,10 @@ bool states[2][5];
 bool sysex = false;
 const int MODE_SYS = 1;
 const int MODE_GFX = 2;
+const int MODE_DATA = 3;
 int cmd_mode = 0;
+
+uint8_t data_buf[512];
 
 void ctx_switch(int c){
     ctx = c;
@@ -204,6 +207,23 @@ int parseCommand(const char* bytes, int len){
         if(cmd_mode == 0){
           	draw_ssd1306();
         }
+        else if(cmd_mode == MODE_DATA){
+          if(bytes[i] == 'l'){
+              int start = bytes[++i];
+              int count = bytes[++i];
+              const char* buf = &bytes[++i];
+              if(start+count < 512){
+                  int d = 0;
+                  for(int j=0; j<count*2; j+=2){
+                    data_buf[start+d] = uint8_t(buf[j+0]) << 0;
+                    data_buf[start+d] |= uint8_t(buf[j+1]) << 4;
+                    d++;
+                  }
+              }
+              i+=count*2;
+              Serial.println("loaded LE_bitmap data");
+          }
+        }
         else if(cmd_mode == MODE_GFX){
             if(bytes[i] == 'G'){
                 int ctx = bytes[++i];
@@ -213,7 +233,7 @@ int parseCommand(const char* bytes, int len){
                 int scale = bytes[++i];
                 gfx.scale = scale; 
             }
-			else if(bytes[i] == 'I'){
+			      else if(bytes[i] == 'I'){
                 int m = bytes[++i];;
                 gfx.modexor = m; 
             }
@@ -257,6 +277,21 @@ int parseCommand(const char* bytes, int len){
                 while(bytes[i+j] != 0) j++;
                 i+=j;
             }
+            else if(bytes[i] == 'b'){
+                int s = bytes[++i];
+                int x = bytes[++i];
+                int y = bytes[++i];
+                int w = bytes[++i];
+                int h = bytes[++i];
+                int start = bytes[++i];
+                int len = bytes[++i];
+                if(s == 8)
+                  gfx_drawBitmap8(x,y,w,h,len,data_buf+start);
+                else if(s == 16)
+                  gfx_drawBitmap16(x,y,w,h,len,(uint16_t*)(data_buf+start));
+                else if(s == 32)
+                  gfx_drawBitmap32(x,y,w,h,len,(uint32_t*)(data_buf+start));
+            }
         }
         else{
             return -1;
@@ -267,6 +302,13 @@ int parseCommand(const char* bytes, int len){
 }
 
 void collectSysex(char* b, int offset){
+  
+  // Serial.println("[");
+  // Serial.println(b[0],DEC);
+  //   Serial.println(b[1],DEC);
+  //   Serial.println(b[2],DEC);
+  //   Serial.println(b[3],DEC);
+  // Serial.println("]");
   for(int i = offset; i<3; i++){
     if(b[1+i] == 0xf7 && sysex){
       sysex = false;
