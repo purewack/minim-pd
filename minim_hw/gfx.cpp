@@ -194,9 +194,13 @@ void drawPixel(int x, int y, int tx, int ty){
 
 
 void gfx_drawBitmap(int x, int y, int w, int h, int bpc, int blen, const uint8_t* buf){
-  for(int xx=0; xx<w*bpc; xx++){
+  for(int xx=0; xx<w; xx++){
     for(int yy=0; yy<h; yy++){
-      if(buf[xx%blen] & (1<<(yy%bpc)))
+      uint8_t bb = (xx*bpc) + (yy>>3)%bpc;
+      uint8_t ybyte = 0;
+      ybyte |= (buf[bb%blen]);
+
+      if(ybyte & (1<<(yy%8)))
         drawPixel(xx,yy,x,y);
     }
   }
@@ -207,9 +211,10 @@ void gfx_drawBitmap(int x, int y, int w, int h, int bpc, int blen, const uint8_t
 
 void gfx_drawChar(char ch, int x, int y){
   ch = (ch < ' ' || ch > 126) ? 0 : (ch-' '+1);
-  gfx_drawBitmap8(x,y,
+  gfx_drawBitmap(x,y,
     fontsmall_wide,
     fontsmall_tall,
+    fontsmall_tall>>3,
     fontsmall_wide,
     &fontsmall_data[int(ch)*8]
   );

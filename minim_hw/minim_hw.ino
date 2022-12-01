@@ -199,20 +199,24 @@ void setup(){
 
 
 
-int parseCommand(const char* bytes, int len){
+int parseCommand(const char* cmd_bytes, int len){
     for(int i=0; i<len; i++){
-        if(bytes[i] == 'x'){
-        	cmd_mode = bytes[++i];
+        if(cmd_bytes[i] == 'x'){
+        	cmd_mode = cmd_bytes[++i];
         }
         if(cmd_mode == 0){
           	draw_ssd1306();
         }
         else if(cmd_mode == MODE_DATA){
-          if(bytes[i] == 'l'){
-              int start = bytes[++i];
-              int nibbles = bytes[++i];
-              int bytes = nibbles/2;
-              const char* buf = &bytes[++i];
+          if(cmd_bytes[i] == 'l'){
+              int start = cmd_bytes[++i];
+              int bytes = cmd_bytes[++i];
+              int nibbles = bytes*2;
+              Serial.println("loading LE_bitmap into");
+              Serial.println(start);
+              Serial.println(nibbles);
+              Serial.println(bytes);
+              const char* buf = &cmd_bytes[++i];
               if(start+bytes < 512){
                   int d = 0;
                   for(int j=0; j<nibbles; j+=2){
@@ -220,72 +224,74 @@ int parseCommand(const char* bytes, int len){
                     data_buf[start+d] |= uint8_t(buf[j+1]) << 4;
                     d++;
                   }
+                Serial.println("loaded LE_bitmap data");
+                for(int i=0; i<bytes; i++)
+                  Serial.println(data_buf[start+i],HEX);
               }
               i+=nibbles;
-              Serial.println("loaded LE_bitmap data");
           }
         }
         else if(cmd_mode == MODE_GFX){
-            if(bytes[i] == 'G'){
-                int ctx = bytes[++i];
+            if(cmd_bytes[i] == 'G'){
+                int ctx = cmd_bytes[++i];
                 ctx_switch(ctx);
             }
-            else if(bytes[i] == 'S'){
-                int scale = bytes[++i];
+            else if(cmd_bytes[i] == 'S'){
+                int scale = cmd_bytes[++i];
                 gfx.scale = scale; 
             }
-			      else if(bytes[i] == 'I'){
-                int m = bytes[++i];;
+			      else if(cmd_bytes[i] == 'I'){
+                int m = cmd_bytes[++i];;
                 gfx.modexor = m; 
             }
 
-            else if(bytes[i] == 'c'){
-                //printf("\t* cls\n"); 
+            else if(cmd_bytes[i] == 'c'){
                 gfx_clear();
             }
-            else if(bytes[i] == 'u'){
+            else if(cmd_bytes[i] == 'u'){
                 draw_ssd1306();
             }
 
-            else if(bytes[i] == 'l'){
-                int x = bytes[++i];
-                int y = bytes[++i];
-                int x2 = bytes[++i];
-                int y2 = bytes[++i];
-                //printf("\t* line (%d,%d) -> (%d,%d)\n",x,y,x2,y2); 
+            else if(cmd_bytes[i] == 'l'){
+                int x = cmd_bytes[++i];
+                int y = cmd_bytes[++i];
+                int x2 = cmd_bytes[++i];
+                int y2 = cmd_bytes[++i];
                 gfx_drawLine(x,y,x2,y2);
             }
-            else if(bytes[i] == 'r'){
-                int x = bytes[++i];
-                int y = bytes[++i];
-                int w = bytes[++i];
-                int h = bytes[++i];
-                int fill = bytes[++i];
+            else if(cmd_bytes[i] == 'r'){
+                int x = cmd_bytes[++i];
+                int y = cmd_bytes[++i];
+                int w = cmd_bytes[++i];
+                int h = cmd_bytes[++i];
+                int fill = cmd_bytes[++i];
                 if(fill)
                   gfx_fillSection(x,y,w,h);
                 else
                   gfx_drawRectSize(x,y,w,h);
-                //printf("\t* rect @ (%d,%d) of [%d,%d] %s\n",x,y,w,h,fill ? "filled" : "lines"); 
                 
             }
-            else if(bytes[i] == 's'){
-                //printf("\t* string [%s]\n",&bytes[++i]);
-                int x = bytes[++i];
-                int y = bytes[++i];
-                const char* str = &bytes[++i];
+            else if(cmd_bytes[i] == 's'){
+                int x = cmd_bytes[++i];
+                int y = cmd_bytes[++i];
+                const char* str = &cmd_bytes[++i];
                 gfx_drawString(str,x,y); 
                 int j = 0;
-                while(bytes[i+j] != 0) j++;
+                while(cmd_bytes[i+j] != 0) j++;
                 i+=j;
             }
-            else if(bytes[i] == 'b'){
-                int x = bytes[++i];
-                int y = bytes[++i];
-                int w = bytes[++i];
-                int h = bytes[++i];
-                int start = bytes[++i];
-                int bytes_per_col = bytes[++i];
-                int len = bytes[++i];
+            else if(cmd_bytes[i] == 'b'){
+                int x = cmd_bytes[++i];
+                int y = cmd_bytes[++i];
+                int w = cmd_bytes[++i];
+                int h = cmd_bytes[++i];
+                int start = cmd_bytes[++i];
+                int bytes_per_col = cmd_bytes[++i];
+                int len = cmd_bytes[++i];
+                Serial.println("drawing bitmap ");
+                Serial.println(start);
+                Serial.println(bytes_per_col);
+                Serial.println(len);
                 gfx_drawBitmap(x,y,w,h,bytes_per_col,len,data_buf+start);
             }
         }

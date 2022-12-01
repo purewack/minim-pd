@@ -1,4 +1,4 @@
-#N canvas 545 136 565 324 12;
+#N canvas 841 362 565 321 12;
 #X obj 115 233 oled 2;
 #X obj 134 270 print;
 #X obj 77 270 midiout;
@@ -9,11 +9,13 @@
 #X msg 4 69 clear \, rect 0 0 10 10 \, fill 30 30 4 4 \, line 0 0 30 30 \, line 0 50 50 50 \, S 1 \, string 0 40 hello@world \, S 2 \, s 0 50 Hello \, xor 1 \, box 0 60 64 8 1 \, send;
 #X msg 6 166 scale 1;
 #X msg 6 192 scale 2;
-#X msg 292 125 upload img8.txt;
-#X msg 292 148 clear \, glyph 0 1 10 1 1 24 24 \, send;
-#X msg 292 202 clear \, glyph 0 2 32 1 1 24 24 \, send;
-#X msg 292 255 clear \, glyph 0 4 48 1 1 24 24 \, send;
+#X msg 291 125 upload img8.txt;
 #X msg 6 218 scale 3;
+#X msg 292 202 clear \, glyph 0 2 16 1 1 24 24 \, send;
+#X msg 292 148 clear \, glyph 0 1 5 0 0 24 24 \, send;
+#X msg 292 255 clear \, glyph 0 3 24 1 1 24 32 \, send;
+#X msg 295 284 upload img34.txt;
+#X msg 295 307 clear \, glyph 0 6 30 1 1 10 60 \, send;
 #X connect 0 0 1 0;
 #X connect 0 0 2 0;
 #X connect 0 1 4 0;
@@ -28,3 +30,5 @@
 #X connect 12 0 0 0;
 #X connect 13 0 0 0;
 #X connect 14 0 0 0;
+#X connect 15 0 0 0;
+#X connect 16 0 0 0;

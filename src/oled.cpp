@@ -131,7 +131,7 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
         if(glyph_file){
             post("processing file gfx data");
             int len = 0;
-            int bbc = 0;
+            int npc = 0;
             int offset = argc > 1 ? atom_getint(&argv[1]) : 0;
             SETFLOAT(oled->a_table+oled->a_table_i,(float)('x'));
             SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(3));
@@ -143,7 +143,7 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
             int ww = 0;
             int hh = 0;
             while(fgets(oled->str,512,glyph_file)){
-                uint32_t byte = 0;
+                uint8_t ybyte[16] = {0};
                 int cc = 0;
                 for(int j=0; j<512; j++){
                     auto c = oled->str[j];
@@ -151,19 +151,25 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
                     if(c == '\n') break;
                     if(c == '\r') break;
                     if(c != ' '){
-                        byte |= (1<<cc);
+                        ybyte[(cc>>3)] |= (1<<(cc%8));
                     }
+                    post("[%d][%d]%x.%x.%x.%x",cc,cc>>3,ybyte[3],ybyte[2],ybyte[1], ybyte[0]);
                     cc+=1;
                 }   
+                //bitmap height
                 hh += 1;
+                //bitmap width
                 ww = std::max(ww,cc);
-                bbc = std::max(bbc,int(std::floor(float(cc)/4.f)));
-                if(bbc&1) bbc++;
-                len += bbc;
-                for(int i=0; i<bbc; i++){
-                    auto bb = (byte>>(4*i))&0xf;
-                    SETFLOAT(oled->a_table+oled->a_table_i,(float)(bb));
-                    oled->a_table_i++;
+                //nibbles per column
+                npc = std::max(npc,int(std::floor(float(ww)/4.f)));
+                if(npc&1) npc++;
+                len += npc;
+                for(int i=0; i<npc; i+=2){
+                    auto n1 = (ybyte[(i>>1)]&0xf);
+                    auto n2 = (ybyte[(i>>1)]>>4)&(0xf);
+                    SETFLOAT(oled->a_table+oled->a_table_i,(float)(n1));
+                    SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(n2));
+                    oled->a_table_i+=2;
                     //post("sending %x",bb);
                 }
             }
@@ -176,7 +182,7 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
 
             //post info of glyph loading
             SETFLOAT(oled->a_info+0,(float)(offset));
-            SETFLOAT(oled->a_info+1,(float)(bbc/2));
+            SETFLOAT(oled->a_info+1,(float)(npc/2));
             SETFLOAT(oled->a_info+2,(float)(len/2));
             SETFLOAT(oled->a_info+3,(float)(ww));
             SETFLOAT(oled->a_info+4,(float)(hh));
