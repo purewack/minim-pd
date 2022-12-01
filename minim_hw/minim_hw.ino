@@ -283,11 +283,15 @@ int parseCommand(const char* cmd_bytes, int len){
             else if(cmd_bytes[i] == 'b'){
                 int x = cmd_bytes[++i];
                 int y = cmd_bytes[++i];
+                int nw = cmd_bytes[++i];
                 int w = cmd_bytes[++i];
+                int nh = cmd_bytes[++i];
                 int h = cmd_bytes[++i];
                 int start = cmd_bytes[++i];
                 int bytes_per_col = cmd_bytes[++i];
                 int len = cmd_bytes[++i];
+                if(nw) w = -w;
+                if(nh) h = -h;
                 Serial.println("drawing bitmap ");
                 Serial.println(start);
                 Serial.println(bytes_per_col);

@@ -195,15 +195,25 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
         }
     }
     else if(s == gensym("glyph") && argc == 7){
+        int ww = int(atom_getfloat(&argv[5]));
+        int hh = int(atom_getfloat(&argv[6]));
+        int nw = ww < 0;
+        int nh = hh < 0;
+        if(nw) ww = -ww;
+        if(nh) hh = -hh;
+        float w2 = float(ww&0x7f);
+        float h2 = float(hh&0x7f);
         SETFLOAT(oled->a_table+oled->a_table_i,(float)('b'));
         SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[3]));//x
         SETFLOAT(oled->a_table+oled->a_table_i+2,atom_getfloat(&argv[4]));//y
-        SETFLOAT(oled->a_table+oled->a_table_i+3,atom_getfloat(&argv[5]));//w
-        SETFLOAT(oled->a_table+oled->a_table_i+4,atom_getfloat(&argv[6]));//h
-        SETFLOAT(oled->a_table+oled->a_table_i+5,atom_getfloat(&argv[0]));//image start idx
-        SETFLOAT(oled->a_table+oled->a_table_i+6,atom_getfloat(&argv[1])); //bytes per column
-        SETFLOAT(oled->a_table+oled->a_table_i+7,atom_getfloat(&argv[2])); //byte count
-        oled->a_table_i+=8;
+        SETFLOAT(oled->a_table+oled->a_table_i+3,(nw ? 1.f : 0.f));
+        SETFLOAT(oled->a_table+oled->a_table_i+4,w2);
+        SETFLOAT(oled->a_table+oled->a_table_i+5,(nh ? 1.f : 0.f));
+        SETFLOAT(oled->a_table+oled->a_table_i+6,h2);
+        SETFLOAT(oled->a_table+oled->a_table_i+7,atom_getfloat(&argv[0]));//image start idx
+        SETFLOAT(oled->a_table+oled->a_table_i+8,atom_getfloat(&argv[1])); //bytes per column
+        SETFLOAT(oled->a_table+oled->a_table_i+9,atom_getfloat(&argv[2])); //byte count
+        oled->a_table_i+=10;
     }
     else{
         pd_error(oled,"invaild command");
