@@ -125,7 +125,7 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
     else if(s == gensym("upload") && argc >= 1){
         const char* filename = atom_getsymbol(&argv[0])->s_name;
         char path[MAXPDSTRING], *dummy;
-        auto glyph_fd = open_via_path(oled->cwd,filename,"",path,&dummy,MAXPDSTRING,1);
+        open_via_path(oled->cwd,filename,"",path,&dummy,MAXPDSTRING,1);
         snprintf(oled->str,MAXPDSTRING,"%s/%s",path,filename);
         auto glyph_file = sys_fopen(oled->str,"r");
         if(glyph_file){
@@ -140,6 +140,8 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
             auto len_idx = oled->a_table_i+4;
             oled->a_table_i+=5;
 
+            int ww = 0;
+            int hh = 0;
             while(fgets(oled->str,512,glyph_file)){
                 uint32_t byte = 0;
                 int cc = 0;
@@ -153,14 +155,16 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
                     }
                     cc+=1;
                 }   
+                hh += 1;
+                ww = std::max(ww,cc);
                 bbc = std::max(bbc,int(std::floor(float(cc)/4.f)));
                 if(bbc&1) bbc++;
-                len += bbc/2;
+                len += bbc;
                 for(int i=0; i<bbc; i++){
                     auto bb = (byte>>(4*i))&0xf;
                     SETFLOAT(oled->a_table+oled->a_table_i,(float)(bb));
                     oled->a_table_i++;
-                    post("sending %x",bb);
+                    //post("sending %x",bb);
                 }
             }
 
@@ -171,11 +175,12 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
             oled_fresh(oled);
 
             //post info of glyph loading
-            if(bbc == 6) bbc = 8;
             SETFLOAT(oled->a_info+0,(float)(offset));
             SETFLOAT(oled->a_info+1,(float)(bbc/2));
-            SETFLOAT(oled->a_info+2,(float)(len));
-            outlet_anything(oled->o_info,gensym("gylph"),3,oled->a_info);
+            SETFLOAT(oled->a_info+2,(float)(len/2));
+            SETFLOAT(oled->a_info+3,(float)(ww));
+            SETFLOAT(oled->a_info+4,(float)(hh));
+            outlet_anything(oled->o_info,gensym("gylph"),5,oled->a_info);
 
             sys_fclose(glyph_file);
         }
@@ -205,7 +210,7 @@ void* oled_new(t_floatarg ctx){
     t_oled* x = (t_oled*)pd_new(oled_class);
     x->o_midi = (t_outlet*)outlet_new(&x->x_obj, &s_list);
     x->o_info = (t_outlet*)outlet_new(&x->x_obj, &s_list);
-    x->a_info = (t_atom*)malloc(sizeof(t_atom)*3);
+    x->a_info = (t_atom*)malloc(sizeof(t_atom)*5);
     x->a_table = (t_atom*)malloc(sizeof(t_atom)*256);
     x->a_table_i = 0;
     x->context = int(ctx);

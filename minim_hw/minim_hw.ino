@@ -210,17 +210,18 @@ int parseCommand(const char* bytes, int len){
         else if(cmd_mode == MODE_DATA){
           if(bytes[i] == 'l'){
               int start = bytes[++i];
-              int count = bytes[++i];
+              int nibbles = bytes[++i];
+              int bytes = nibbles/2;
               const char* buf = &bytes[++i];
-              if(start+count < 512){
+              if(start+bytes < 512){
                   int d = 0;
-                  for(int j=0; j<count*2; j+=2){
+                  for(int j=0; j<nibbles; j+=2){
                     data_buf[start+d] = uint8_t(buf[j+0]) << 0;
                     data_buf[start+d] |= uint8_t(buf[j+1]) << 4;
                     d++;
                   }
               }
-              i+=count*2;
+              i+=nibbles;
               Serial.println("loaded LE_bitmap data");
           }
         }
@@ -285,12 +286,7 @@ int parseCommand(const char* bytes, int len){
                 int start = bytes[++i];
                 int bytes_per_col = bytes[++i];
                 int len = bytes[++i];
-                if(bytes_per_col == 1)
-                  gfx_drawBitmap8(x,y,w,h,len,data_buf+start);
-                else if(bytes_per_col == 2)
-                  gfx_drawBitmap16(x,y,w,h,len,(uint16_t*)(data_buf+start));
-                else if(bytes_per_col == 4)
-                  gfx_drawBitmap32(x,y,w,h,len,(uint32_t*)(data_buf+start));
+                gfx_drawBitmap(x,y,w,h,bytes_per_col,len,data_buf+start);
             }
         }
         else{

@@ -161,7 +161,7 @@ void gfx_fillSection(int xoff, int yoff, int xlen, int ylen){
 void drawPixel(int x, int y, int tx, int ty){
 
   if(gfx.rotated){
-    x += 1;
+    tx += gfx.scale;
     auto a = tx;
     tx = ty;
     ty = -a;
@@ -193,26 +193,10 @@ void drawPixel(int x, int y, int tx, int ty){
 }
 
 
-void gfx_drawBitmap8(int x, int y, int w, int h, int blen, const uint8_t* buf){
-  for(int xx=0; xx<w; xx++){
+void gfx_drawBitmap(int x, int y, int w, int h, int bpc, int blen, const uint8_t* buf){
+  for(int xx=0; xx<w*bpc; xx++){
     for(int yy=0; yy<h; yy++){
-      if(buf[xx%blen] & (1<<(yy%8)))
-        drawPixel(xx,yy,x,y);
-    }
-  }
-}
-void gfx_drawBitmap16(int x, int y, int w, int h, int blen, const uint16_t* buf){
-  for(int xx=0; xx<w; xx++){
-    for(int yy=0; yy<h; yy++){
-      if(buf[xx%blen] & (1<<(yy%16)))
-        drawPixel(xx,yy,x,y);
-    }
-  }
-}
-void gfx_drawBitmap32(int x, int y, int w, int h, int blen, const uint32_t* buf){
-  for(int xx=0; xx<w; xx++){
-    for(int yy=0; yy<h; yy++){
-      if(buf[xx%blen] & (1<<(yy%32)))
+      if(buf[xx%blen] & (1<<(yy%bpc)))
         drawPixel(xx,yy,x,y);
     }
   }
