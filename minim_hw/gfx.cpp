@@ -161,6 +161,7 @@ void gfx_fillSection(int xoff, int yoff, int xlen, int ylen){
 void drawPixel(int x, int y, int tx, int ty){
 
   if(gfx.rotated){
+    x += 1;
     auto a = tx;
     tx = ty;
     ty = -a;

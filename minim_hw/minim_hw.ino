@@ -278,18 +278,18 @@ int parseCommand(const char* bytes, int len){
                 i+=j;
             }
             else if(bytes[i] == 'b'){
-                int s = bytes[++i];
                 int x = bytes[++i];
                 int y = bytes[++i];
                 int w = bytes[++i];
                 int h = bytes[++i];
                 int start = bytes[++i];
+                int bytes_per_col = bytes[++i];
                 int len = bytes[++i];
-                if(s == 8)
+                if(bytes_per_col == 1)
                   gfx_drawBitmap8(x,y,w,h,len,data_buf+start);
-                else if(s == 16)
+                else if(bytes_per_col == 2)
                   gfx_drawBitmap16(x,y,w,h,len,(uint16_t*)(data_buf+start));
-                else if(s == 32)
+                else if(bytes_per_col == 4)
                   gfx_drawBitmap32(x,y,w,h,len,(uint32_t*)(data_buf+start));
             }
         }
