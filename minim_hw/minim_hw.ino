@@ -1,6 +1,7 @@
 #include "include/libdarray.h"
 #include "include/gfx.h"
 #include "include/io.h"
+#include "include/cmd.h"
 #include <libmaple/gpio.h>
 #include <libmaple/i2c.h>
 #include <USBMIDI.h>
@@ -196,115 +197,6 @@ void setup(){
     Serial.println("ready");
 } 
 
-
-
-int parseCommand(const char* cmd_bytes, int len){
-    for(int i=0; i<len; i++){
-        if(cmd_bytes[i] == 'x'){
-        	cmd_mode = cmd_bytes[++i];
-        }
-        if(cmd_mode == 0){
-          	draw_ssd1306();
-        }
-        else if(cmd_mode == MODE_DATA){
-          if(cmd_bytes[i] == 'l'){
-              int start = cmd_bytes[++i];
-              int bytes = cmd_bytes[++i];
-              int nibbles = bytes*2;
-              Serial.println("loading LE_bitmap into");
-              Serial.println(start);
-              Serial.println(nibbles);
-              Serial.println(bytes);
-              const char* buf = &cmd_bytes[++i];
-              if(start+bytes < 512){
-                  int d = 0;
-                  for(int j=0; j<nibbles; j+=2){
-                    data_buf[start+d] = uint8_t(buf[j+0]) << 0;
-                    data_buf[start+d] |= uint8_t(buf[j+1]) << 4;
-                    d++;
-                  }
-                Serial.println("loaded LE_bitmap data");
-                for(int i=0; i<bytes; i++)
-                  Serial.println(data_buf[start+i],HEX);
-              }
-              i+=nibbles;
-          }
-        }
-        else if(cmd_mode == MODE_GFX){
-            if(cmd_bytes[i] == 'G'){
-                int ctx = cmd_bytes[++i];
-                ctx_switch(ctx);
-            }
-            else if(cmd_bytes[i] == 'S'){
-                int scale = cmd_bytes[++i];
-                gfx.scale = scale; 
-            }
-			      else if(cmd_bytes[i] == 'I'){
-                int m = cmd_bytes[++i];;
-                gfx.modexor = m; 
-            }
-
-            else if(cmd_bytes[i] == 'c'){
-                gfx_clear();
-            }
-            else if(cmd_bytes[i] == 'u'){
-                draw_ssd1306();
-            }
-
-            else if(cmd_bytes[i] == 'l'){
-                int x = cmd_bytes[++i];
-                int y = cmd_bytes[++i];
-                int x2 = cmd_bytes[++i];
-                int y2 = cmd_bytes[++i];
-                gfx_drawLine(x,y,x2,y2);
-            }
-            else if(cmd_bytes[i] == 'r'){
-                int x = cmd_bytes[++i];
-                int y = cmd_bytes[++i];
-                int w = cmd_bytes[++i];
-                int h = cmd_bytes[++i];
-                int fill = cmd_bytes[++i];
-                if(fill)
-                  gfx_fillSection(x,y,w,h);
-                else
-                  gfx_drawRectSize(x,y,w,h);
-                
-            }
-            else if(cmd_bytes[i] == 's'){
-                int x = cmd_bytes[++i];
-                int y = cmd_bytes[++i];
-                const char* str = &cmd_bytes[++i];
-                gfx_drawString(str,x,y); 
-                int j = 0;
-                while(cmd_bytes[i+j] != 0) j++;
-                i+=j;
-            }
-            else if(cmd_bytes[i] == 'b'){
-                int x = cmd_bytes[++i];
-                int y = cmd_bytes[++i];
-                int nw = cmd_bytes[++i];
-                int w = cmd_bytes[++i];
-                int nh = cmd_bytes[++i];
-                int h = cmd_bytes[++i];
-                int start = cmd_bytes[++i];
-                int bytes_per_col = cmd_bytes[++i];
-                int len = cmd_bytes[++i];
-                if(nw) w = -w;
-                if(nh) h = -h;
-                Serial.println("drawing bitmap ");
-                Serial.println(start);
-                Serial.println(bytes_per_col);
-                Serial.println(len);
-                gfx_drawBitmap(x,y,w,h,bytes_per_col,len,data_buf+start);
-            }
-        }
-        else{
-            return -1;
-        }
-    }
-
-    return 0;
-}
 
 void collectSysex(char* b, int offset){
   
