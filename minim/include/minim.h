@@ -24,15 +24,13 @@
 #include <limits>
 #endif
 
+#include <vector>
+
 #define AUDIO_CLIP_SIZE 8388608 //8MB 8*1024*1024*4bytes ~ 43s @ 48kHz
 
-enum MidiBytes: int{
-	on = 144, //x90
-	off = 128, //x80
-	cc = 176, //xb0
-};
-
 inline RtAudio adac;
+inline RtMidiIn* midiin;
+inline std::vector<unsigned char> midiin_bytes;
 
 void audio_end();
 int audio_init();
@@ -44,4 +42,8 @@ int rtaudio_process (void *out_b, void *in_b, unsigned int nBufferFrames,
 
 int initGFXSystem();
 int endGFXSystem();
-int postCommand(std::string s);
+
+int initMidiSystem();
+int endMidiSystem();
+
+void processSystems();

@@ -15,12 +15,18 @@ add_subdirectory(deps/rtmidi)
 add_subdirectory(deps/rtaudio)
 add_subdirectory(deps/raylib)
 
-add_executable(${PROJECT_NAME} src/main.cpp src/gfx.cpp src/audio.cpp ../minim_hw/gfx.cpp)
+add_executable(${PROJECT_NAME} 
+    src/main.cpp 
+    src/audio.cpp 
+    ../minim_hw/api/gfx.cpp 
+    ../minim_hw/api/cmd.cpp
+    ../minim_hw/api/gfx/fonttiny.cpp
+)
 
 target_include_directories(${PROJECT_NAME} 
 	PUBLIC include
-    PUBLIC ../minim_hw
-    PUBLIC ../minim_hw/gfx
+    PUBLIC ../minim_hw/api
+    PUBLIC ../minim_hw/api/gfx
     PUBLIC deps/libpd/pure-data/src 
     PUBLIC deps/libpd/libpd_wrapper
     PUBLIC deps/rtmidi

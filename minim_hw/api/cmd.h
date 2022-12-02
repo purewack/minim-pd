@@ -19,8 +19,9 @@
 #define CMD_SYMBOL_F_STRING 's'
 #define CMD_SYMBOL_F_BITMAP 'b'
 
-extern void cmd_on_mode(int mode);
+#define MIDI_BASE 35
+
 extern void cmd_gfx_on_context(int ctx);
 extern void cmd_gfx_on_draw();
 
-extern int parseCommand(const char* cmd_bytes, int len);
+extern int parseCommand(const unsigned char* cmd_bytes, int len);
