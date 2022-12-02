@@ -183,8 +183,7 @@ void setup(){
     // i2c_peripheral_enable(I2C2);
     delay(200);
 
-    gfx.modexor = 1;
-    gfx.rotated = 1;
+    gfx_defaults();
     gfx_clear();
     //gfx_drawRectSize(0,0,64,128);
     for(int i=0; i<5; i++){

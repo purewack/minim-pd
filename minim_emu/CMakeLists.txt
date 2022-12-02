@@ -8,15 +8,19 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-Wno-narrowing )
 
+add_definitions( -D_SRC_MINIM_EMU=1 )
+
 add_subdirectory(deps/libpd)
 add_subdirectory(deps/rtmidi)
 add_subdirectory(deps/rtaudio)
 add_subdirectory(deps/raylib)
 
-add_executable(${PROJECT_NAME} src/main.cpp src/gfx.cpp src/audio.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/gfx.cpp src/audio.cpp ../minim_hw/gfx.cpp)
 
 target_include_directories(${PROJECT_NAME} 
 	PUBLIC include
+    PUBLIC ../minim_hw
+    PUBLIC ../minim_hw/gfx
     PUBLIC deps/libpd/pure-data/src 
     PUBLIC deps/libpd/libpd_wrapper
     PUBLIC deps/rtmidi

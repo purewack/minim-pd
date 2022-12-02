@@ -21,6 +21,7 @@ struct gfx_t {
 };
 extern gfx_t gfx;
 
+void gfx_defaults();
 void gfx_clear();
 void gfx_drawHline(int x, int y, int w);
 void gfx_drawVline(int x, int y, int h);

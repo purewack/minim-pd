@@ -1,5 +1,9 @@
 #include "include/gfx.h"
 
+void gfx_defaults(){
+  gfx.modexor = 0;
+  gfx.rotated = 1;
+}
 void gfx_clear(){
   for(int i=0; i<128; i++){
     gfx.fbuf_top[i] = 0;
