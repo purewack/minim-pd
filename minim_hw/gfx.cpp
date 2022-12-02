@@ -1,5 +1,4 @@
-#include "gfx.h"
-#include <Arduino.h>
+#include "include/gfx.h"
 
 void gfx_clear(){
   for(int i=0; i<128; i++){
@@ -212,17 +211,18 @@ void gfx_drawBitmap(int x, int y, int w, int h, int bpc, int blen, const uint8_t
   }
 }
 
-
-#include "gfx/fontsmall.h"
+#ifndef _SRC_MINIM_EMU
+#include "gfx/fonttiny.cpp"
+#endif
 
 void gfx_drawChar(char ch, int x, int y){
   ch = (ch < ' ' || ch > 126) ? 0 : (ch-' '+1);
   gfx_drawBitmap(x,y,
-    fontsmall_wide,
-    fontsmall_tall,
-    fontsmall_tall>>3,
-    fontsmall_wide,
-    &fontsmall_data[int(ch)*8]
+    fonttiny_wide,
+    fonttiny_tall,
+    fonttiny_tall>>3,
+    fonttiny_wide,
+    &fonttiny_data[int(ch)*8]
   );
 }
 
@@ -230,7 +230,7 @@ void gfx_drawChar(char ch, int x, int y){
 void gfx_drawString(const char* str, int x, int y){
   int ii = 0;
 	while(str[ii] != 0){
-		gfx_drawChar(str[ii], x + ii*6*gfx.scale, y);
+		gfx_drawChar(str[ii], x + ii*fonttiny_wide*gfx.scale, y);
     ii++;
 	}
 }

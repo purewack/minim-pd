@@ -1,8 +1,8 @@
+#include "include/libdarray.h"
+#include "include/gfx.h"
+#include "include/io.h"
 #include <libmaple/gpio.h>
 #include <libmaple/i2c.h>
-#include "libdarray.h"
-#include "gfx.h"
-#include "io.h"
 #include <USBMIDI.h>
 #include <USBComposite.h>
 

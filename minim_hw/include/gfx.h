@@ -2,6 +2,13 @@
 
 #include <stdint.h>
 
+#ifndef _SRC_MINIM_EMU
+#include <Arduino.h>
+#endif
+
+#include "../gfx/fonttiny.h"
+
+
 struct gfx_t {
   int inited = 0;
   int rotated = 0;
