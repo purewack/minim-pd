@@ -29,12 +29,13 @@ void oled_onCommand(t_oled *x, t_symbol *s, int argc, t_atom *argv);
 #include <limits>
 #include <iostream>
 #include <fstream>
+#include "../minim_hw/api/cmd.h"
 
 void oled_fresh(t_oled *oled){
     SETFLOAT(oled->a_table+oled->a_table_i,(float)(0xf0));
-    SETFLOAT(oled->a_table+oled->a_table_i+1,(float)('x'));
-    SETFLOAT(oled->a_table+oled->a_table_i+2,(float)(2));
-    SETFLOAT(oled->a_table+oled->a_table_i+3,(float)('G'));
+    SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(CMD_SYMBOL_F_MODE));
+    SETFLOAT(oled->a_table+oled->a_table_i+2,(float)(CMD_SYMBOL_MODE_GFX));
+    SETFLOAT(oled->a_table+oled->a_table_i+3,(float)(CMD_SYMBOL_C_CONTEXT));
     SETFLOAT(oled->a_table+oled->a_table_i+4,(float)(oled->context));
     oled->a_table_i = 5;
 }
@@ -48,31 +49,31 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
         oled->a_table_i = 0;
     }
     else if(s == gensym("send")){
-        SETFLOAT(oled->a_table+oled->a_table_i,(float)('u'));
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_DRAW));
         SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(0xf7));
         oled->a_table_i+=2;
         outlet_list(oled->o_midi,&s_list,oled->a_table_i,oled->a_table);
         oled_fresh(oled);
     }
     else if(s == gensym("clear")){
-        SETFLOAT(oled->a_table+oled->a_table_i,(float)('c'));
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_CLEAR));
         SETFLOAT(oled->a_table+oled->a_table_i+1,(float)('I'));
         SETFLOAT(oled->a_table+oled->a_table_i+2,(float)(0));
         oled->a_table_i+=3;
     }
     else if(s == gensym("xor")){
-        SETFLOAT(oled->a_table+oled->a_table_i,(float)('I'));
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_C_XOR));
         SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[0]));
         oled->a_table_i+=2;
     }
     else if(s == gensym("scale") || s == gensym("S")){
-        SETFLOAT(oled->a_table+oled->a_table_i,(float)('S'));
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_C_SCALE));
         SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[0]));
         oled->a_table_i+=2;
     }
 
     else if((s == gensym("fill") || s == gensym("f")) && argc == 4){
-        SETFLOAT(oled->a_table+oled->a_table_i,(float)('r'));
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_RECT));
         SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[0]));
         SETFLOAT(oled->a_table+oled->a_table_i+2,atom_getfloat(&argv[1]));
         SETFLOAT(oled->a_table+oled->a_table_i+3,atom_getfloat(&argv[2]));
@@ -81,7 +82,7 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
         oled->a_table_i+=6;
     }  
     else if((s == gensym("rect") || s == gensym("r")) && argc == 4){
-        SETFLOAT(oled->a_table+oled->a_table_i,(float)('r'));
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_RECT));
         SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[0]));
         SETFLOAT(oled->a_table+oled->a_table_i+2,atom_getfloat(&argv[1]));
         SETFLOAT(oled->a_table+oled->a_table_i+3,atom_getfloat(&argv[2]));
@@ -90,7 +91,7 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
         oled->a_table_i+=6;
     } 
     else if((s == gensym("box") || s == gensym("b")) && argc == 5){
-        SETFLOAT(oled->a_table+oled->a_table_i,(float)('r'));
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_RECT));
         SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[0]));
         SETFLOAT(oled->a_table+oled->a_table_i+2,atom_getfloat(&argv[1]));
         SETFLOAT(oled->a_table+oled->a_table_i+3,atom_getfloat(&argv[2]));
@@ -99,7 +100,7 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
         oled->a_table_i+=6;
     }
     else if((s == gensym("line") || s == gensym("l")) && argc == 4){
-        SETFLOAT(oled->a_table+oled->a_table_i,(float)('l'));
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_LINE));
         SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[0]));
         SETFLOAT(oled->a_table+oled->a_table_i+2,atom_getfloat(&argv[1]));
         SETFLOAT(oled->a_table+oled->a_table_i+3,atom_getfloat(&argv[2]));
@@ -107,7 +108,7 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
         oled->a_table_i+=5;
     } 
     else if((s == gensym("string") || s == gensym("s")) && argc >= 3){  
-        SETFLOAT(oled->a_table+oled->a_table_i,(float)('s'));
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_STRING));
         SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[0]));
         SETFLOAT(oled->a_table+oled->a_table_i+2,atom_getfloat(&argv[1]));
         oled->a_table_i+=3;
@@ -133,9 +134,9 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
             int len = 0;
             int npc = 0;
             int offset = argc > 1 ? atom_getint(&argv[1]) : 0;
-            SETFLOAT(oled->a_table+oled->a_table_i,(float)('x'));
-            SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(3));
-            SETFLOAT(oled->a_table+oled->a_table_i+2,(float)('l'));
+            SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_MODE));
+            SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(CMD_SYMBOL_MODE_DATA));
+            SETFLOAT(oled->a_table+oled->a_table_i+2,(float)(CMD_SYMBOL_F_UPLOAD));
             SETFLOAT(oled->a_table+oled->a_table_i+3,(float)(offset));
             auto len_idx = oled->a_table_i+4;
             oled->a_table_i+=5;
@@ -195,25 +196,25 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
         }
     }
     else if(s == gensym("glyph") && argc == 7){
+        int negs = 0;
+        int xx = int(atom_getfloat(&argv[3]));
+        int yy = int(atom_getfloat(&argv[4]));
         int ww = int(atom_getfloat(&argv[5]));
         int hh = int(atom_getfloat(&argv[6]));
-        int nw = ww < 0;
-        int nh = hh < 0;
-        if(nw) ww = -ww;
-        if(nh) hh = -hh;
-        float w2 = float(ww&0x7f);
-        float h2 = float(hh&0x7f);
-        SETFLOAT(oled->a_table+oled->a_table_i,(float)('b'));
-        SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[3]));//x
-        SETFLOAT(oled->a_table+oled->a_table_i+2,atom_getfloat(&argv[4]));//y
-        SETFLOAT(oled->a_table+oled->a_table_i+3,(nw ? 1.f : 0.f));
-        SETFLOAT(oled->a_table+oled->a_table_i+4,w2);
-        SETFLOAT(oled->a_table+oled->a_table_i+5,(nh ? 1.f : 0.f));
-        SETFLOAT(oled->a_table+oled->a_table_i+6,h2);
-        SETFLOAT(oled->a_table+oled->a_table_i+7,atom_getfloat(&argv[0]));//image start idx
-        SETFLOAT(oled->a_table+oled->a_table_i+8,atom_getfloat(&argv[1])); //bytes per column
-        SETFLOAT(oled->a_table+oled->a_table_i+9,atom_getfloat(&argv[2])); //byte count
-        oled->a_table_i+=10;
+        if(xx < 0) {xx = -xx; negs |= 0b0001;}
+        if(yy < 0) {yy = -yy; negs |= 0b0010;}
+        if(ww < 0) {ww = -ww; negs |= 0b0100;}
+        if(hh < 0) {hh = -hh; negs |= 0b1000;}
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_BITMAP));
+        SETFLOAT(oled->a_table+oled->a_table_i+1,xx);//x
+        SETFLOAT(oled->a_table+oled->a_table_i+2,yy);//y
+        SETFLOAT(oled->a_table+oled->a_table_i+3,ww);
+        SETFLOAT(oled->a_table+oled->a_table_i+4,hh);
+        SETFLOAT(oled->a_table+oled->a_table_i+5,negs);//y
+        SETFLOAT(oled->a_table+oled->a_table_i+6,atom_getfloat(&argv[0]));//image start idx
+        SETFLOAT(oled->a_table+oled->a_table_i+7,atom_getfloat(&argv[1])); //bytes per column
+        SETFLOAT(oled->a_table+oled->a_table_i+8,atom_getfloat(&argv[2])); //byte count
+        oled->a_table_i+=9;
     }
     else{
         pd_error(oled,"invaild command");

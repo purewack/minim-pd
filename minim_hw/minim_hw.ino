@@ -208,7 +208,7 @@ void collectSysex(char* b, int offset){
     if(b[1+i] == 0xf7 && sysex){
       sysex = false;
       usbmidi.sendControlChange(0,127,1);
-      parseCommand(sysex_string.buf,sysex_string.count);
+      parseCommand((unsigned char*)sysex_string.buf,sysex_string.count);
       usbmidi.sendControlChange(0,127,0);
     }
     else

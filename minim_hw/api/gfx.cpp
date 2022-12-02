@@ -5,6 +5,7 @@ uint8_t* data_buf;
 void gfx_defaults(){
   gfx.modexor = 0;
   gfx.rotated = 1;
+  gfx.scale = 1;
 }
 void gfx_clear(){
   for(int i=0; i<128; i++){
@@ -228,7 +229,7 @@ void gfx_drawChar(char ch, int x, int y){
     fonttiny_tall,
     fonttiny_tall>>3,
     fonttiny_wide,
-    &fonttiny_data[int(ch)*8]
+    &fonttiny_data[int(ch)*fonttiny_wide]
   );
 }
 

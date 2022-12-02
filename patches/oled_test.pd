@@ -1,8 +1,7 @@
-#N canvas 841 362 565 321 12;
+#N canvas 742 103 565 344 12;
 #X obj 115 233 oled 2;
 #X obj 134 270 print;
 #X obj 77 270 midiout;
-#X msg 3 39 clear \, line 10 10 50 5 \, send;
 #X obj 177 270 print;
 #X msg 292 179 upload img16.txt;
 #X msg 292 232 upload img20.txt;
@@ -16,10 +15,11 @@
 #X msg 292 255 clear \, glyph 0 3 24 1 1 24 32 \, send;
 #X msg 295 284 upload img34.txt;
 #X msg 295 307 clear \, glyph 0 6 30 1 1 10 60 \, send;
+#X msg 4 39 clear \, line 10 10 50 5 \, send;
 #X connect 0 0 1 0;
 #X connect 0 0 2 0;
-#X connect 0 1 4 0;
-#X connect 3 0 0 0;
+#X connect 0 1 3 0;
+#X connect 4 0 0 0;
 #X connect 5 0 0 0;
 #X connect 6 0 0 0;
 #X connect 7 0 0 0;

@@ -16,7 +16,7 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
             if(cmd_bytes[i] == CMD_SYMBOL_F_UPLOAD){
                 int start = cmd_bytes[++i];
                 int bytes = cmd_bytes[++i];
-                int nibbles = bytes>>1;
+                int nibbles = bytes<<1;
                 unsigned char* buf = (unsigned char*)&cmd_bytes[++i];
                 if(start+bytes < 512){
                     int d = 0;
@@ -36,6 +36,7 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_C_SCALE){
                 gfx.scale = cmd_bytes[++i];
+                if(gfx.scale <= 0) gfx.scale = 1;
             }
 			else if(cmd_bytes[i] == CMD_SYMBOL_C_XOR){
                 gfx.modexor = cmd_bytes[++i];
