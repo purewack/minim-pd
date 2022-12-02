@@ -86,5 +86,6 @@
         "xstddef": "cpp",
         "xtr1common": "cpp"
     },
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "C_Cpp.dimInactiveRegions": false
 }
