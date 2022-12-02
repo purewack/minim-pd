@@ -1,4 +1,6 @@
-#include "include/gfx.h"
+#include "gfx.h"
+
+uint8_t* data_buf;
 
 void gfx_defaults(){
   gfx.modexor = 0;

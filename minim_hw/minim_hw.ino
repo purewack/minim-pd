@@ -1,7 +1,9 @@
 #include "include/libdarray.h"
-#include "include/gfx.h"
 #include "include/io.h"
-#include "include/cmd.h"
+#include "api/cmd.h"
+#include "api/cmd.cpp"
+#include "api/gfx.h"
+#include "api/gfx.cpp"
 #include <libmaple/gpio.h>
 #include <libmaple/i2c.h>
 #include <USBMIDI.h>
@@ -20,14 +22,8 @@ sarray_t<uint8> imsgdata;
 sarray_t<char> sysex_string;
 bool states[2][5];
 bool sysex = false;
-const int MODE_SYS = 1;
-const int MODE_GFX = 2;
-const int MODE_DATA = 3;
-int cmd_mode = 0;
 
-uint8_t data_buf[512];
-
-void ctx_switch(int c){
+void cmd_gfx_on_context(int c){
     ctx = c;
     if(ctx == 0 || ctx == 1) {
       ctx_add = ctx == 0 ? 0x3C : 0x3D; 
@@ -117,7 +113,7 @@ void begin_ssd1306(){
     
 }
 
-void draw_ssd1306(){
+void cmd_gfx_on_draw(){
 
   sarray_clear(imsgdata);
     sarray_push(imsgdata,(uint8)0x00);//cmd byte
@@ -164,6 +160,8 @@ void setup(){
     Serial.begin(115200);
     usbmidi.begin();
 
+    data_buf = (uint8_t*)malloc(sizeof(uint8_t)*512);
+
     sysex_string.buf = (char*)malloc(sizeof(char)*128);
     sysex_string.lim = 128;
     sarray_clear(sysex_string);
@@ -188,9 +186,9 @@ void setup(){
     gfx_clear();
     //gfx_drawRectSize(0,0,64,128);
     for(int i=0; i<5; i++){
-      ctx_switch(i);
+      cmd_gfx_on_context(i);
       begin_ssd1306();
-      draw_ssd1306();
+      cmd_gfx_on_draw();
       delay(100);
     }
 
@@ -263,8 +261,8 @@ void loop(){
           gfx_fillSection(4,4,56,56);
         if(states[0][ctx])
           gfx_fillSection(4,4+64,56,56);
-        ctx_switch(ctx%5);
-        draw_ssd1306();
+        cmd_gfx_on_context(ctx%5);
+        cmd_gfx_on_draw();
       }
       else if(b[1] == 0xf0 && !sysex){
         sysex = true;

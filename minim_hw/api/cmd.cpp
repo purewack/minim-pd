@@ -1,32 +1,45 @@
-#include "include/cmd.h"
+#include "cmd.h"
+#include "gfx.h"
+
+static int cmd_mode = 0;
 
 int parseCommand(const char* cmd_bytes, int len){
     for(int i=0; i<len; i++){
         if(cmd_bytes[i] == CMD_SYMBOL_F_MODE){
-        	cmd_on_mode(cmd_bytes[++i]);
+        	cmd_mode = cmd_bytes[++i];
         }
-        
-        if(cmd_is_mode_data()){
+        if(cmd_mode == CMD_SYMBOL_MODE_DRAW){
+            cmd_gfx_on_draw();
+        }
+        if(cmd_mode == CMD_SYMBOL_MODE_DATA){
           if(cmd_bytes[i] == CMD_SYMBOL_F_UPLOAD){
             int start = cmd_bytes[++i];
             int bytes = cmd_bytes[++i];
+            int nibbles = bytes>>1;
             unsigned char* buf = (unsigned char*)&cmd_bytes[++i];
-            i += cmd_data_on_load(start,bytes,buf);
+            if(start+bytes < 512){
+                int d = 0;
+                for(int j=0; j<nibbles; j+=2){
+                data_buf[start+d] = uint8_t(buf[j+0]) << 0;
+                data_buf[start+d] |= uint8_t(buf[j+1]) << 4;
+                d++;
+            }
+            i+=nibbles;
           }
         }
-        else if(cmd_is_mode_gfx()){
+        else if(cmd_mode == CMD_SYMBOL_MODE_GFX){
             if(cmd_bytes[i] == CMD_SYMBOL_C_CONTEXT){
                 cmd_gfx_on_context(cmd_bytes[++i]);
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_C_SCALE){
-                cmd_gfx_on_scale(cmd_bytes[++i]);
+                gfx.scale = cmd_bytes[++i];
             }
 			else if(cmd_bytes[i] == CMD_SYMBOL_C_XOR){
-                cmd_gfx_on_xor(cmd_bytes[++i]);
+                gfx.modexor = cmd_bytes[++i];
             }
 
             else if(cmd_bytes[i] == CMD_SYMBOL_F_CLEAR){
-                cmd_gfx_on_clear();
+                gfx_clear();
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_DRAW){
                 cmd_gfx_on_draw();
@@ -37,7 +50,7 @@ int parseCommand(const char* cmd_bytes, int len){
                 int y = cmd_bytes[++i];
                 int x2 = cmd_bytes[++i];
                 int y2 = cmd_bytes[++i];
-                cmd_gfx_on_line(x,y,x2,y2);
+                gfx_drawLine(x,y,x2,y2);
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_RECT){
                 int x = cmd_bytes[++i];
@@ -45,13 +58,19 @@ int parseCommand(const char* cmd_bytes, int len){
                 int w = cmd_bytes[++i];
                 int h = cmd_bytes[++i];
                 int fill = cmd_bytes[++i];
-                cmd_gfx_on_rect(x,y,w,h,fill);
+                if(fill)
+                  gfx_fillSection(x,y,w,h);
+                else
+                  gfx_drawRectSize(x,y,w,h);
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_STRING){
                 int x = cmd_bytes[++i];
                 int y = cmd_bytes[++i];
                 const char* str = &cmd_bytes[++i];
-                i += cmd_gfx_on_string(x,y,str);
+                gfx_drawString(str,x,y); 
+                int j = 0;
+                while(cmd_bytes[i+j] != 0) j++;
+                i+=j;
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_BITMAP){
                 int x = cmd_bytes[++i];
@@ -66,7 +85,8 @@ int parseCommand(const char* cmd_bytes, int len){
                 int start = cmd_bytes[++i];
                 int bytes_per_col = cmd_bytes[++i];
                 int len = cmd_bytes[++i];
-                i += cmd_gfx_on_bitmap_from_buffer(x,y,w,h,negs,start,bytes_per_col,len);
+                gfx_drawBitmap(x,y,w,h,bytes_per_col,len,data_buf+start);
+            }
             }
         }
         else{

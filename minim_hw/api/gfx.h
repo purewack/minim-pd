@@ -6,7 +6,7 @@
 #include <Arduino.h>
 #endif
 
-#include "../gfx/fonttiny.h"
+#include "gfx/fonttiny.h"
 
 
 struct gfx_t {
@@ -20,6 +20,7 @@ struct gfx_t {
   uint32_t fbuf_bot[128]; // 128 vertical columns
 };
 extern gfx_t gfx;
+extern uint8_t* data_buf;
 
 void gfx_defaults();
 void gfx_clear();
