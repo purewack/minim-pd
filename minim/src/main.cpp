@@ -1,6 +1,8 @@
 #include "minim.h"
 #include "gfx.h"
 #include "cmd.h"
+#include <string>
+#include <chrono>
 gfx_t gfx;
 
 #define INT(X) (std::stoi(X))
@@ -38,6 +40,8 @@ int context = 0;
 void cmd_gfx_on_context(int ctx){
 	context = ctx;
 }
+
+int draw_count = 0;
 void cmd_gfx_on_draw(){
 	BeginTextureMode(ctx[context]);
 		ClearBackground(BLACK);
@@ -54,7 +58,27 @@ void cmd_gfx_on_draw(){
 
 int initMidiSystem(){
 	midiin = new RtMidiIn();
+#ifdef WIN32
+	unsigned int nPorts = midiin->getPortCount();
+	if ( nPorts == 0 ) {
+		std::cout << "No ports available!\n";
+	}
+	else{
+		std::string portName;
+  		for ( unsigned int i=0; i<nPorts; i++ ) {
+			try {
+				portName = midiin->getPortName(i);
+				std::cout << "  Input Port #" << i+1 << ": " << portName << '\n';
+			}
+			catch ( RtMidiError &error ) {
+				error.printMessage();
+			}
+		}
+		midiin->openPort( 0 );
+	}
+#else
 	midiin->openVirtualPort("MINIM Emu Input");
+#endif
   	midiin->ignoreTypes( false, false, false );
 	return 0;
 }
@@ -68,7 +92,6 @@ uint8_t sysex_buf[512];
 int sysex_buf_len = 0;
 
 void collectSysex(unsigned char b){
-	std::cout << "Collecting :" << std::to_string(b) << std::endl;
 	if(b == 0xf7 && sysex){
 		sysex = false;
 		std::cout << "Finish SYSEX "<< std::endl;
@@ -114,8 +137,8 @@ int main(){
 	std::cin >> in;
 	audio_end();
 #else
-	initGFXSystem();
 	initMidiSystem();
+	initGFXSystem();
 	while(!WindowShouldClose()){
 		processMidi();
 		BeginDrawing();
@@ -126,7 +149,6 @@ int main(){
 							(Rectangle){i*64*SS,0,128*SS,64*SS},
 							(Vector2){0,0}, 0.0f, WHITE);
 			}
-			
 		EndDrawing();
 	}
 	endMidiSystem();
