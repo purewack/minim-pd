@@ -7,20 +7,19 @@ gfx_t gfx;
 
 #define INT(X) (std::stoi(X))
 
-RenderTexture ctx[5];
+RenderTexture ctx[6];
 int SS = 2;
 
 int initGFXSystem(){
 	data_buf = (uint8_t*)malloc(sizeof(uint8_t)*512);
-    InitWindow(64*SS*6,128*SS,"M I N I M - Emulator");
+    InitWindow(80*SS*8,128*SS,"M I N I M - Emulator");
     BeginDrawing();
     ClearBackground(BLACK);
     EndDrawing();
 	gfx_defaults();
 
-	for(int i=0; i<5; i++){
+	for(int i=0; i<6; i++){
 		ctx[i] = LoadRenderTexture(128,64);
-
 		BeginTextureMode(ctx[i]);
 			ClearBackground(BLACK);
 		EndTextureMode();
@@ -29,7 +28,7 @@ int initGFXSystem(){
 }
 
 int endGFXSystem(){
-	for(int i=0; i<5; i++)
+	for(int i=0; i<6; i++)
 		UnloadRenderTexture(ctx[i]);
 	
     CloseWindow();
@@ -40,6 +39,8 @@ int endGFXSystem(){
 int context = 0;
 void cmd_gfx_on_context(int ctx){
 	context = ctx;
+	if(ctx == 5) gfx.rotated = 0;
+	else gfx.rotated = 1;
 }
 
 int draw_count = 0;
@@ -151,6 +152,12 @@ int main(){
 							(Vector2){0,128}, 90.0f, WHITE);
 				DrawRectangleLines(i*70*SS,0,64*SS,128*SS,YELLOW);
 			}
+			
+			DrawTexturePro(ctx[5].texture,
+						(Rectangle){0,0,128,-64},
+						(Rectangle){5*75*SS,0,128*SS*2,64*SS*2},
+						(Vector2){0,0}, 0.0f, WHITE);
+			DrawRectangleLines(5*75*SS,0,128*SS*2,64*SS*2,YELLOW);
 		EndDrawing();
 	}
 	endMidiSystem();
