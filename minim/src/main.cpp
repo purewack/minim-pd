@@ -12,13 +12,14 @@ int SS = 2;
 
 int initGFXSystem(){
 	data_buf = (uint8_t*)malloc(sizeof(uint8_t)*512);
-    InitWindow(64*SS*6,64*SS,"M I N I M - Emulator");
+    InitWindow(64*SS*6,128*SS,"M I N I M - Emulator");
     BeginDrawing();
     ClearBackground(BLACK);
     EndDrawing();
+	gfx_defaults();
 
 	for(int i=0; i<5; i++){
-		ctx[i] = LoadRenderTexture(128,128);
+		ctx[i] = LoadRenderTexture(128,64);
 
 		BeginTextureMode(ctx[i]);
 			ClearBackground(BLACK);
@@ -146,8 +147,9 @@ int main(){
 			for(int i=0; i<5; i++){
 				DrawTexturePro(ctx[i].texture,
 							(Rectangle){0,0,128,-64},
-							(Rectangle){i*64*SS,0,128*SS,64*SS},
-							(Vector2){0,0}, 0.0f, WHITE);
+							(Rectangle){i*70*SS,0,128*SS,64*SS},
+							(Vector2){0,128}, 90.0f, WHITE);
+				DrawRectangleLines(i*70*SS,0,64*SS,128*SS,YELLOW);
 			}
 		EndDrawing();
 	}
