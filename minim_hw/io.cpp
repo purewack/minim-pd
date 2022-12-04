@@ -1,5 +1,5 @@
 #include "include/io.h"
-
+#include "include/common.h"
 hw_t io;
 
 void io_mux_init(){
@@ -43,4 +43,27 @@ void io_mux_irq(){
     io.bscan_up |= (io.bstate_old & (~io.bstate));
     
     io.row = (io.row+1) % 2;
+
+    if(io.bscan_down){
+    auto n = midi_base;
+    for(int i=0; i<10; i++){
+      if((1<<i)&io.bscan_down){
+        n+=i;
+        break;
+      }
+    }
+    usbmidi.sendNoteOn(0,n,127);
+    io.bscan_down = 0;
+  }
+  if(io.bscan_up){
+    auto n = midi_base;
+    for(int i=0; i<10; i++){
+      if((1<<i)&io.bscan_up){
+        n+=i;
+        break;
+      }
+    }
+    usbmidi.sendNoteOn(0,n,0);
+    io.bscan_up = 0;
+  }
 }
