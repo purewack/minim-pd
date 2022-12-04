@@ -6,6 +6,7 @@
 #include <libmaple/i2c.h>
 #include <USBMIDI.h>
 #include <USBComposite.h>
+#include <EEPROM.h>
 
 uint8 midi_base = 35;
 USBMIDI usbmidi;
@@ -20,6 +21,29 @@ sarray_t<uint8> imsgdata;
 sarray_t<char> sysex_string;
 bool states[2][5];
 bool sysex = false;
+
+int boot_byte_count = 0;
+
+void cmd_sys_on_upload_boot_begin(){
+  Serial.println("begin boot cmd upload");
+  boot_byte_count = 0;
+}
+
+void cmd_sys_on_upload_boot_byte(unsigned char byte){
+  EEPROM.write(1+boot_byte_count,byte);
+  boot_byte_count++;
+}
+
+void cmd_sys_on_upload_boot_end(){
+  Serial.println("begin boot cmd upload");
+  EEPROM.write(0,boot_byte_count);
+  Serial.println("recieved bytes");
+  Serial.println(boot_byte_count);
+}
+
+void cmd_sys_on_sleep(int ms){
+  delay(ms);
+}
 
 void cmd_gfx_on_context(int c){
     ctx = c;
@@ -189,6 +213,16 @@ void setup(){
       cmd_gfx_on_draw();
       delay(100);
     }
+        
+    int boot_cmd = EEPROM.read(0) ;
+    if(boot_cmd != 0xffff && boot_cmd){
+      for(int i=0; i<boot_cmd; i++)
+        sarray_push(sysex_string,(char)EEPROM.read(i+1));
+      parseCommand((unsigned char*)sysex_string.buf,sysex_string.count);
+      sarray_clear(sysex_string);
+    }
+    else
+      Serial.println("no boot info found");
 
     Serial.println("ready");
 } 

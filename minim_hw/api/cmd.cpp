@@ -93,6 +93,25 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
             }
             
         }
+        else if(cmd_mode == CMD_SYMBOL_MODE_SYS){
+            if(cmd_bytes[i] == CMD_SYMBOL_F_UPLOAD){
+                int cc = cmd_bytes[++i];
+                unsigned char* buf = (unsigned char*)&cmd_bytes[++i];
+                if(cc <= 512){
+                    cmd_sys_on_upload_boot_begin();
+                    unsigned char data_byte = 0;
+                    for(int j=0; j<cc; j++){
+                        data_byte = uint8_t(buf[j]) << 0;
+                        cmd_sys_on_upload_boot_byte(data_byte);
+                    }
+                    i+=cc;
+                    cmd_sys_on_upload_boot_end();
+                }
+            }
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_SLEEP){
+                cmd_sys_on_sleep(cmd_bytes[++i]);
+            }
+        }
     }
 
     return 0;

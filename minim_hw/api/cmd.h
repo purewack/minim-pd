@@ -1,5 +1,7 @@
 #pragma once
 
+#define CMD_SYMBOL_F_SLEEP 's'
+
 #define CMD_SYMBOL_F_MODE 'x'
 #define CMD_SYMBOL_MODE_DRAW 0
 #define CMD_SYMBOL_MODE_SYS 1
@@ -23,5 +25,10 @@
 
 extern void cmd_gfx_on_context(int ctx);
 extern void cmd_gfx_on_draw();
+
+extern void cmd_sys_on_upload_boot_begin();
+extern void cmd_sys_on_upload_boot_byte(unsigned char byte);
+extern void cmd_sys_on_upload_boot_end();
+extern void cmd_sys_on_sleep(int ms);
 
 extern int parseCommand(const unsigned char* cmd_bytes, int len);
