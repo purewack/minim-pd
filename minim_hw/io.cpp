@@ -63,7 +63,7 @@ void io_mux_irq(){
         break;
       }
     }
-    usbmidi.sendNoteOn(0,n,0);
+    usbmidi.sendNoteOff(0,n,0);
     io.bscan_up = 0;
   }
 }

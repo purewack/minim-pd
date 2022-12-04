@@ -224,12 +224,12 @@ void loop(){
     // Serial.println(b[3],DEC);
 
     if(!sysex){
-      if(b[1] == 0x90){
+      if(b[1] == 0x90 || b[1] == 0x80){
         int ctx = b[2]-midi_base;
         bool bot = (ctx < 5);
         ctx %= 5;
 
-        states[1-bot][ctx] = b[3];
+        states[1-bot][ctx] = b[1] == 0x80 ? 0 : b[3];
         gfx.rotated = 1;
         gfx_clear();
         gfx_drawRectSize(0,0,64,128);
