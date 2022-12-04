@@ -1,9 +1,6 @@
 #include "include/libdarray.h"
 #include "include/io.h"
-#include "api/cmd.h"
-#include "api/cmd.cpp"
-#include "api/gfx.h"
-#include "api/gfx.cpp"
+#include "api/api.h"
 #include <libmaple/gpio.h>
 #include <libmaple/i2c.h>
 #include <USBMIDI.h>
