@@ -249,7 +249,7 @@ void collectSysex(char* b, int offset){
 }
 
 void loop(){
-  
+
   if(int a = usbmidi.available()){
     uint32 aa = usbmidi.readPacket();
     char *b = (char*)&aa;
@@ -286,6 +286,6 @@ void loop(){
     
     // Serial.println("----");
   }
-
-  delay(1);
+  else
+    delay(1);
 }
