@@ -4,6 +4,7 @@
 #include "api/api.h"
 #include <libmaple/gpio.h>
 #include <libmaple/i2c.h>
+#include <libmaple/spi.h>
 #include <USBMIDI.h>
 #include <USBComposite.h>
 #include <EEPROM.h>
@@ -63,75 +64,93 @@ void cmd_gfx_on_context(int c){
     }
 }
 
-void post_ssd1306(){
+void post_display(){
+  if(ctx == 5){
+    gpio_write_bit(GPIOB, 12, 0);
+    spi_tx(SPI2, imsgdata.buf, imsgdata.count);
+    while(spi_is_busy(SPI2));
+    gpio_write_bit(GPIOB, 12, 1);
+    return;
+  }
+  
   imsg.addr = ctx_add;
   imsg.length = imsgdata.count;
   imsg.data = (uint8*)imsgdata.buf;
   i2c_master_xfer(ctx_dev,&imsg,1,0);
   while(ctx_dev->state == I2C_STATE_BUSY){}
+  
 }
 
-void begin_ssd1306(){
+void begin_oled(){
     
     //multiplex
     sarray_clear(imsgdata);
-    sarray_push(imsgdata,(uint8)0x00);//cmd byte
+    if(ctx != 5)
+      sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xAE);//display off
     sarray_push(imsgdata,(uint8)0xD5);//clock div
     sarray_push(imsgdata,(uint8)0x80);
     sarray_push(imsgdata,(uint8)0xA8);// ration
     sarray_push(imsgdata,(uint8)0x3F);
-    post_ssd1306();
+    post_display();
     
     sarray_clear(imsgdata);
-    sarray_push(imsgdata,(uint8)0x00);//cmd byte
+    if(ctx != 5)
+      sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xD3);//disp offset
     sarray_push(imsgdata,(uint8)0x40);//start line
-    sarray_push(imsgdata,(uint8)0x8D);//sharge
-    sarray_push(imsgdata,(uint8)0x14);
-    post_ssd1306();
+    if(ctx != 5){
+      sarray_push(imsgdata,(uint8)0x8D);//sharge
+      sarray_push(imsgdata,(uint8)0x14);
+    }
+    post_display();
  
     sarray_clear(imsgdata);
-    sarray_push(imsgdata,(uint8)0x00);
+    if(ctx != 5)
+      sarray_push(imsgdata,(uint8)0x00);
     sarray_push(imsgdata,(uint8)0x20);
     sarray_push(imsgdata,(uint8)0x00);
     sarray_push(imsgdata,(uint8)0xA1);
     sarray_push(imsgdata,(uint8)0xC8);
-    post_ssd1306();
+    post_display();
     
     sarray_clear(imsgdata);
-    sarray_push(imsgdata,(uint8)0x00);//cmd byte
+    if(ctx != 5)
+      sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xDA);//coms pins set
     sarray_push(imsgdata,(uint8)0x12);
     sarray_push(imsgdata,(uint8)0x81);//contrast set
     sarray_push(imsgdata,(uint8)0xCF);
-    post_ssd1306();
+    post_display();
 
     sarray_clear(imsgdata);
-    sarray_push(imsgdata,(uint8)0x00);//cmd byte
+    if(ctx != 5)
+      sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xd9);//precharge
     sarray_push(imsgdata,(uint8)0xF1);
-    post_ssd1306();
+    post_display();
 
     sarray_clear(imsgdata);
-    sarray_push(imsgdata,(uint8)0x00);//cmd byte
+    if(ctx != 5)
+      sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0x21);//col add
     sarray_push(imsgdata,(uint8)0x00);
     sarray_push(imsgdata,(uint8)0x7F);
     sarray_push(imsgdata,(uint8)0x22);//page add
     sarray_push(imsgdata,(uint8)0x00);
     sarray_push(imsgdata,(uint8)0x07);
-    post_ssd1306();
+    post_display();
     
     sarray_clear(imsgdata);
-    sarray_push(imsgdata,(uint8)0x00);//cmd byte
+    if(ctx != 5)
+      sarray_push(imsgdata,(uint8)0x00);//cmd byte
     sarray_push(imsgdata,(uint8)0xD8);
     sarray_push(imsgdata,(uint8)0x40);
     sarray_push(imsgdata,(uint8)0xA4);
     sarray_push(imsgdata,(uint8)0xA6);
     sarray_push(imsgdata,(uint8)0x2E);
     sarray_push(imsgdata,(uint8)0xAF);
-    post_ssd1306();
+    post_display();
     
 }
 
@@ -145,20 +164,29 @@ void cmd_gfx_on_draw(){
     sarray_push(imsgdata,(uint8)0x22);//page add
     sarray_push(imsgdata,(uint8)0x00);
     sarray_push(imsgdata,(uint8)0x07);
-  post_ssd1306();
+  post_display();
   
   for(int j=0; j<8; j++){
     auto bb = j<4 ? gfx.fbuf_top : gfx.fbuf_bot;
     auto pp = (j%4)*8;
     sarray_clear(imsgdata);
-      sarray_push(imsgdata,(uint8)0x40);//cmd byte
+      if(ctx != 5)
+        sarray_push(imsgdata,(uint8)0x40);//cmd byte
+
       for(int d=0; d<128; d++){
         uint32_t dd = bb[d];
         dd &= (0xff<<pp);
         dd >>= pp;
         sarray_push(imsgdata,(uint8)dd);
       }
-      post_ssd1306();
+
+      if(ctx == 5){
+        gpio_write_bit(GPIOB,14,1);
+        post_display();
+        gpio_write_bit(GPIOB,14,0);
+      }
+      else
+        post_display();
   }
 }
 
@@ -171,6 +199,21 @@ void begin_gpio(){
   gpio_set_mode(GPIOB,10,GPIO_AF_OUTPUT_OD);
   gpio_set_mode(GPIOB,9,GPIO_AF_OUTPUT_OD);
   gpio_set_mode(GPIOB,8,GPIO_AF_OUTPUT_OD);
+
+  gpio_set_mode(GPIOB, 12, GPIO_OUTPUT_PP); //cs
+  gpio_set_mode(GPIOB, 13, GPIO_AF_OUTPUT_PP); //scl
+  gpio_set_mode(GPIOB, 14, GPIO_OUTPUT_PP); //dc
+  gpio_set_mode(GPIOB, 15, GPIO_AF_OUTPUT_PP); //sda
+  gpio_set_mode(GPIOA, 8, GPIO_OUTPUT_PP); //rst
+
+  //cs
+  gpio_write_bit(GPIOB, 12, 1);
+  //rst
+  gpio_write_bit(GPIOB, 8, 1);
+  delay(2);
+  gpio_write_bit(GPIOB, 8, 0);
+  delay(2);
+  gpio_write_bit(GPIOB, 8, 1);
 }
 
 
@@ -200,16 +243,21 @@ void setup(){
     i2c_init(I2C2);
     i2c_master_enable(I2C1, I2C_FAST_MODE, 1000000);
     i2c_master_enable(I2C2, I2C_FAST_MODE, 1000000);
-    // i2c_peripheral_enable(I2C1);
-    // i2c_peripheral_enable(I2C2);
+    spi_init(SPI2);
+    spi_init(SPI2);
+    spi_master_enable(SPI2, 
+      SPI_BAUD_PCLK_DIV_8, 
+      SPI_MODE_0, 
+      SPI_FRAME_MSB | SPI_DFF_8_BIT | SPI_SW_SLAVE | SPI_SOFT_SS 
+    );
     delay(200);
 
     gfx_defaults();
     gfx_clear();
-    //gfx_drawRectSize(0,0,64,128);
-    for(int i=0; i<5; i++){
+    gfx_drawRectSize(0,0,32,32);
+    for(int i=0; i<6; i++){
       cmd_gfx_on_context(i);
-      begin_ssd1306();
+      begin_oled();
       cmd_gfx_on_draw();
       delay(100);
     }
