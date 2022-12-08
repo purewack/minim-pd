@@ -112,16 +112,19 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
         SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[0]));
         SETFLOAT(oled->a_table+oled->a_table_i+2,atom_getfloat(&argv[1]));
         oled->a_table_i+=3;
-        
         for(int i=2; i<argc; i++){
             atom_string(&argv[i],oled->str,128);
             for(int j=0; j<128; j++){
                 char cc = oled->str[j];
+                if(cc == 0) break;
                 SETFLOAT(oled->a_table+oled->a_table_i,float(cc));
                 oled->a_table_i++;
-                if(cc == 0) break;
             }
+            SETFLOAT(oled->a_table+oled->a_table_i,float(' '));
+            oled->a_table_i++;
         }
+        SETFLOAT(oled->a_table+oled->a_table_i,float(0));
+        oled->a_table_i++;
     }
     else if(s == gensym("upload") && argc >= 1){
         const char* filename = atom_getsymbol(&argv[0])->s_name;
