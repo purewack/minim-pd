@@ -186,8 +186,10 @@ void drawPixel(int x, int y, int tx, int ty){
   for(int sx=sxx; sx<gfx.scale+sxx; sx++){
     //create pixel scaled y tall
     if(tx+sx >= 128) return;
-    if(tx+sx < 0) return;
+    if(tx+sx < 0) continue;
     for(int s=0; s<gfx.scale; s++){
+      if(ty+syy < 0) continue;
+      if(ty+syy >= 64) return;
       auto bb = (syy+s+ty<32) ? gfx.fbuf_top : gfx.fbuf_bot;
       auto bbpx = (1<<((syy+s+ty)%32));
       if(gfx.modexor)

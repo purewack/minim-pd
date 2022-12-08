@@ -3,6 +3,7 @@
 #include "cmd.h"
 #include <string>
 #include <chrono>
+#include <unistd.h>
 gfx_t gfx;
 
 #define INT(X) (std::stoi(X))
@@ -58,9 +59,14 @@ void cmd_gfx_on_draw(){
 	EndTextureMode();
 }
 
+void cmd_sys_on_sleep(int ms){}
+void cmd_sys_on_upload_boot_begin(){}
+void cmd_sys_on_upload_boot_byte(unsigned char c){}
+void cmd_sys_on_upload_boot_end(){}
+
 int initMidiSystem(){
 	midiin = new RtMidiIn();
-#ifdef WIN32
+//#ifdef WIN32
 	unsigned int nPorts = midiin->getPortCount();
 	if ( nPorts == 0 ) {
 		std::cout << "No ports available!\n";
@@ -78,9 +84,9 @@ int initMidiSystem(){
 		}
 		midiin->openPort( 0 );
 	}
-#else
-	midiin->openVirtualPort("MINIM Emu Input");
-#endif
+// #else
+// 	midiin->openVirtualPort("MINIM Emu Input");
+//#endif
   	midiin->ignoreTypes( false, false, false );
 	return 0;
 }
@@ -159,6 +165,7 @@ int main(){
 						(Vector2){0,0}, 0.0f, WHITE);
 			DrawRectangleLines(5*75*SS,0,128*SS*2,64*SS*2,YELLOW);
 		EndDrawing();
+		usleep(1000);
 	}
 	endMidiSystem();
 	endGFXSystem();
