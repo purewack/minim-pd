@@ -48,6 +48,7 @@ void cmd_sys_on_sleep(int ms){
 
 void cmd_gfx_on_context(int c){
     ctx = c;
+    gfx.rotated = ctx == 5 ? 0 : 1;
     if(ctx == 0 || ctx == 1) {
       ctx_add = ctx == 0 ? 0x3C : 0x3D; 
       C_BIT(AFIO_BASE->MAPR,1);
@@ -94,16 +95,15 @@ void begin_oled(){
     sarray_push(imsgdata,(uint8)0x3F);
     post_display();
     
-    sarray_clear(imsgdata);
-    if(ctx != 5)
-      sarray_push(imsgdata,(uint8)0x00);//cmd byte
-    sarray_push(imsgdata,(uint8)0xD3);//disp offset
-    sarray_push(imsgdata,(uint8)0x40);//start line
     if(ctx != 5){
+    sarray_clear(imsgdata);
+      sarray_push(imsgdata,(uint8)0x00);//cmd byte
+      sarray_push(imsgdata,(uint8)0xD3);//disp offset
+      sarray_push(imsgdata,(uint8)0x40);//start line
       sarray_push(imsgdata,(uint8)0x8D);//sharge
       sarray_push(imsgdata,(uint8)0x14);
-    }
     post_display();
+    }
  
     sarray_clear(imsgdata);
     if(ctx != 5)
@@ -208,12 +208,14 @@ void begin_gpio(){
 
   //cs
   gpio_write_bit(GPIOB, 12, 1);
+  //dc
+  gpio_write_bit(GPIOB, 14, 0);
   //rst
-  gpio_write_bit(GPIOB, 8, 1);
-  delay(2);
-  gpio_write_bit(GPIOB, 8, 0);
-  delay(2);
-  gpio_write_bit(GPIOB, 8, 1);
+  gpio_write_bit(GPIOA, 8, 1);
+  delay(10);
+  gpio_write_bit(GPIOA, 8, 0);
+  delay(10);
+  gpio_write_bit(GPIOA, 8, 1);
 }
 
 
@@ -236,13 +238,6 @@ void setup(){
     imsgdata.lim = 130;
     sarray_clear(imsgdata);
     
-    begin_gpio();
-    io_mux_init();
-
-    i2c_init(I2C1);
-    i2c_init(I2C2);
-    i2c_master_enable(I2C1, I2C_FAST_MODE, 1000000);
-    i2c_master_enable(I2C2, I2C_FAST_MODE, 1000000);
     spi_init(SPI2);
     spi_init(SPI2);
     spi_master_enable(SPI2, 
@@ -250,11 +245,19 @@ void setup(){
       SPI_MODE_0, 
       SPI_FRAME_MSB | SPI_DFF_8_BIT | SPI_SW_SLAVE | SPI_SOFT_SS 
     );
+    
+    begin_gpio();
+    io_mux_init();
+
+    i2c_init(I2C1);
+    i2c_init(I2C2);
+    i2c_master_enable(I2C1, I2C_FAST_MODE, 1000000);
+    i2c_master_enable(I2C2, I2C_FAST_MODE, 1000000);
+    
     delay(200);
 
     gfx_defaults();
     gfx_clear();
-    gfx_drawRectSize(0,0,32,32);
     for(int i=0; i<6; i++){
       cmd_gfx_on_context(i);
       begin_oled();
@@ -312,7 +315,7 @@ void loop(){
         ctx %= 5;
 
         states[1-bot][ctx] = b[1] == 0x80 ? 0 : b[3];
-        gfx.rotated = 1;
+
         gfx_clear();
         gfx_drawRectSize(0,0,64,128);
         if(states[1][ctx])
