@@ -41,14 +41,16 @@ void oled_fresh(t_oled *oled){
 }
 
 void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
-    if(oled->a_table_i > 128) {
+    if(oled->a_table_i > 1000) {
         post("byte buffer full!");
+        outlet_list(oled->o_midi,&s_list,oled->a_table_i,oled->a_table);
+        oled->a_table_i = 0;
         return;
     }
     if(s == gensym("reset_bytes")){
         oled->a_table_i = 0;
     }
-    else if(s == gensym("send")){
+    else if(oled->a_table_i > 128 || s == gensym("send")){
         SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_DRAW));
         SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(0xf7));
         oled->a_table_i+=2;
@@ -157,7 +159,6 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
                     if(c != ' '){
                         ybyte[(cc>>3)] |= (1<<(cc%8));
                     }
-                    post("[%d][%d]%x.%x.%x.%x",cc,cc>>3,ybyte[3],ybyte[2],ybyte[1], ybyte[0]);
                     cc+=1;
                 }   
                 //bitmap height
@@ -231,7 +232,7 @@ void* oled_new(t_floatarg ctx){
     x->o_midi = (t_outlet*)outlet_new(&x->x_obj, &s_list);
     x->o_info = (t_outlet*)outlet_new(&x->x_obj, &s_list);
     x->a_info = (t_atom*)malloc(sizeof(t_atom)*5);
-    x->a_table = (t_atom*)malloc(sizeof(t_atom)*256);
+    x->a_table = (t_atom*)malloc(sizeof(t_atom)*1024);
     x->a_table_i = 0;
     x->context = int(ctx);
     x->str = (char*)malloc(sizeof(char)*MAXPDSTRING);
