@@ -59,6 +59,7 @@ extern "C"{
         t_inlet*    i_control;
         t_inlet*    i_sync;
         t_outlet*   o_loop_sig;
+        t_outlet*   o_loop_pos;
         t_outlet*   o_control;
         t_outlet*   o_info; 
 
@@ -237,6 +238,8 @@ t_int* bank_perform(t_int *w)
         break;
     }
 
+    if(m->len_syncs) m->pos_ratio = float(m->pos_syncs) / float(m->len_syncs);
+    outlet_float(x->o_loop_pos,m->pos_ratio);
 
     //n-state machine
     if(x->tick_action_pending){
@@ -773,6 +776,7 @@ void* bank_tilde_new(t_floatarg id){
     x->i_control = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_alt"));
     x->i_sync = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("set_sync_tick"));
     x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
+    x->o_loop_pos = outlet_new(&x->x_obj,&s_float);
     x->o_control = outlet_new(&x->x_obj, &s_float);
     x->o_info = outlet_new(&x->x_obj,&s_list);
     
@@ -826,6 +830,7 @@ void bank_tilde_free(t_bank* x){
     inlet_free(x->i_control);
     inlet_free(x->i_sync);
     outlet_free(x->o_loop_sig);
+    outlet_free(x->o_loop_pos);
     outlet_free(x->o_control);
     outlet_free(x->o_info);
     for(int i=0; i<4; i++){    
