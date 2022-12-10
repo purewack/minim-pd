@@ -87,5 +87,6 @@
         "xtr1common": "cpp"
     },
     "cmake.configureOnOpen": false,
-    "C_Cpp.dimInactiveRegions": false
+    "C_Cpp.dimInactiveRegions": false,
+    "cmake.sourceDirectory": "${workspaceFolder}/minim/deps/libpd"
 }

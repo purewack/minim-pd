@@ -62,7 +62,7 @@ extern "C"{
         t_outlet*   o_control;
         t_outlet*   o_info; 
 
-        t_atom      a_info_list[5];
+        t_atom      a_info_list[10];
         
         //sync tick = b64 boundary timing, 1 DSP loop
         //quan tick = L*sync ticks
@@ -368,6 +368,7 @@ void bank_postBase(t_bank* x){
     SETFLOAT(x->a_info_list+1, x->populatedCount);
     SETFLOAT(x->a_info_list+2, x->tick_action_nstate);
     SETFLOAT(x->a_info_list+3, x->active_motif_ptr->state);
+    SETFLOAT(x->a_info_list+4, x->active_motif_ptr->len_syncs);
 }
 
 void bank_postUnlatchUpdate(t_bank* x){
@@ -376,13 +377,13 @@ void bank_postUnlatchUpdate(t_bank* x){
 }
 void bank_postQuanUpdate(t_bank* x){
     bank_postBase(x);
-    SETFLOAT(x->a_info_list+4, x->tick_duration);
-    outlet_list(x->o_info, &s_list, 5, x->a_info_list);
+    SETFLOAT(x->a_info_list+5, x->tick_duration);
+    outlet_list(x->o_info, &s_list, 6, x->a_info_list);
 }
 
 void bank_postStateUpdate(t_bank* x){
     bank_postBase(x);
-    outlet_list(x->o_info, &s_list, 4, x->a_info_list);
+    outlet_list(x->o_info, &s_list, 5, x->a_info_list);
 }
 
 
@@ -678,6 +679,8 @@ void bank_onReset(t_bank* x){
     x->tick_action_nstate = 0;
     x->hasQuantick = false;
     bank_onTransportReset(x);
+    bank_onDelete(x);
+    x->populatedCount = 0;
     for(int m=0; m<x->motifs_array_count; m++)
         bank_clear_motif(x->motifs_array[m]);
         
