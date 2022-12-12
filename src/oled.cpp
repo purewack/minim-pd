@@ -190,12 +190,14 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
             oled_fresh(oled);
 
             //post info of glyph loading
+            post("uploaded glyph [w:%d h:%d off:%d bpc:%d bcount:%d offset_next:%d]",
+                hh,ww,offset,npc/2,len/2,offset+len/2
+            );
             SETFLOAT(oled->a_info+0,(float)(offset));
             SETFLOAT(oled->a_info+1,(float)(npc/2));
             SETFLOAT(oled->a_info+2,(float)(len/2));
-            SETFLOAT(oled->a_info+3,(float)(ww));
-            SETFLOAT(oled->a_info+4,(float)(hh));
-            outlet_anything(oled->o_info,gensym("gylph"),5,oled->a_info);
+            SETFLOAT(oled->a_info+3,(float)(offset + len/2));
+            outlet_anything(oled->o_info,gensym("glyph_upload_info"),4,oled->a_info);
 
             sys_fclose(glyph_file);
         }
@@ -205,10 +207,10 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
     }
     else if(s == gensym("glyph") && argc == 7){
         int negs = 0;
-        int xx = int(atom_getfloat(&argv[3]));
-        int yy = int(atom_getfloat(&argv[4]));
-        int ww = int(atom_getfloat(&argv[5]));
-        int hh = int(atom_getfloat(&argv[6]));
+        int xx = int(atom_getfloat(&argv[0]));
+        int yy = int(atom_getfloat(&argv[1]));
+        int ww = int(atom_getfloat(&argv[2]));
+        int hh = int(atom_getfloat(&argv[3]));
         if(xx < 0) {xx = -xx; negs |= 0b0001;}
         if(yy < 0) {yy = -yy; negs |= 0b0010;}
         if(ww < 0) {ww = -ww; negs |= 0b0100;}
@@ -219,9 +221,9 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
         SETFLOAT(oled->a_table+oled->a_table_i+3,ww);
         SETFLOAT(oled->a_table+oled->a_table_i+4,hh);
         SETFLOAT(oled->a_table+oled->a_table_i+5,negs);//y
-        SETFLOAT(oled->a_table+oled->a_table_i+6,atom_getfloat(&argv[0]));//image start idx
-        SETFLOAT(oled->a_table+oled->a_table_i+7,atom_getfloat(&argv[1])); //bytes per column
-        SETFLOAT(oled->a_table+oled->a_table_i+8,atom_getfloat(&argv[2])); //byte count
+        SETFLOAT(oled->a_table+oled->a_table_i+6,atom_getfloat(&argv[4]));//image start idx
+        SETFLOAT(oled->a_table+oled->a_table_i+7,atom_getfloat(&argv[5])); //bytes per column
+        SETFLOAT(oled->a_table+oled->a_table_i+8,atom_getfloat(&argv[6])); //byte count
         oled->a_table_i+=9;
     }
     else{
