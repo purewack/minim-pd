@@ -14,6 +14,7 @@ int SS = 2;
 int initGFXSystem(){
 	data_buf = (uint8_t*)malloc(sizeof(uint8_t)*512);
     InitWindow(80*SS*8,128*SS,"M I N I M - Emulator");
+	SetTargetFPS(30);
     BeginDrawing();
     ClearBackground(BLACK);
     EndDrawing();

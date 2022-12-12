@@ -248,6 +248,7 @@ void setup(){
     
     begin_gpio();
     io_mux_init();
+    timer_pause(TIMER3);
 
     i2c_init(I2C1);
     i2c_init(I2C2);
@@ -300,7 +301,7 @@ void collectSysex(char* b, int offset){
 }
 
 void loop(){
-
+  io_mux_irq();
   if(int a = usbmidi.available()){
     uint32 aa = usbmidi.readPacket();
     char *b = (char*)&aa;
