@@ -35,9 +35,7 @@ void oled_fresh(t_oled *oled){
     SETFLOAT(oled->a_table+oled->a_table_i,(float)(0xf0));
     SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(CMD_SYMBOL_F_MODE));
     SETFLOAT(oled->a_table+oled->a_table_i+2,(float)(CMD_SYMBOL_MODE_GFX));
-    SETFLOAT(oled->a_table+oled->a_table_i+3,(float)(CMD_SYMBOL_C_CONTEXT));
-    SETFLOAT(oled->a_table+oled->a_table_i+4,(float)(oled->context));
-    oled->a_table_i = 5;
+    oled->a_table_i = 3;
 }
 
 void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
@@ -52,14 +50,22 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
     }
     else if(s == gensym("context")){
         oled->context = int(atom_getfloat(&argv[0]));
-        post("[context changed to %d]",oled->context);
+        post("[context changed to %d]",oled->context);        
+        oled_fresh(oled);
+        SETFLOAT(oled->a_table+oled->a_table_i+0,(float)(CMD_SYMBOL_C_CONTEXT));
+        SETFLOAT(oled->a_table+oled->a_table_i+1,oled->context);
+        oled->a_table_i+=2;
+        return;
     }
     else if(oled->a_table_i > 128 || s == gensym("send")){
         SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_DRAW));
         SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(0xf7));
         oled->a_table_i+=2;
-        outlet_list(oled->o_midi,&s_list,oled->a_table_i,oled->a_table);
+        outlet_list(oled->o_midi,&s_list,oled->a_table_i,oled->a_table);      
         oled_fresh(oled);
+        SETFLOAT(oled->a_table+oled->a_table_i+0,(float)(CMD_SYMBOL_C_CONTEXT));
+        SETFLOAT(oled->a_table+oled->a_table_i+1,oled->context);
+        oled->a_table_i+=2;
     }
     else if(s == gensym("clear")){
         SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_CLEAR));
@@ -186,8 +192,11 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
             SETFLOAT(oled->a_table+len_idx,(float)(len));
             SETFLOAT(oled->a_table+oled->a_table_i,(float)(0xf7));
             oled->a_table_i++;
-            outlet_list(oled->o_midi,&s_list,oled->a_table_i,oled->a_table);
+            outlet_list(oled->o_midi,&s_list,oled->a_table_i,oled->a_table);      
             oled_fresh(oled);
+            SETFLOAT(oled->a_table+oled->a_table_i+0,(float)(CMD_SYMBOL_C_CONTEXT));
+            SETFLOAT(oled->a_table+oled->a_table_i+1,oled->context);
+            oled->a_table_i+=2;
 
             //post info of glyph loading
             post("uploaded glyph [w:%d h:%d off:%d bpc:%d bcount:%d offset_next:%d]",
@@ -237,14 +246,17 @@ void* oled_new(t_floatarg ctx){
     t_oled* x = (t_oled*)pd_new(oled_class);
     x->o_midi = (t_outlet*)outlet_new(&x->x_obj, &s_list);
     x->o_info = (t_outlet*)outlet_new(&x->x_obj, &s_list);
-    x->a_info = (t_atom*)malloc(sizeof(t_atom)*5);
+    x->a_info = (t_atom*)malloc(sizeof(t_atom)*10);
     x->a_table = (t_atom*)malloc(sizeof(t_atom)*1024);
     x->a_table_i = 0;
     x->context = int(ctx);
     x->str = (char*)malloc(sizeof(char)*MAXPDSTRING);
     x->canvas = canvas_getcurrent();
-    x->cwd = canvas_getdir(x->canvas)->s_name;
+    x->cwd = canvas_getdir(x->canvas)->s_name;      
     oled_fresh(x);
+    SETFLOAT(x->a_table+x->a_table_i+0,(float)(CMD_SYMBOL_C_CONTEXT));
+    SETFLOAT(x->a_table+x->a_table_i+1,x->context);
+    x->a_table_i+=2;
     post("New screen helper for context [%d]",x->context);
     
     return (void*)x;
