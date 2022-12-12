@@ -60,7 +60,7 @@ extern "C"{
         t_inlet*    i_sync;
         t_outlet*   o_loop_sig;
         t_outlet*   o_loop_pos;
-        t_outlet*   o_control;
+        //t_outlet*   o_control;
         t_outlet*   o_info; 
 
         t_atom      a_info_list[10];
@@ -90,7 +90,6 @@ extern "C"{
 
         bool        stateTrigger; //main ctrl state of button
         bool        stateCAlt; //alt ctrl state of button
-        bool        stateCShift; 
         long        holdCounter;// + for main ctrl, - for alt ctrl
         long        debounceCounter;
 
@@ -133,7 +132,6 @@ extern "C"{
     void* bank_worker_thread(void* arg);
 }
 
-void bank_postUnlatchUpdate(t_bank* x);
 
 bool bank_isMainCtrlHeld(t_bank* x){
     return x->stateTrigger && std::abs(x->holdCounter) > HOLD_TIME;
@@ -288,7 +286,6 @@ t_int* bank_perform(t_int *w)
                 x->work_type |= _motif_work_type::REFILL;
                 x->work_data = m->len_spl;
                 x->tick_action_nstate = x->gate ? _motif_state::m_stop : _motif_state::m_play;
-                bank_postUnlatchUpdate(x);
             }
 
             m->state = x->tick_action_nstate;
@@ -350,7 +347,6 @@ t_int* bank_perform(t_int *w)
 
 
 
-
 void bank_setSyncTick(t_bank* x, t_floatarg t){
     if(x->tick_duration > 0) return;
     if(t <= 0) return;
@@ -366,22 +362,18 @@ void bank_setSyncTick(t_bank* x, t_floatarg t){
     // bank_outlet_sync(x,1);
 }
 
-void bank_postBase(t_bank* x){
-    SETFLOAT(x->a_info_list+0, x->isActive);
-    SETFLOAT(x->a_info_list+1, x->populatedCount);
-    SETFLOAT(x->a_info_list+2, x->tick_action_nstate);
-    SETFLOAT(x->a_info_list+3, x->active_motif_ptr->state);
-    SETFLOAT(x->a_info_list+4, x->active_motif_ptr->len_syncs);
+int bank_postBase(t_bank* x){
+    SETFLOAT(x->a_info_list+0, x->active_motif_idx);
+    SETFLOAT(x->a_info_list+1, x->tick_action_nstate);
+    SETFLOAT(x->a_info_list+2, x->active_motif_ptr->state);
+    SETFLOAT(x->a_info_list+3, x->active_motif_ptr->len_syncs);
+    return 3;
 }
 
-void bank_postUnlatchUpdate(t_bank* x){
-    x->stateCAlt = false;
-    outlet_float(x->o_control, 0);
-}
 void bank_postQuanUpdate(t_bank* x){
-    bank_postBase(x);
-    SETFLOAT(x->a_info_list+5, x->tick_duration);
-    outlet_list(x->o_info, &s_list, 6, x->a_info_list);
+    auto aa = bank_postBase(x);
+    SETFLOAT(x->a_info_list+aa, x->tick_duration);
+    outlet_list(x->o_info, &s_list, aa+1, x->a_info_list);
 }
 
 void bank_postStateUpdate(t_bank* x){
@@ -400,8 +392,6 @@ void bank_q(t_bank* x){
     x->tick_action_pending = 1; //signal action pending
     bank_postStateUpdate(x);
 }
-
-
 
 
 void bank_debugInfo(t_bank* x){
@@ -461,6 +451,16 @@ void bank_onPrevSlot(t_bank* x){
     bank_safeSlotChange(x,x->active_motif_idx - 1);
 }
 
+
+void bank_onUndo(t_bank* x){
+    if(bank_activeMotifIsDub(x)){
+        x->tick_action_nstate = _motif_state::m_stop;
+        auto s = x->synced;
+        x->synced = bank_activeMotifIsDub(x) ? false : x->synced;
+        bank_q(x);
+        x->synced = s;
+    }
+}
 
 void bank_onTriggerOn(t_bank* x){
     x->stateTrigger = true;
@@ -550,7 +550,6 @@ void bank_onTriggerOn(t_bank* x){
         //[10]
         else if(bank_activeMotifIsStop(x) && !bank_activeMotifIsClear(x)){
             x->tick_action_nstate = _motif_state::m_play;
-            bank_postUnlatchUpdate(x);
             bank_q(x);
         }
     } 
@@ -594,14 +593,7 @@ void bank_onControlAltOn(t_bank* x){
     }
     else{
         //[9]
-        if(bank_activeMotifIsDub(x)){
-            bank_postUnlatchUpdate(x);
-            x->tick_action_nstate = _motif_state::m_stop;
-            auto s = x->synced;
-            x->synced = bank_activeMotifIsDub(x) ? false : x->synced;
-            bank_q(x);
-            x->synced = s;
-        }
+        bank_onUndo(x);
     }
    
 }
@@ -631,7 +623,7 @@ void bank_onControlAlt(t_bank *x, t_floatarg state){
     else{
         bank_onControlAltOff(x);
     }
-    outlet_float(x->o_control, x->stateCAlt);
+    //outlet_float(x->o_control, x->stateCAlt);
     post("bank [%d] alt:%d",x->id,x->stateCAlt);
 }
 
@@ -648,10 +640,6 @@ void bank_onOvertakeRecord(t_bank* x){
         x->active_motif_ptr->n_state = _motif_state::m_stop;
         bank_q(x);
     }
-}
-
-void bank_onUnlatch(t_bank* x){
-    x->stateCAlt = false;
 }
 
 
@@ -673,7 +661,6 @@ void bank_onDelete(t_bank* x){
 
 void bank_onReset(t_bank* x){
     x->stateCAlt = false;
-    bank_postUnlatchUpdate(x);
     x->gate = false;
     x->synced = false;
     x->onetime = false;
@@ -777,7 +764,7 @@ void* bank_tilde_new(t_floatarg id){
     x->i_sync = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("set_sync_tick"));
     x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
     x->o_loop_pos = outlet_new(&x->x_obj,&s_float);
-    x->o_control = outlet_new(&x->x_obj, &s_float);
+    //x->o_control = outlet_new(&x->x_obj, &s_float);
     x->o_info = outlet_new(&x->x_obj,&s_list);
     
 
@@ -793,7 +780,7 @@ void* bank_tilde_new(t_floatarg id){
     x->motifs_array_count = 4;
     x->active_motif_idx = 0;
     x->active_motif_ptr = x->motifs_array[x->active_motif_idx];
-    x->isActive = 0;
+    x->isActive = 1;
     x->tick_duration = 0;
     x->tick_start = 0;
     x->tick_next = 0;
@@ -802,7 +789,6 @@ void* bank_tilde_new(t_floatarg id){
     x->onetime = false;
     x->synced = false;
     x->debounceCounter = 0;
-    x->stateCShift = 0;
     x->hasQuantick = false;
 
     post("[%s] new bank with id: %d", VER, x->id);
@@ -831,7 +817,7 @@ void bank_tilde_free(t_bank* x){
     inlet_free(x->i_sync);
     outlet_free(x->o_loop_sig);
     outlet_free(x->o_loop_pos);
-    outlet_free(x->o_control);
+    //outlet_free(x->o_control);
     outlet_free(x->o_info);
     for(int i=0; i<4; i++){    
         free(x->motifs_array[i]->_aData);
@@ -857,6 +843,7 @@ void bank_tilde_setup(void){
 
     class_addmethod(bank_tilde_class, (t_method) bank_onDelete  ,gensym("delete")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onReset  ,gensym("clean")   ,(t_atomtype)0 );
+    class_addmethod(bank_tilde_class, (t_method) bank_onUndo ,gensym("undo") ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onTransportReset   ,gensym("transport_start")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onTransportStop   ,gensym("transport_stop")   ,(t_atomtype)0 );
 
@@ -866,7 +853,6 @@ void bank_tilde_setup(void){
 
     class_addmethod(bank_tilde_class, (t_method) bank_onActivate   ,gensym("activate")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onDeactivate   ,gensym("deactivate")   ,(t_atomtype)0 );
-    class_addmethod(bank_tilde_class, (t_method) bank_onUnlatch   ,gensym("unlatch")   ,(t_atomtype)0 );
 
     class_addmethod(bank_tilde_class, (t_method) bank_onNextSlot   ,gensym("next_slot")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onPrevSlot   ,gensym("prev_slot")   ,(t_atomtype)0 );

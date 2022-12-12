@@ -50,6 +50,10 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
     if(s == gensym("reset_bytes")){
         oled->a_table_i = 0;
     }
+    else if(s == gensym("context")){
+        oled->context = int(atom_getfloat(&argv[0]));
+        post("[context changed to %d]",oled->context);
+    }
     else if(oled->a_table_i > 128 || s == gensym("send")){
         SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_DRAW));
         SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(0xf7));

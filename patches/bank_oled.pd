@@ -1,0 +1,8 @@
+#N canvas 212 186 450 300 12;
+#X obj 12 14 inlet;
+#X obj 277 23 inlet;
+#X obj 276 211 oled;
+#X msg 276 181 context \$1;
+#X msg 15 90 clear \, send;
+#X connect 1 0 3 0;
+#X connect 3 0 2 0;
