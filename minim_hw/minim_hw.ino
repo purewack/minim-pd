@@ -69,7 +69,10 @@ void post_display(){
   if(ctx == 5){
     gpio_write_bit(GPIOB, 12, 0);
     spi_tx(SPI2, imsgdata.buf, imsgdata.count);
-    while(spi_is_busy(SPI2));
+    while(spi_is_busy(SPI2)){
+      io_mux_irq();
+      delay(2);
+    }
     gpio_write_bit(GPIOB, 12, 1);
     return;
   }
@@ -78,7 +81,10 @@ void post_display(){
   imsg.length = imsgdata.count;
   imsg.data = (uint8*)imsgdata.buf;
   i2c_master_xfer(ctx_dev,&imsg,1,0);
-  while(ctx_dev->state == I2C_STATE_BUSY){}
+  while(ctx_dev->state == I2C_STATE_BUSY){
+    io_mux_irq();
+    delay(2);
+  }
   
 }
 
@@ -265,6 +271,19 @@ void setup(){
       cmd_gfx_on_draw();
       delay(100);
     }
+
+    cmd_gfx_on_context(5);
+    gfx.modexor = 1;
+    gfx.scale = 1;
+    for(int i=0; i<32; i++){
+      gfx_clear();
+      gfx_drawString(VERSION,0,64-8);
+      gfx_fillSection(0,64-8,i*4,8);
+      cmd_gfx_on_draw();
+      delay(1);
+    }
+    gfx_clear();
+    cmd_gfx_on_draw();
         
     int boot_cmd = EEPROM.read(0) ;
     if(boot_cmd != 0xffff && boot_cmd){
@@ -291,9 +310,7 @@ void collectSysex(char* b, int offset){
   for(int i = offset; i<3; i++){
     if(b[1+i] == 0xf7 && sysex){
       sysex = false;
-      usbmidi.sendControlChange(0,127,1);
       parseCommand((unsigned char*)sysex_string.buf,sysex_string.count);
-      usbmidi.sendControlChange(0,127,0);
     }
     else
       sarray_push(sysex_string,b[1+i]);
