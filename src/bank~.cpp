@@ -650,7 +650,7 @@ void bank_onDelete(t_bank* x){
     x->onetime = false;
     // x->tick_duration = 0;
     x->tick_action_pending = 0;
-    x->tick_action_nstate = 0;
+    x->tick_action_nstate = _motif_state::m_clear;
     // x->hasQuantick = false;
     //bank_onTransportReset(x);
     bank_clear_motif(x->active_motif_ptr);
@@ -666,7 +666,7 @@ void bank_onReset(t_bank* x){
     x->onetime = false;
     x->tick_duration = 0;
     x->tick_action_pending = 0;
-    x->tick_action_nstate = 0;
+    x->tick_action_nstate = _motif_state::m_clear;
     x->hasQuantick = false;
     bank_onTransportReset(x);
     bank_onDelete(x);
@@ -773,23 +773,14 @@ void* bank_tilde_new(t_floatarg id){
         x->motifs_array[i] = (t_motif*)malloc(sizeof(t_motif));
         x->motifs_array[i]->_aData = (t_sample*)malloc(sizeof(t_sample) * MOTIF_BUF_SIZE);
         x->motifs_array[i]->_bData = (t_sample*)malloc(sizeof(t_sample) * MOTIF_BUF_SIZE);
-        bank_clear_motif(x->motifs_array[i]);
     }
-    
+
     x->id = (int)id;
     x->motifs_array_count = 4;
     x->active_motif_idx = 0;
     x->active_motif_ptr = x->motifs_array[x->active_motif_idx];
     x->isActive = 1;
-    x->tick_duration = 0;
-    x->tick_start = 0;
-    x->tick_next = 0;
-    x->tick_current = -1;
-    x->gate = false;
-    x->onetime = false;
-    x->synced = false;
-    x->debounceCounter = 0;
-    x->hasQuantick = false;
+    bank_onReset(x);
 
     post("[%s] new bank with id: %d", VER, x->id);
     // pthread_mutex_init(&x->mtx_work, NULL);
