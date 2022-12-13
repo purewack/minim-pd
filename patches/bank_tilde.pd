@@ -43,7 +43,7 @@
 #X obj -69 431 *~ 0.7;
 #X obj 697 265 bank~ 4, f 8;
 #X floatatom 258 295 5 0 0 0 - - - 0;
-#X obj 762 104 loadbang;
+#X obj 794 79 loadbang;
 #X obj 556 77 mapper 39;
 #X obj 216 78 mapper 35 36 37 38;
 #X obj 395 78 mapper 40 41 42 43;
@@ -113,6 +113,11 @@
 #X obj 780 514 bank_oled;
 #X msg 680 515 2;
 #X msg 853 514 3;
+#X msg 800 131 1;
+#X obj 710 574 oled 5;
+#X msg 765 573 upload status_icons.txt;
+#X obj 768 549 loadbang;
+#X obj 797 105 delay 1000;
 #X connect 2 0 24 0;
 #X connect 2 1 24 1;
 #X connect 3 0 4 0;
@@ -170,7 +175,7 @@
 #X connect 42 0 40 0;
 #X connect 42 1 39 0;
 #X connect 42 2 107 0;
-#X connect 44 0 67 0;
+#X connect 44 0 118 0;
 #X connect 45 0 84 0;
 #X connect 46 0 21 1;
 #X connect 46 1 22 1;
@@ -256,3 +261,9 @@
 #X connect 111 0 77 0;
 #X connect 112 0 109 2;
 #X connect 113 0 111 2;
+#X connect 114 0 79 0;
+#X connect 115 0 77 0;
+#X connect 115 0 76 0;
+#X connect 116 0 115 0;
+#X connect 117 0 116 0;
+#X connect 118 0 114 0;
