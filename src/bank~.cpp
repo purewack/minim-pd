@@ -17,7 +17,7 @@ extern "C" {
 #define HOLD_TIME 1500 //sync ticks ~= 2s
 #define REFILL_CHUNK 64
 
-#define BAR_BEATS 4
+#define BAR_BEATS 8
 typedef struct _motif{
     int state;
     int n_state;
@@ -682,7 +682,7 @@ void bank_onTransportReset(t_bank* x){
     t_motif* m = x->active_motif_ptr;
     if(!bank_activeMotifIsClear(x)){
         m->state = _motif_state::m_stop;
-        m->pos_syncs = 0;
+        bank_motif_toStart(m);
     }
     // bank_outlet_sync(x,1);
     post("bank [%d] transport reset", x->id);
