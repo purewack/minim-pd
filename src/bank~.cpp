@@ -16,6 +16,8 @@ extern "C" {
 #define DEBOUNCE_TIME 20 // ~40ms
 #define HOLD_TIME 1500 //sync ticks ~= 2s
 #define REFILL_CHUNK 64
+
+#define BAR_BEATS 4
 typedef struct _motif{
     int state;
     int n_state;
@@ -60,8 +62,8 @@ extern "C"{
         t_inlet*    i_sync;
         t_outlet*   o_loop_sig;
         t_outlet*   o_loop_pos;
-        //t_outlet*   o_control;
         t_outlet*   o_info; 
+        t_outlet*   o_sync;
 
         t_atom      a_info_list[10];
         
@@ -253,16 +255,23 @@ t_int* bank_perform(t_int *w)
                 bank_motif_toStart(m);
             
             else if(m->state == _motif_state::m_base && x->tick_action_nstate == _motif_state::m_play ){  
-                x->active_motif_ptr->pos_syncs = 0;
-                x->active_motif_ptr->len_syncs = x->tick_current - x->when_base;
+                //post changes to sync listeners to update banks with new project quan length
                 if(!x->hasQuantick){
-                    bank_onTransportReset(x);
-                    x->hasQuantick = true;
-                    x->tick_duration+=1;
-                    x->active_motif_ptr->len_syncs-=1;
-                } 
-                x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
-                //master quan tick recorder fix len
+                    x->tick_duration *= -1;
+                    auto dd = x->tick_duration;
+                    auto ll = int(dd / BAR_BEATS);
+                    x->tick_duration = ll * BAR_BEATS;
+                    outlet_float(x->o_sync, x->tick_duration);
+                    post("bank_onTriggerOn() bank %d setting new tick len %d (%d) @%d", x->id, x->tick_duration, dd, x->tick_current);
+                    x->active_motif_ptr->len_syncs = x->tick_duration;
+                    x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
+                }
+                else{
+                    x->active_motif_ptr->len_syncs = x->tick_current - x->when_base;
+                    x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
+                    post("onPending() @%d nstate ticklen:%d spllen:%d @%d",x->when_base, x->active_motif_ptr->len_syncs, x->active_motif_ptr->len_spl, x->tick_current);
+                }
+                bank_onTransportReset(x);
             }
 
             else if((m->state == _motif_state::m_play || m->state == _motif_state::m_stop) && x->tick_action_nstate == _motif_state::m_dub){
@@ -353,12 +362,12 @@ void bank_setSyncTick(t_bank* x, t_floatarg t){
     
     //banks with uninitiated quan tick data go through this routine once
     //normalize recorded sample len to sync len
+
+    bank_onTransportReset(x);
     x->hasQuantick = true;
-    int m_len_spl = x->active_motif_ptr->len_spl;
     x->tick_duration = t;
-    x->tick_current = -1; //set sync tick in other banks will be out by 1 tick so need to compensate
     x->tick_next = t;
-    post("bank %d has new tick len: %f tick len spl %d (%d pre)", x->id, t, x->active_motif_ptr->len_spl, m_len_spl);
+    post("bank %d has new tick len: %f tick len spl %d", x->id, t, x->active_motif_ptr->len_spl);
     // bank_outlet_sync(x,1);
 }
 
@@ -368,12 +377,6 @@ int bank_postBase(t_bank* x){
     SETFLOAT(x->a_info_list+2, x->active_motif_ptr->state);
     SETFLOAT(x->a_info_list+3, x->active_motif_ptr->len_syncs);
     return 3;
-}
-
-void bank_postQuanUpdate(t_bank* x){
-    auto aa = bank_postBase(x);
-    SETFLOAT(x->a_info_list+aa, x->tick_duration);
-    outlet_list(x->o_info, &s_list, aa+1, x->a_info_list);
 }
 
 void bank_postStateUpdate(t_bank* x){
@@ -400,7 +403,7 @@ void bank_debugInfo(t_bank* x){
     post("=======bank[id%d]=====", x->id);
     post("active slot [slot%d]",x->active_motif_idx);
     post("posPer: %f , posA:%d, len : %d",p, x->active_motif_ptr->pos_syncs, x->active_motif_ptr->len_syncs);
-    post("bank %d tick len: %d, tick %d", x->id, x->tick_duration, x->tick_current);
+    post("bank %d tick len: %d, tick %d tick_action:%d", x->id, x->tick_duration, x->tick_current, x->tick_action_when);
     post("state %d", x->active_motif_ptr->state);
     post("gate%d", x->gate);
 }
@@ -484,13 +487,7 @@ void bank_onTriggerOn(t_bank* x){
         //[4]
         //[5]
         if(!x->stateCAlt){
-             //post changes to sync listeners to update banks with new project quan length
-            if(!x->hasQuantick){
-                x->tick_duration *= -1;
-                bank_postQuanUpdate(x);
-                post("bank %d setting new tick len %d", x->id, x->tick_duration);
-            }
-
+             
             //loop        
             x->gate = false;
             x->onetime = false;
@@ -688,6 +685,7 @@ void bank_onTransportReset(t_bank* x){
         m->pos_syncs = 0;
     }
     // bank_outlet_sync(x,1);
+    post("bank [%d] transport reset", x->id);
 }
 
 void bank_onTransportStop(t_bank* x){
@@ -764,8 +762,8 @@ void* bank_tilde_new(t_floatarg id){
     x->i_sync = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("set_sync_tick"));
     x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
     x->o_loop_pos = outlet_new(&x->x_obj,&s_float);
-    //x->o_control = outlet_new(&x->x_obj, &s_float);
     x->o_info = outlet_new(&x->x_obj,&s_list);
+    x->o_sync = outlet_new(&x->x_obj, &s_float);
     
 
     x->motifs_array = (t_motif**)malloc(4 * sizeof(t_motif*));
@@ -808,8 +806,8 @@ void bank_tilde_free(t_bank* x){
     inlet_free(x->i_sync);
     outlet_free(x->o_loop_sig);
     outlet_free(x->o_loop_pos);
-    //outlet_free(x->o_control);
     outlet_free(x->o_info);
+    outlet_free(x->o_sync);
     for(int i=0; i<4; i++){    
         free(x->motifs_array[i]->_aData);
         free(x->motifs_array[i]->_bData);
