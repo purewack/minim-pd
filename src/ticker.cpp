@@ -66,6 +66,13 @@ void ticker_oninfo(t_ticker* x){
     post("state %f", x->tick_state);
 }
 
+
+void ticker_oninfoShort(t_ticker* x){
+    post("++++Ticker++++");
+    post("ppos:%f / len : %f", x->tick_ppos, x->tick_len);
+}
+
+
 void ticker_onset(t_ticker* x, t_floatarg t){
     if(x->tick_len > 0) return;
     if(t <= 0) return;
@@ -144,6 +151,7 @@ void ticker_setup(void){
         (t_method)ticker_dsp, gensym("dsp"), A_CANT, 0);
     class_addfloat(ticker_class,(t_method)ticker_onset);
     class_addmethod(ticker_class,(t_method)ticker_oninfo, gensym("debug_info"),  (t_atomtype)0);
+    class_addmethod(ticker_class,(t_method)ticker_oninfoShort, gensym("dbg"),  (t_atomtype)0);
     class_addmethod(ticker_class,(t_method)ticker_onstart, gensym("start"),  (t_atomtype)0);
     class_addmethod(ticker_class,(t_method)ticker_onend,   gensym("stop"),   (t_atomtype)0);
     class_addmethod(ticker_class,(t_method)ticker_onreset, gensym("reset"),  (t_atomtype)0);

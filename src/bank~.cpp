@@ -400,7 +400,6 @@ void bank_q(t_bank* x){
 
 
 void bank_debugInfo(t_bank* x){
-    if(! x->isActive) return;
     float p = x->active_motif_ptr->len_syncs ? float(x->active_motif_ptr->pos_syncs) / float(x->active_motif_ptr->len_syncs) : 0.0f;
     post("=======bank[id%d]=====", x->id);
     post("active slot [slot%d]",x->active_motif_idx);
@@ -412,7 +411,10 @@ void bank_debugInfo(t_bank* x){
     post("one %d", x->onetime);
 }
 
-
+void bank_debugInfoShort(t_bank* x){
+    post("=======bank[id%d]=====", x->id);
+    post("posA:%d / len : %d / tick len: %d", x->active_motif_ptr->pos_syncs, x->active_motif_ptr->len_syncs, x->tick_duration);
+}
 
 
 void bank_onActivate(t_bank* x){
@@ -853,6 +855,7 @@ void bank_tilde_setup(void){
     class_addmethod(bank_tilde_class, (t_method) bank_setSyncTick,    gensym("set_sync_tick"),  A_DEFFLOAT, (t_atomtype)0);
 
     class_addmethod(bank_tilde_class, (t_method) bank_debugInfo     ,gensym("debug_info")     ,(t_atomtype)0 );
+    class_addmethod(bank_tilde_class, (t_method) bank_debugInfoShort     ,gensym("dbg")     ,(t_atomtype)0 );
 
     //class_sethelpsymbol(bank_class, gensym("bank_tilde-help"));
 }
