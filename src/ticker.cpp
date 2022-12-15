@@ -89,7 +89,7 @@ void ticker_onstart(t_ticker* x){
         x->tick_state = 1;
     else if(x->tick_len){
         x->tick_pos = -1.0f;
-        x->tick_start = 0.0f;
+        x->tick_start = -1.0f;
         x->tick_state = 2;
         outlet_bang(x->o_tick_sync[0]);
     }
