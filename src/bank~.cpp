@@ -17,7 +17,7 @@ extern "C" {
 #define HOLD_TIME 1500 //sync ticks ~= 2s
 #define REFILL_CHUNK 64
 
-#define BAR_BEATS 8
+#define BAR_BEATS 4
 typedef struct _motif{
     int state;
     int n_state;
@@ -80,6 +80,9 @@ extern "C"{
         int         tick_action_when;//when action should be exec
         int         tick_action_nstate;//next motif state on action
         int         when_base;//last time of sync tick
+        int         sync_cbeat; //current bar beat
+        int         sync_beats; // number of beats in bar
+        int         quan_beats;
 
         bool gate; //if play button let go, stop sound
         bool onetime; //dont loop
@@ -238,8 +241,8 @@ t_int* bank_perform(t_int *w)
         break;
     }
 
-    if(m->len_syncs) m->pos_ratio = float(m->pos_syncs) / float(m->len_syncs);
-    outlet_float(x->o_loop_pos,m->pos_ratio);
+    // if(m->len_syncs) m->pos_ratio = float(m->pos_syncs) / float(m->len_syncs);
+    // outlet_float(x->o_loop_pos,m->pos_ratio);
 
     //n-state machine
     if(x->tick_action_pending){
@@ -253,18 +256,19 @@ t_int* bank_perform(t_int *w)
                 post("bank[%d] when_base %d",x->id, x->when_base);
             }
 
-            if((m->state == _motif_state::m_clear || m->state == _motif_state::m_stop) && x->tick_action_nstate == _motif_state::m_play) 
+            if((m->state == _motif_state::m_clear || m->state == _motif_state::m_stop) && x->tick_action_nstate == _motif_state::m_play)
+            { 
                 bank_motif_toStart(m);
+            }
             
             else if(m->state == _motif_state::m_base && x->tick_action_nstate == _motif_state::m_play ){  
                 if(!x->hasQuantick){
                     //post changes to sync listeners to update banks with new project quan length
                     auto dd = x->tick_duration * -1;
                     auto ll = int(dd / BAR_BEATS);
-                    dd = ll * BAR_BEATS;
-                    outlet_float(x->o_sync, dd);
-                    post("posted @%d", x->tick_current);
-                    x->active_motif_ptr->len_syncs = x->tick_duration;
+                    //dd = ll * BAR_BEATS;
+                    outlet_float(x->o_sync, ll);
+                    x->active_motif_ptr->len_syncs = ll * BAR_BEATS;
                     x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
                 }
                 else{
@@ -272,12 +276,14 @@ t_int* bank_perform(t_int *w)
                     x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
                     post("perform[%d]@%d nstate ticklen:%d spllen:%d",x->id, x->tick_current, x->active_motif_ptr->len_syncs, x->active_motif_ptr->len_spl);
                 }
+                bank_onTransportReset(x);
             }
 
             else if((m->state == _motif_state::m_play || m->state == _motif_state::m_stop) && x->tick_action_nstate == _motif_state::m_dub){
                 //start dub
-                if(m->state == _motif_state::m_stop) 
+                if(m->state == _motif_state::m_stop){ 
                     bank_motif_toStart(m);
+                }
                 m->isDubbing = 1;
                 bank_motif_swapStreams(m);
             }
@@ -296,7 +302,7 @@ t_int* bank_perform(t_int *w)
                 x->work_data = m->len_spl;
                 x->tick_action_nstate = x->gate ? _motif_state::m_stop : _motif_state::m_play;
             }
-
+           
             m->state = x->tick_action_nstate;
             x->tick_action_pending = 0;
             //post("pending action done bank %d",x->id);
@@ -309,6 +315,10 @@ t_int* bank_perform(t_int *w)
     //next sync tick calculation
     if(x->tick_duration > 0 && x->tick_current >= x->tick_start+x->tick_duration)
     {
+        //if(bank_activeMotifIsRunning(x)){
+            x->sync_cbeat = (x->sync_cbeat+1) % x->sync_beats;
+            outlet_float(x->o_loop_pos,float(x->sync_cbeat%x->quan_beats));
+        //}
         x->tick_start = x->tick_current;
         x->tick_next = x->tick_start + x->tick_duration;
     }
@@ -357,6 +367,10 @@ t_int* bank_perform(t_int *w)
 }
 
 
+void bank_onSetQuanBeats(t_bank* x, t_floatarg t){
+    if(t > 0)
+        x->quan_beats = int(t);
+}
 
 void bank_setSyncTick(t_bank* x, t_floatarg t){
     if(x->hasQuantick) return;
@@ -366,6 +380,7 @@ void bank_setSyncTick(t_bank* x, t_floatarg t){
     //normalize recorded sample len to sync len
 
     bank_onTransportReset(x);
+    x->sync_beats = BAR_BEATS;
     x->hasQuantick = true;
     x->tick_duration = t;
     x->tick_next = t;
@@ -383,14 +398,15 @@ int bank_postBase(t_bank* x){
 
 void bank_postStateUpdate(t_bank* x){
     bank_postBase(x);
-    outlet_list(x->o_info, &s_list, 5, x->a_info_list);
+    outlet_list(x->o_info, &s_list, 3, x->a_info_list);
 }
 
 
 //que up action time aligned if alignment data exists
 void bank_q(t_bank* x){
-    if(x->synced && x->tick_duration) {//if not gated then schedule on next tick 
-        x->tick_action_when = x->tick_start+x->tick_duration;
+    if(x->synced && x->tick_duration) {//if not gated then schedule on next tick beat 0
+        int ww = x->tick_start + x->tick_duration * (x->quan_beats - (x->sync_cbeat%x->quan_beats));
+        x->tick_action_when = ww;
     }
     else //else execute on next block cycle (q64)
         x->tick_action_when = 0;
@@ -409,6 +425,7 @@ void bank_debugInfo(t_bank* x){
     post("gate %d", x->gate);
     post("sync %d", x->synced);
     post("one %d", x->onetime);
+    post("Qb:%d  %d/%d", x->quan_beats, x->sync_cbeat, x->sync_beats);
 }
 
 void bank_debugInfoShort(t_bank* x){
@@ -672,6 +689,9 @@ void bank_onReset(t_bank* x){
     x->tick_action_pending = 0;
     x->tick_action_nstate = _motif_state::m_clear;
     x->hasQuantick = false;
+    x->quan_beats = BAR_BEATS;
+    x->sync_beats = BAR_BEATS;
+    x->sync_cbeat = 0;
     bank_onTransportReset(x);
     bank_onDelete(x);
     x->populatedCount = 0;
@@ -682,17 +702,18 @@ void bank_onReset(t_bank* x){
 }
 
 void bank_onTransportReset(t_bank* x){
+    post("@%d bank [%d] transport reset",x->tick_current, x->id);
     x->tick_start = 0;
     x->tick_current = 0;
     x->tick_action_when = 0;
     x->tick_next = x->tick_duration;
+    x->sync_cbeat = 0;
     t_motif* m = x->active_motif_ptr;
     if(!bank_activeMotifIsClear(x)){
         m->state = _motif_state::m_stop;
         bank_motif_toStart(m);
     }
     // bank_outlet_sync(x,1);
-    post("@%d bank [%d] transport reset",x->tick_current, x->id);
 }
 
 void bank_onTransportStop(t_bank* x){
@@ -842,6 +863,7 @@ void bank_tilde_setup(void){
     class_addmethod(bank_tilde_class, (t_method) bank_onUndo ,gensym("undo") ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onTransportReset   ,gensym("transport_start")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onTransportStop   ,gensym("transport_stop")   ,(t_atomtype)0 );
+    class_addmethod(bank_tilde_class, (t_method) bank_onSetQuanBeats ,gensym("quan_beats"), A_DEFFLOAT ,(t_atomtype)0 );
 
     class_addmethod(bank_tilde_class, (t_method) bank_onControlAlt ,gensym("on_ctl_alt"), A_DEFFLOAT ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onControlMain ,gensym("on_ctl_main"), A_DEFFLOAT ,(t_atomtype)0 );
