@@ -244,6 +244,7 @@ t_int* bank_perform(t_int *w)
     //n-state machine
     if(x->tick_action_pending){
         if(x->tick_current >= x->tick_action_when){
+            post("NSTATE[%d] @%d -> %d [%d](%d)", x->id, x->tick_current, x->tick_action_when,m->state, x->tick_action_nstate);
             //if state play and n_state stop => reset pos etc, next state machine essentially 
             x->tick_action_when = 0;
 
@@ -255,23 +256,21 @@ t_int* bank_perform(t_int *w)
                 bank_motif_toStart(m);
             
             else if(m->state == _motif_state::m_base && x->tick_action_nstate == _motif_state::m_play ){  
-                //post changes to sync listeners to update banks with new project quan length
                 if(!x->hasQuantick){
-                    x->tick_duration *= -1;
-                    auto dd = x->tick_duration;
+                    //post changes to sync listeners to update banks with new project quan length
+                    auto dd = x->tick_duration * -1;
                     auto ll = int(dd / BAR_BEATS);
-                    x->tick_duration = ll * BAR_BEATS;
-                    outlet_float(x->o_sync, x->tick_duration);
-                    post("bank_onTriggerOn() bank %d setting new tick len %d (%d) @%d", x->id, x->tick_duration, dd, x->tick_current);
-                    x->active_motif_ptr->len_syncs = x->tick_duration;
-                    x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
+                    dd = ll * BAR_BEATS;
+                    outlet_float(x->o_sync, dd);
+                    post("posted @%d", x->tick_current);
+                    goto endstate;
                 }
                 else{
                     x->active_motif_ptr->len_syncs = x->tick_current - x->when_base;
                     x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
-                    post("onPending() @%d nstate ticklen:%d spllen:%d @%d",x->when_base, x->active_motif_ptr->len_syncs, x->active_motif_ptr->len_spl, x->tick_current);
+                    post("perform[%d]@%d nstate ticklen:%d spllen:%d",x->id, x->tick_current, x->active_motif_ptr->len_syncs, x->active_motif_ptr->len_spl);
+                    bank_onTransportReset(x);
                 }
-                bank_onTransportReset(x);
             }
 
             else if((m->state == _motif_state::m_play || m->state == _motif_state::m_stop) && x->tick_action_nstate == _motif_state::m_dub){
@@ -299,8 +298,11 @@ t_int* bank_perform(t_int *w)
 
             m->state = x->tick_action_nstate;
             x->tick_action_pending = 0;
-            post("pending action done bank %d",x->id);
+            //post("pending action done bank %d",x->id);
             bank_postStateUpdate(x);
+
+endstate:
+            post("NSTATE[%d] done", x->id);
         }
     }
 
@@ -357,7 +359,7 @@ t_int* bank_perform(t_int *w)
 
 
 void bank_setSyncTick(t_bank* x, t_floatarg t){
-    if(x->tick_duration > 0) return;
+    if(x->hasQuantick) return;
     if(t <= 0) return;
     
     //banks with uninitiated quan tick data go through this routine once
@@ -367,7 +369,7 @@ void bank_setSyncTick(t_bank* x, t_floatarg t){
     x->hasQuantick = true;
     x->tick_duration = t;
     x->tick_next = t;
-    post("bank %d has new tick len: %f tick len spl %d", x->id, t, x->active_motif_ptr->len_spl);
+    post("setSyncTick_bank:%d @%d has new tick len: %f tick len spl %d", x->id,x->tick_current, t, x->active_motif_ptr->len_spl);
     // bank_outlet_sync(x,1);
 }
 
@@ -405,7 +407,9 @@ void bank_debugInfo(t_bank* x){
     post("posPer: %f , posA:%d, len : %d",p, x->active_motif_ptr->pos_syncs, x->active_motif_ptr->len_syncs);
     post("bank %d tick len: %d, tick %d tick_action:%d", x->id, x->tick_duration, x->tick_current, x->tick_action_when);
     post("state %d", x->active_motif_ptr->state);
-    post("gate%d", x->gate);
+    post("gate %d", x->gate);
+    post("sync %d", x->synced);
+    post("one %d", x->onetime);
 }
 
 
@@ -477,7 +481,7 @@ void bank_onTriggerOn(t_bank* x){
         x->tick_action_nstate = _motif_state::m_base;
         if(!x->stateCAlt) x->synced = true;
         bank_q(x);
-        post("base rec bank %d [%s]",x->id, x->synced ? "SYNC" : "FREE");
+        post("@%d base rec bank %d [%s]",x->tick_current, x->id, x->synced ? "SYNC" : "FREE");
         return;
     }
 
@@ -496,6 +500,7 @@ void bank_onTriggerOn(t_bank* x){
             bank_q(x);
             x->synced = true;
 
+            post("onTriggerOn@%d - Base sync for %d",x->tick_current,x->tick_action_when);
         }
         else{
             //bank_postUnlatchUpdate(x);
@@ -507,7 +512,7 @@ void bank_onTriggerOn(t_bank* x){
             bank_q(x);
         }
         x->populatedCount++;
-        post("base rec end bank %d [%s]",x->id, x->synced ? "SYNC" : "FREE");
+        post("onTriggerOn@%d base rec end bank %d [%s]",x->tick_current, x->id, x->synced ? "SYNC" : "FREE");
         return;
     }
     
@@ -685,7 +690,7 @@ void bank_onTransportReset(t_bank* x){
         bank_motif_toStart(m);
     }
     // bank_outlet_sync(x,1);
-    post("bank [%d] transport reset", x->id);
+    post("@%d bank [%d] transport reset",x->tick_current, x->id);
 }
 
 void bank_onTransportStop(t_bank* x){

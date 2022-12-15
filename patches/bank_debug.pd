@@ -1,4 +1,4 @@
-#N canvas 646 516 510 345 12;
+#N canvas 758 597 510 337 12;
 #X msg 159 108 debug_info;
 #X floatatom 44 183 4 0 0 0 - - - 0;
 #X msg 53 15 1;
@@ -38,6 +38,8 @@
 #X obj 258 288 bng 19 51 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 280 288 bng 19 51 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 302 288 bng 19 51 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
+#X obj 368 315 print;
+#X msg 368 287 -----------;
 #X connect 0 0 13 0;
 #X connect 0 0 28 0;
 #X connect 0 0 29 0;
@@ -83,3 +85,4 @@
 #X connect 31 0 29 0;
 #X connect 32 0 29 0;
 #X connect 34 0 33 0;
+#X connect 40 0 39 0;
