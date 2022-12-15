@@ -365,7 +365,7 @@ void bank_setSyncTick(t_bank* x, t_floatarg t){
     //banks with uninitiated quan tick data go through this routine once
     //normalize recorded sample len to sync len
 
-    bank_onTransportReset(x);
+    //bank_onTransportReset(x);
     x->hasQuantick = true;
     x->tick_duration = t;
     x->tick_next = t;
