@@ -17,7 +17,7 @@ extern "C" {
 #define HOLD_TIME 1500 //sync ticks ~= 2s
 #define REFILL_CHUNK 64
 
-#define BAR_BEATS 4
+#define BAR_BEATS 24
 typedef struct _motif{
     int state;
     int n_state;
@@ -62,11 +62,21 @@ extern "C"{
         t_inlet*    i_sync;
         t_outlet*   o_loop_sig;
         t_outlet*   o_loop_pos;
-        t_outlet*   o_info; 
-        t_outlet*   o_sync;
+        t_outlet*   o_info_status; 
+        t_outlet*   o_info_sync;
 
-        t_atom      a_info_list[10];
-        
+        t_atom      a_status_list[3];
+        //a_status_list:
+        //  bank_idx
+        //  status_peding
+        //  status_current
+
+        t_atom      a_sync_list[3];
+        //a_sync_list:
+        //  tick_len
+        //  len_syncs
+        //  bar_beats
+
         //sync tick = b64 boundary timing, 1 DSP loop
         //quan tick = L*sync ticks
         bool        isActive;// if not, does not take any input, still processes sound
@@ -83,6 +93,7 @@ extern "C"{
         int         sync_cbeat; //current bar beat
         int         sync_beats; // number of beats in bar
         int         quan_beats;
+        bool        show_ratio;
 
         bool gate; //if play button let go, stop sound
         bool onetime; //dont loop
@@ -104,7 +115,7 @@ extern "C"{
 
     void bank_q(t_bank* x);
     void bank_postStateUpdate(t_bank* x);
-    void bank_postQuanUpdate(t_bank* x);
+    void bank_postSyncUpdate(t_bank* x, int len = 0);
 
     void bank_onActivate(t_bank* x);
     void bank_onDeactivate(t_bank* x);
@@ -241,12 +252,14 @@ t_int* bank_perform(t_int *w)
         break;
     }
 
-    // if(m->len_syncs) m->pos_ratio = float(m->pos_syncs) / float(m->len_syncs);
-    // outlet_float(x->o_loop_pos,m->pos_ratio);
-
+    if(x->show_ratio){
+        if(m->len_syncs) m->pos_ratio = float(m->pos_syncs) / float(m->len_syncs);
+        outlet_float(x->o_loop_pos,m->pos_ratio);
+    }
     //n-state machine
     if(x->tick_action_pending){
         if(x->tick_current >= x->tick_action_when){
+            bool doPost = true;
             post("     NSTATE[%d] @%d -> %d [%d](%d)", x->id, x->tick_current, x->tick_action_when,m->state, x->tick_action_nstate);
             //if state play and n_state stop => reset pos etc, next state machine essentially 
             x->tick_action_when = 0;
@@ -263,20 +276,25 @@ t_int* bank_perform(t_int *w)
             
             else if(m->state == _motif_state::m_base && x->tick_action_nstate == _motif_state::m_play ){  
                 if(!x->hasQuantick){
+                    int suggested_bar_beats = 24;
                     //post changes to sync listeners to update banks with new project quan length
                     auto dd = x->tick_duration * -1;
-                    auto ll = int(dd / BAR_BEATS);
+                    auto ll = int(dd / suggested_bar_beats);
+                    auto delta = dd - (ll*suggested_bar_beats);
                     //dd = ll * BAR_BEATS;
-                    outlet_float(x->o_sync, ll);
-                    x->active_motif_ptr->len_syncs = ll * BAR_BEATS;
+                    x->active_motif_ptr->len_syncs = ll * suggested_bar_beats;
                     x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
+                    x->sync_beats = suggested_bar_beats;
+
+                    post("bank[%d] len compensation error %dq64 (%fms)",x->id,delta,float(64*(delta))/44.1f);
+                    bank_postSyncUpdate(x, ll);
                 }
                 else{
                     x->active_motif_ptr->len_syncs = x->tick_current - x->when_base;
                     x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
                     post("perform[%d]@%d nstate ticklen:%d spllen:%d",x->id, x->tick_current, x->active_motif_ptr->len_syncs, x->active_motif_ptr->len_spl);
+                    bank_postSyncUpdate(x);
                 }
-                bank_onTransportReset(x);
             }
 
             else if((m->state == _motif_state::m_play || m->state == _motif_state::m_stop) && x->tick_action_nstate == _motif_state::m_dub){
@@ -306,6 +324,7 @@ t_int* bank_perform(t_int *w)
             m->state = x->tick_action_nstate;
             x->tick_action_pending = 0;
             //post("pending action done bank %d",x->id);
+            if(doPost)
             bank_postStateUpdate(x);
 
             post("     NSTATE[%d] done", x->id);
@@ -317,7 +336,8 @@ t_int* bank_perform(t_int *w)
     {
         //if(bank_activeMotifIsRunning(x)){
             x->sync_cbeat = (x->sync_cbeat+1) % x->sync_beats;
-            outlet_float(x->o_loop_pos,float(x->sync_cbeat%x->quan_beats));
+            if(!x->show_ratio)
+            outlet_float(x->o_loop_pos,x->sync_cbeat);
         //}
         x->tick_start = x->tick_current;
         x->tick_next = x->tick_start + x->tick_duration;
@@ -388,19 +408,20 @@ void bank_setSyncTick(t_bank* x, t_floatarg t){
     // bank_outlet_sync(x,1);
 }
 
-int bank_postBase(t_bank* x){
-    SETFLOAT(x->a_info_list+0, x->active_motif_idx);
-    SETFLOAT(x->a_info_list+1, x->tick_action_nstate);
-    SETFLOAT(x->a_info_list+2, x->active_motif_ptr->state);
-    SETFLOAT(x->a_info_list+3, x->active_motif_ptr->len_syncs);
-    return 3;
-}
 
 void bank_postStateUpdate(t_bank* x){
-    bank_postBase(x);
-    outlet_list(x->o_info, &s_list, 3, x->a_info_list);
+    SETFLOAT(x->a_status_list+0, x->active_motif_idx);
+    SETFLOAT(x->a_status_list+1, x->tick_action_nstate);
+    SETFLOAT(x->a_status_list+2, x->active_motif_ptr->state);
+    outlet_list(x->o_info_status, &s_list, 3, x->a_status_list);
 }
 
+void bank_postSyncUpdate(t_bank* x, int len){
+    SETFLOAT(x->a_sync_list+0, len != 0 ? len : x->tick_duration);
+    SETFLOAT(x->a_sync_list+1, x->active_motif_ptr->len_syncs);
+    SETFLOAT(x->a_sync_list+2, x->sync_beats);
+    outlet_list(x->o_info_sync, &s_list, 3, x->a_sync_list);
+}
 
 //que up action time aligned if alignment data exists
 void bank_q(t_bank* x){
@@ -663,6 +684,11 @@ void bank_onOvertakeRecord(t_bank* x){
     }
 }
 
+void bank_onShowLoopRatio(t_bank*x, t_floatarg f){
+    if(f == 0) x->show_ratio = false;
+    else x->show_ratio = true;
+}
+
 
 
 void bank_onDelete(t_bank* x){
@@ -685,6 +711,7 @@ void bank_onReset(t_bank* x){
     x->gate = false;
     x->synced = false;
     x->onetime = false;
+    x->show_ratio = true;
     x->tick_duration = 0;
     x->tick_action_pending = 0;
     x->tick_action_nstate = _motif_state::m_clear;
@@ -790,8 +817,8 @@ void* bank_tilde_new(t_floatarg id){
     x->i_sync = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("set_sync_tick"));
     x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
     x->o_loop_pos = outlet_new(&x->x_obj,&s_float);
-    x->o_info = outlet_new(&x->x_obj,&s_list);
-    x->o_sync = outlet_new(&x->x_obj, &s_float);
+    x->o_info_status = outlet_new(&x->x_obj,&s_list);
+    x->o_info_sync = outlet_new(&x->x_obj, &s_list);
     
 
     x->motifs_array = (t_motif**)malloc(4 * sizeof(t_motif*));
@@ -834,8 +861,8 @@ void bank_tilde_free(t_bank* x){
     inlet_free(x->i_sync);
     outlet_free(x->o_loop_sig);
     outlet_free(x->o_loop_pos);
-    outlet_free(x->o_info);
-    outlet_free(x->o_sync);
+    outlet_free(x->o_info_status);
+    outlet_free(x->o_info_sync);
     for(int i=0; i<4; i++){    
         free(x->motifs_array[i]->_aData);
         free(x->motifs_array[i]->_bData);
@@ -864,6 +891,7 @@ void bank_tilde_setup(void){
     class_addmethod(bank_tilde_class, (t_method) bank_onTransportReset   ,gensym("transport_start")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onTransportStop   ,gensym("transport_stop")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onSetQuanBeats ,gensym("quan_beats"), A_DEFFLOAT ,(t_atomtype)0 );
+    class_addmethod(bank_tilde_class, (t_method) bank_onShowLoopRatio ,gensym("loop_ratio"), A_DEFFLOAT ,(t_atomtype)0 );
 
     class_addmethod(bank_tilde_class, (t_method) bank_onControlAlt ,gensym("on_ctl_alt"), A_DEFFLOAT ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onControlMain ,gensym("on_ctl_main"), A_DEFFLOAT ,(t_atomtype)0 );
