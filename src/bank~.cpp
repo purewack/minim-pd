@@ -118,7 +118,7 @@ extern "C"{
 
     void bank_onActivate(t_bank* x);
     void bank_onDeactivate(t_bank* x);
-    void bank_setSyncTick(t_bank* x, t_floatarg t);
+    void bank_setSyncTick(t_bank* x, t_symbol *s, int argc, t_atom *argv);
     void bank_debugInfo(t_bank* x);
     void bank_onNextSlot(t_bank* x);
     void bank_onPrevSlot(t_bank* x);
@@ -277,6 +277,7 @@ t_int* bank_perform(t_int *w)
             else if(m->state == _motif_state::m_base && x->tick_action_nstate == _motif_state::m_play ){  
                 if(!x->hasQuantick){
                     int suggested_bar_beats = bank_getEstimateBarBeats(-x->tick_duration);
+                    post("new sbeat %d",suggested_bar_beats);
                     //post changes to sync listeners to update banks with new project quan length
                     auto dd = x->tick_duration * -1;
                     auto ll = int(dd / suggested_bar_beats);
@@ -285,6 +286,7 @@ t_int* bank_perform(t_int *w)
                     x->active_motif_ptr->len_syncs = ll * suggested_bar_beats;
                     x->active_motif_ptr->len_spl = x->active_motif_ptr->len_syncs * 64;
                     x->sync_beats = suggested_bar_beats;
+                    x->quan_beats = suggested_bar_beats;
 
                     post("bank[%d] len compensation error %dq64 (%fms)",x->id,delta,float(64*(delta))/44.1f);
                     bank_postSyncUpdate(x, ll);
@@ -392,19 +394,24 @@ void bank_onSetQuanBeats(t_bank* x, t_floatarg t){
         x->quan_beats = int(t);
 }
 
-void bank_setSyncTick(t_bank* x, t_floatarg t){
+void bank_setSyncTick(t_bank* x, t_symbol *s, int argc, t_atom *argv){
     if(x->hasQuantick) return;
+    if(argc < 2) return;
+    int t = atom_getint(argv+0);
+    int d = atom_getint(argv+1);
     if(t <= 0) return;
+    post("t%d d%d",t,d);
     
     //banks with uninitiated quan tick data go through this routine once
     //normalize recorded sample len to sync len
 
     bank_onTransportReset(x);
-    x->sync_beats = bank_getEstimateBarBeats(int(t));
     x->hasQuantick = true;
     x->tick_duration = t;
     x->tick_next = t;
-    post("setSyncTick_bank:%d @%d has new tick len: %f tick len spl %d", x->id,x->tick_current, t, x->active_motif_ptr->len_spl);
+    x->sync_beats = d;
+    x->quan_beats = d;
+    post("setSyncTick_bank:%d @%d has new tick len: %d tick len spl %d qb%d", x->id,x->tick_current, t, x->active_motif_ptr->len_spl, x->sync_beats);
     // bank_outlet_sync(x,1);
 }
 
@@ -691,22 +698,27 @@ void bank_onShowLoopRatio(t_bank*x, t_floatarg f){
 
 
 int bank_getEstimateBarBeats(int tick_duration){
-    if(tick_duration >= 10000) return 24;
-    if(tick_duration < 68) return 1;
-    float thresh = 0.02f; //2% error
-    int divisors[4] = {24,12,6,3};
-    for(int i=0; i<4; i++){
-        int rounded = tick_duration/divisors[i];
-        rounded *= divisors[i];
-        // float error = 1.f - float(rounded)/float(tick_duration);
-        // if(error <= thresh) {
-        //     post("    [/%d] len:%d round:%d diff:%d error%%%f\n",divisors[i],tick_duration, rounded,tick_duration-rounded, error*100.f);
-        //     return divisors[i];
-        // }
-        if(tick_duration-rounded <= 3)
-            return divisors[i];
-    }
+    if(tick_duration >= 1000) return 24;
+    if(tick_duration >= 560) return 16;
+    if(tick_duration >= 280) return 8;
+    if(tick_duration >= 100) return 4;
     return 1;
+    // if(tick_duration >= 10000) return 24;
+    // if(tick_duration < 68) return 1;
+    // float thresh = 0.02f; //2% error
+    // int divisors[4] = {24,12,6,3};
+    // for(int i=0; i<4; i++){
+    //     int rounded = tick_duration/divisors[i];
+    //     rounded *= divisors[i];
+    //     // float error = 1.f - float(rounded)/float(tick_duration);
+    //     // if(error <= thresh) {
+    //     //     post("    [/%d] len:%d round:%d diff:%d error%%%f\n",divisors[i],tick_duration, rounded,tick_duration-rounded, error*100.f);
+    //     //     return divisors[i];
+    //     // }
+    //     if(tick_duration-rounded <= 3)
+    //         return divisors[i];
+    // }
+    // return 1;
 }
 
 void bank_onDelete(t_bank* x){
@@ -832,7 +844,7 @@ void* bank_tilde_new(t_floatarg id){
     //f signal in
     x->i_trigger = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_main"));
     x->i_control = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("on_ctl_alt"));
-    x->i_sync = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym("set_sync_tick"));
+    x->i_sync = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_list, gensym("set_sync_tick"));
     x->o_loop_sig = outlet_new(&x->x_obj,&s_signal);
     x->o_loop_pos = outlet_new(&x->x_obj,&s_float);
     x->o_info_status = outlet_new(&x->x_obj,&s_list);
@@ -920,7 +932,7 @@ void bank_tilde_setup(void){
 
     class_addmethod(bank_tilde_class, (t_method) bank_onNextSlot   ,gensym("next_slot")   ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_onPrevSlot   ,gensym("prev_slot")   ,(t_atomtype)0 );
-    class_addmethod(bank_tilde_class, (t_method) bank_setSyncTick,    gensym("set_sync_tick"),  A_DEFFLOAT, (t_atomtype)0);
+    class_addmethod(bank_tilde_class, (t_method) bank_setSyncTick,    gensym("set_sync_tick"),  A_GIMME, (t_atomtype)0);
 
     class_addmethod(bank_tilde_class, (t_method) bank_debugInfo     ,gensym("debug_info")     ,(t_atomtype)0 );
     class_addmethod(bank_tilde_class, (t_method) bank_debugInfoShort     ,gensym("dbg")     ,(t_atomtype)0 );
