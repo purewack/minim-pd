@@ -74,8 +74,8 @@ extern "C"{
         t_atom      a_sync_list[3];
         //a_sync_list:
         //  tick_len
-        //  len_syncs
         //  bar_beats
+        //  len_syncs
 
         //sync tick = b64 boundary timing, 1 DSP loop
         //quan tick = L*sync ticks
@@ -418,8 +418,8 @@ void bank_postStateUpdate(t_bank* x){
 
 void bank_postSyncUpdate(t_bank* x, int len){
     SETFLOAT(x->a_sync_list+0, len != 0 ? len : x->tick_duration);
-    SETFLOAT(x->a_sync_list+1, x->active_motif_ptr->len_syncs);
-    SETFLOAT(x->a_sync_list+2, x->sync_beats);
+    SETFLOAT(x->a_sync_list+1, x->sync_beats);
+    SETFLOAT(x->a_sync_list+2, x->active_motif_ptr->len_syncs);
     outlet_list(x->o_info_sync, &s_list, 3, x->a_sync_list);
 }
 

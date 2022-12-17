@@ -8,7 +8,7 @@
 #X floatatom 29 223 5 0 0 0 - - - 0;
 #X floatatom 69 223 5 0 0 0 - - - 0;
 #X floatatom 108 224 5 0 0 0 - - - 0;
-#X msg 169 85 clean;
+#X msg 169 109 clean;
 #X obj 24 158 bank~ 1, f 9;
 #X obj 20 88 i;
 #X floatatom 182 154 5 0 0 0 - - - 0;
@@ -37,7 +37,7 @@
 #X obj 302 288 bng 19 51 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 368 315 print;
 #X msg 368 287 -----------;
-#X msg 159 108 dbg;
+#X msg 169 84 dbg;
 #X obj 136 317 plonk~ 1500;
 #X obj 146 344 dac~;
 #X obj 238 345 dac~;
@@ -53,6 +53,9 @@
 #X floatatom 80 326 5 0 0 0 - - - 0;
 #X obj 81 189 unpack f f f;
 #X msg 315 114 quan_beats 4;
+#X msg 168 33 loop_ratio 0;
+#X obj 52 358 *;
+#X floatatom 89 361 5 0 0 0 - - - 0;
 #X connect 1 0 4 0;
 #X connect 2 0 3 0;
 #X connect 3 0 11 0;
@@ -114,7 +117,12 @@
 #X connect 48 1 50 0;
 #X connect 48 2 51 0;
 #X connect 49 0 12 0;
+#X connect 49 0 55 0;
+#X connect 50 0 55 1;
 #X connect 52 0 6 0;
 #X connect 52 1 7 0;
 #X connect 52 2 8 0;
 #X connect 53 0 25 0;
+#X connect 54 0 10 0;
+#X connect 54 0 25 0;
+#X connect 55 0 56 0;
