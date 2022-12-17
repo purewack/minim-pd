@@ -17,7 +17,6 @@ extern "C" {
 #define HOLD_TIME 1500 //sync ticks ~= 2s
 #define REFILL_CHUNK 64
 
-#define BAR_BEATS 24
 typedef struct _motif{
     int state;
     int n_state;
@@ -128,6 +127,7 @@ extern "C"{
     void bank_onReset(t_bank* x);
     void bank_onDelete(t_bank* x);
     void bank_onOvertakeRecord(t_bank* x);
+    int bank_getEstimateBarBeats(int tick_duration);
     
     void bank_onTriggerOn(t_bank* x);
     void bank_onTriggerOff(t_bank* x);
@@ -276,7 +276,7 @@ t_int* bank_perform(t_int *w)
             
             else if(m->state == _motif_state::m_base && x->tick_action_nstate == _motif_state::m_play ){  
                 if(!x->hasQuantick){
-                    int suggested_bar_beats = 24;
+                    int suggested_bar_beats = bank_getEstimateBarBeats(-x->tick_duration);
                     //post changes to sync listeners to update banks with new project quan length
                     auto dd = x->tick_duration * -1;
                     auto ll = int(dd / suggested_bar_beats);
@@ -400,7 +400,7 @@ void bank_setSyncTick(t_bank* x, t_floatarg t){
     //normalize recorded sample len to sync len
 
     bank_onTransportReset(x);
-    x->sync_beats = BAR_BEATS;
+    x->sync_beats = bank_getEstimateBarBeats(int(t));
     x->hasQuantick = true;
     x->tick_duration = t;
     x->tick_next = t;
@@ -690,6 +690,24 @@ void bank_onShowLoopRatio(t_bank*x, t_floatarg f){
 }
 
 
+int bank_getEstimateBarBeats(int tick_duration){
+    if(tick_duration >= 10000) return 24;
+    if(tick_duration < 68) return 1;
+    float thresh = 0.02f; //2% error
+    int divisors[4] = {24,12,6,3};
+    for(int i=0; i<4; i++){
+        int rounded = tick_duration/divisors[i];
+        rounded *= divisors[i];
+        // float error = 1.f - float(rounded)/float(tick_duration);
+        // if(error <= thresh) {
+        //     post("    [/%d] len:%d round:%d diff:%d error%%%f\n",divisors[i],tick_duration, rounded,tick_duration-rounded, error*100.f);
+        //     return divisors[i];
+        // }
+        if(tick_duration-rounded <= 3)
+            return divisors[i];
+    }
+    return 1;
+}
 
 void bank_onDelete(t_bank* x){
     x->gate = false;
@@ -716,8 +734,8 @@ void bank_onReset(t_bank* x){
     x->tick_action_pending = 0;
     x->tick_action_nstate = _motif_state::m_clear;
     x->hasQuantick = false;
-    x->quan_beats = BAR_BEATS;
-    x->sync_beats = BAR_BEATS;
+    x->quan_beats = 1;
+    x->sync_beats = 1;
     x->sync_cbeat = 0;
     bank_onTransportReset(x);
     bank_onDelete(x);
