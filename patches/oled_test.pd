@@ -1,4 +1,4 @@
-#N canvas 402 114 744 639 12;
+#N canvas 55 449 839 639 12;
 #X obj 134 270 print;
 #X obj 77 270 midiout;
 #X obj 177 270 print;
@@ -13,8 +13,8 @@
 #X msg 292 255 clear \, glyph 0 3 24 1 1 24 32 \, send;
 #X msg 295 284 upload img34.txt;
 #X msg 295 307 clear \, glyph 0 6 30 1 1 10 60 \, send;
-#X msg 4 39 clear \, line 10 10 50 5 \, send;
-#X msg 5 13 clear \, rect 0 0 64 127 \, send;
+#X msg 3 46 clear \, line 10 10 50 5 \, send;
+#X msg 4 21 clear \, rect 0 0 64 127 \, send;
 #X obj 115 233 oled 2;
 #X msg 51 128 clear \, S 2 \, s 0 0 hello \, send;
 #X obj 449 41 oled 5;
@@ -44,13 +44,18 @@
 #X obj 652 456 >= 3;
 #X obj 553 539 pack f f f f f;
 #X obj 656 512 + 1;
-#X msg 25 374 clear \, box 0 54 15 8 \$1 \, box 16 54 15 8 \$2 \, box 32 54 15 8 \$3 \, box 48 54 15 8 \$4 \, box 0 64 15 8 \$4 \, box 16 64 15 8 \$3 \, box 32 64 15 8 \$2 \, box 48 64 15 8 \$1 \, S 4 \, s 0 0 \$5 \, send;
+#X msg 25 373 clear \, box 0 54 15 8 \$1 \, box 16 54 15 8 \$2 \, box 32 54 15 8 \$3 \, box 48 54 15 8 \$4 \, box 0 64 15 8 \$4 \, box 16 64 15 8 \$3 \, box 32 64 15 8 \$2 \, box 48 64 15 8 \$1 \, S 4 \, s 0 0 \$5 \, send;
 #X obj 452 486 dac~;
 #X msg 269 563 clear \, box 8 0 15 8 \$1 \, box 24 0 15 8 \$2 \, box 40 0 15 8 \$3 \, box 56 0 15 8 \$4 \, S 6 \, s 0 16 \$5/4 \, send;
 #X obj 465 443 plonk~ 900;
 #X msg 28 429 clear \, box 0 0 64 8 0 \, box 56 0 8 64 0 \, box 0 56 64 8 0 \, box 0 0 8 64 0 \, send;
 #X obj 612 368 metro 600;
 #X msg 119 182 context 4;
+#X msg 498 172 clear \, fill 0 0 64 20 \, fill 1 25 64 20 \, send;
+#X msg 5 -3 clear \, fill 0 0 64 127 \, send;
+#X msg 569 225 clear \, fill 1 25 64 20 \, send;
+#X msg 460 108 clear \, box 0 0 64 20 1 \, box 0 25 32 20 1 \, box 32 50 32 20 1 \, send, f 40;
+#X msg 573 252 clear \, fill 0 25 32 20 \, send;
 #X connect 3 0 16 0;
 #X connect 4 0 16 0;
 #X connect 5 0 16 0;
@@ -104,8 +109,8 @@
 #X connect 40 0 43 1;
 #X connect 41 0 43 2;
 #X connect 42 0 43 3;
-#X connect 43 0 45 0;
 #X connect 43 0 47 0;
+#X connect 43 0 45 0;
 #X connect 44 0 43 4;
 #X connect 45 0 28 0;
 #X connect 45 0 26 0;
@@ -118,3 +123,10 @@
 #X connect 49 0 24 0;
 #X connect 50 0 34 0;
 #X connect 51 0 16 0;
+#X connect 52 0 18 0;
+#X connect 52 0 16 0;
+#X connect 53 0 16 0;
+#X connect 54 0 18 0;
+#X connect 55 0 16 0;
+#X connect 55 0 18 0;
+#X connect 56 0 16 0;

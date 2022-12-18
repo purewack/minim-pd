@@ -122,24 +122,26 @@ void gfx_drawRectSize(int x, int y, int w, int h){
 }
 
 void gfx_fillSection(int xoff, int yoff, int xlen, int ylen){
-    if(gfx.rotated){
-        auto a = yoff;
-        yoff = 64-xoff-xlen;
-        xoff = a;
-         a = ylen;
-        ylen = xlen;
-        xlen = a;
-    }
+  if(gfx.rotated){
+      int32_t a = yoff;
+      yoff = 64-xoff-xlen;
+      xoff = a;
+      a = ylen;
+      ylen = xlen;
+      xlen = a;
+  }
 
   if(yoff < 0){
     ylen -= -yoff;
     yoff = 0;
   }
 
-  if(yoff > 32){
+  if(yoff >= 32){
     yoff -= 32;
-    int bb = ((1<<ylen)-1);
-    for(int i=xoff; i<xoff+xlen; i++){
+    uint32_t bb = ylen >= 32 ? 0xffffffff : ((1<<ylen)-1);
+    for(uint32_t i=xoff; i<xoff+xlen; i++){
+      if(i<0) continue;
+      if(i>127) return;
       if(gfx.modexor)
         gfx.fbuf_bot[i] ^= (bb<<(yoff));
       else
@@ -147,17 +149,21 @@ void gfx_fillSection(int xoff, int yoff, int xlen, int ylen){
     }
   }
   else{
-    int yy = yoff+ylen;
-    int bt = ((1<<ylen)-1);
-    int bb = yy > 32 ? ((1<<(yy-32))-1) : 0;
-    for(int i=xoff; i<xoff+xlen; i++){
+    uint32_t yy = yoff+ylen;
+    auto ylen2 = yy > 32 ? yy - 32 : 0;
+    uint32_t bt = ylen >= 32 ? 0xffffffff : ((1<<ylen)-1);
+    uint32_t bb = ylen2 >= 32 ? 0xffffffff : ((1<<ylen2)-1);
+
+    for(uint32_t i=xoff; i<xoff+xlen; i++){
+      if(i<0) continue;
+      if(i>127) return;
       if(gfx.modexor){
         gfx.fbuf_top[i] ^= (bt<<yoff);
-        gfx.fbuf_bot[i] ^= bb;
+        gfx.fbuf_bot[i] ^= (bb);
       }
       else{
         gfx.fbuf_top[i] |= (bt<<yoff);
-        gfx.fbuf_bot[i] |= bb;
+        gfx.fbuf_bot[i] |= (bb);
       }
     }
   }
@@ -168,7 +174,7 @@ void drawPixel(int x, int y, int tx, int ty){
 
   if(gfx.rotated){
     tx += gfx.scale;
-    auto a = tx;
+    int a = tx;
     tx = ty;
     ty = -a;
 

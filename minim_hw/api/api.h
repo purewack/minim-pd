@@ -1,6 +1,6 @@
 #pragma once
 
-#define MINIM_API_VER 2
+#define MINIM_API_VER 3
 
 #include "gfx.h"
 #include "cmd.h"

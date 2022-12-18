@@ -70,10 +70,10 @@ void post_display(){
     gpio_write_bit(GPIOB, 12, 0);
     spi_tx(SPI2, imsgdata.buf, imsgdata.count);
     while(spi_is_busy(SPI2)){
-      io_mux_irq();
       delay(2);
     }
     gpio_write_bit(GPIOB, 12, 1);
+    io_mux_irq();
     return;
   }
   

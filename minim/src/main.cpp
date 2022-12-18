@@ -1,6 +1,7 @@
 #include "minim.h"
 #include "gfx.h"
 #include "cmd.h"
+#include "api.h"
 #include <string>
 #include <chrono>
 #include <unistd.h>
@@ -12,8 +13,10 @@ RenderTexture ctx[6];
 int SS = 2;
 
 int initGFXSystem(){
+	char str[64];
+	snprintf(str,64,"M I N I M - Emulator API version[%d]",MINIM_API_VER);
 	data_buf = (uint8_t*)malloc(sizeof(uint8_t)*512);
-    InitWindow(80*SS*8,128*SS,"M I N I M - Emulator");
+    InitWindow(80*SS*8,128*SS,str);
 	SetTargetFPS(30);
     BeginDrawing();
     ClearBackground(BLACK);
