@@ -1,6 +1,8 @@
 #include "include/io.h"
 #include "include/common.h"
+#include <USBCompositeSerial.h>
 hw_t io;
+extern USBCompositeSerial logger;
 
 void io_mux_init(){
   

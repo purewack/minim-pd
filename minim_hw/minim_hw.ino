@@ -7,10 +7,12 @@
 #include <libmaple/spi.h>
 #include <USBMIDI.h>
 #include <USBComposite.h>
+#include <USBCompositeSerial.h>
 #include <EEPROM.h>
 
 uint8 midi_base = 35;
 USBMIDI usbmidi;
+USBCompositeSerial logger;
 
 gfx_t gfx;
 int ctx = 0;
@@ -228,10 +230,14 @@ void begin_gpio(){
 
 void setup(){
   
-    USBComposite.setProductId(0x0030);
-    // put your setup code here, to run once:
-    Serial.begin(115200);
-    usbmidi.begin();
+    USBComposite.clear();
+    USBComposite.setProductId(0x0031);
+    USBComposite.setManufacturerString("M O T I F");
+    USBComposite.setProductString("MINIM-5-1");
+    usbmidi.registerComponent();
+    logger.registerComponent();
+    USBComposite.begin();
+    Serial.begin(31250);
 
     data_buf = (uint8_t*)malloc(sizeof(uint8_t)*512);
 
@@ -293,9 +299,9 @@ void setup(){
       sarray_clear(sysex_string);
     }
     else
-      Serial.println("no boot info found");
+      logger.println("no boot info found");
 
-    Serial.println("ready");
+    logger.println("ready");
 } 
 
 
