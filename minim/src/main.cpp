@@ -106,10 +106,10 @@ int sysex_buf_len = 0;
 void collectSysex(unsigned char b){
 	if(b == 0xf7 && sysex){
 		sysex = false;
-		std::cout << "Finish SYSEX "<< std::endl;
-		std::cout << "------Begin Parse"<< std::endl;
+		//std::cout << "Finish SYSEX "<< std::endl;
+		//std::cout << "------Begin Parse"<< std::endl;
 		parseCommand(sysex_buf,sysex_buf_len);
-		std::cout << "------End Parse"<< std::endl;
+		//std::cout << "------End Parse"<< std::endl;
 	}
 	else{
 		sysex_buf[sysex_buf_len] = b;
@@ -121,18 +121,18 @@ void processMidi(){
 	midiin->getMessage( &midiin_bytes);
 	if(midiin_bytes.size() <= 0) return;
 
-    std::cout << "New midi bytes\n{"<< std::endl;
-    for(auto a : midiin_bytes)
-      std::cout << "\t[" << std::to_string(a) << "]" << std::endl;
+    // std::cout << "New midi bytes\n{"<< std::endl;
+    // for(auto a : midiin_bytes)
+    //   std::cout << "\t[" << std::to_string(a) << "]" << std::endl;
 
-    std::cout << "}\nByte dump end"<< std::endl;
+    // std::cout << "}\nByte dump end"<< std::endl;
 
     for(auto bb : midiin_bytes){
       if(!sysex){
         if(bb == 0xf0 && !sysex){
           sysex = true;
           sysex_buf_len = 0;
-          std::cout << "Enter SYSEX"<< std::endl;
+          //std::cout << "Enter SYSEX"<< std::endl;
           collectSysex(bb);
         }
       }
