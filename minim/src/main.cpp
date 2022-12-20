@@ -17,7 +17,7 @@ int initGFXSystem(){
 	snprintf(str,64,"M I N I M - Emulator API version[%d]",MINIM_API_VER);
 	data_buf = (uint8_t*)malloc(sizeof(uint8_t)*512);
     InitWindow(80*SS*8,128*SS,str);
-	SetTargetFPS(30);
+	SetTargetFPS(120);
     BeginDrawing();
     ClearBackground(BLACK);
     EndDrawing();
@@ -91,6 +91,7 @@ int initMidiSystem(){
 // #else
 // 	midiin->openVirtualPort("MINIM Emu Input");
 //#endif
+	midiin->setBufferSize(8196,8);
   	midiin->ignoreTypes( false, false, false );
 	return 0;
 }
@@ -106,10 +107,10 @@ int sysex_buf_len = 0;
 void collectSysex(unsigned char b){
 	if(b == 0xf7 && sysex){
 		sysex = false;
-		//std::cout << "Finish SYSEX "<< std::endl;
-		//std::cout << "------Begin Parse"<< std::endl;
+		std::cout << "Finish SYSEX "<< std::endl;
+		std::cout << "------Begin Parse"<< std::endl;
 		parseCommand(sysex_buf,sysex_buf_len);
-		//std::cout << "------End Parse"<< std::endl;
+		std::cout << "------End Parse"<< std::endl;
 	}
 	else if(sysex){
 		sysex_buf[sysex_buf_len] = b;
@@ -121,33 +122,38 @@ void processMidi(){
 	midiin->getMessage( &midiin_bytes);
 	if(midiin_bytes.size() <= 0) return;
 
-    // std::cout << "New midi bytes\n{"<< std::endl;
-    // for(auto a : midiin_bytes)
-    //   std::cout << "\t[" << std::to_string(a) << "]" << std::endl;
+    std::cout << "New midi bytes\n{\t"<< std::endl;
+    for(auto a : midiin_bytes)
+      std::cout << "[" << std::to_string(a) << "]";
 
-    // std::cout << "}\nByte dump end"<< std::endl;
+    std::cout << "\n}\nByte dump end"<< std::endl;
 	int nc = 0;
 	int bc[4];
+	bool ex = false;
     for(auto bb : midiin_bytes){
       if(!sysex){
         if(bb == 0xf0 && !sysex){
           sysex = true;
+		  ex = true;
           sysex_buf_len = 0;
-          //std::cout << "Enter SYSEX"<< std::endl;
+          std::cout << "Enter SYSEX"<< std::endl;
           collectSysex(bb);
         }
       }
       else if(sysex){
         collectSysex(bb);
       } 
-	  else if(bc[0] == 0x90 && nc==3){
-		printf("note parse\n");
-		parseNote(bc[1],bc[2]);
-	  }
-	  else{
-		bc[nc++] = bb;
-	  }
     }
+
+	if(!ex){
+		for(int j=0; j<midiin_bytes.size(); j++){
+			if(midiin_bytes[j+0] == 0x90){
+				std::cout << "parse note" << std::endl;
+				parseNote(midiin_bytes[1],midiin_bytes[2]);
+				j+=2;
+			}
+		}
+	}
 }
 
 int main(){
@@ -177,7 +183,6 @@ int main(){
 						(Vector2){0,0}, 0.0f, WHITE);
 			DrawRectangleLines(5*75*SS,0,128*SS*2,64*SS*2,YELLOW);
 		EndDrawing();
-		usleep(1000);
 	}
 	endMidiSystem();
 	endGFXSystem();

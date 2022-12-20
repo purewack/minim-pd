@@ -1,8 +1,6 @@
 #include "cmd.h"
 #include "gfx.h"
 
-#include <stdio.h>
-
 static int cmd_mode = 0;
 
 int parseNote(unsigned char note, unsigned char vel){
@@ -18,6 +16,7 @@ int parseNote(unsigned char note, unsigned char vel){
     gfx_drawRectSize(vv->x,vv->y,vv->w,vv->h);
     gfx_fillSection(vv->x,vv->y,ww,vv->h);
     cmd_gfx_on_draw();
+    return 0;
 }
 
 int parseCommand(const unsigned char* cmd_bytes, int len){
@@ -62,7 +61,6 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                 vs->h = h;
                 vs->rot = rot;
                 vs->val = 0;
-                printf("slider registered at %d",note);
             }
         }
         else if(cmd_mode == CMD_SYMBOL_MODE_GFX){

@@ -281,9 +281,11 @@ void setup(){
     cmd_gfx_on_context(5);
     gfx.modexor = 1;
     gfx.scale = 1;
+    char version_str[32];
+    snprintf(version_str,32,"%s - API:%d",VERSION,MINIM_API_VER);
     for(int i=0; i<32; i++){
       gfx_clear();
-      gfx_drawString(VERSION,0,64-8);
+      gfx_drawString(version_str,0,64-8);
       gfx_fillSection(0,64-8,i*4,8);
       cmd_gfx_on_draw();
       delay(1);
@@ -333,21 +335,8 @@ void loop(){
     // Serial.println(b[3],DEC);
 
     if(!sysex){
-      if(b[1] == 0x90 || b[1] == 0x80){
-        int ctx = b[2]-midi_base;
-        bool bot = (ctx < 5);
-        ctx %= 5;
-
-        states[1-bot][ctx] = b[1] == 0x80 ? 0 : b[3];
-
-        gfx_clear();
-        gfx_drawRectSize(0,0,64,128);
-        if(states[1][ctx])
-          gfx_fillSection(4,4,56,56);
-        if(states[0][ctx])
-          gfx_fillSection(4,4+64,56,56);
-        cmd_gfx_on_context(ctx%5);
-        cmd_gfx_on_draw();
+      if(b[1] == 0x90){
+        parseNote(b[2],b[3]);
       }
       else if(b[1] == 0xf0 && !sysex){
         sysex = true;
@@ -355,7 +344,7 @@ void loop(){
         collectSysex(b, 1);
       }
     }
-    else{
+    else if(sysex){
       collectSysex(b, 0);
     }
     
