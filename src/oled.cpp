@@ -69,9 +69,7 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
     }
     else if(s == gensym("clear")){
         SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_F_CLEAR));
-        SETFLOAT(oled->a_table+oled->a_table_i+1,(float)('I'));
-        SETFLOAT(oled->a_table+oled->a_table_i+2,(float)(0));
-        oled->a_table_i+=3;
+        oled->a_table_i++;
     }
     else if(s == gensym("xor")){
         SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_C_XOR));
