@@ -4,10 +4,11 @@
 
 #ifndef _SRC_MINIM_EMU
 #include <Arduino.h>
+#else
+#include <stdlib.h>
 #endif
 
 #include "gfx/fonttiny.h"
-
 
 struct gfx_t {
   int inited = 0;
@@ -32,3 +33,9 @@ void gfx_fillSection(int xoff, int yoff, int xlen, int ylen);
 void gfx_drawBitmap(int x, int y, int w, int h, int bytes_per_col, int blen, const uint8_t* buf);
 void gfx_drawChar(char ch, int x, int y);
 void gfx_drawString(const char* str, int x, int y);
+
+struct VSlider{
+  int x, y, w, h, rot;
+  int context, val;
+};
+extern VSlider* vsliders;

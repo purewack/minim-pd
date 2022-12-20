@@ -8,6 +8,7 @@
 #define CMD_SYMBOL_MODE_GFX 2
 #define CMD_SYMBOL_MODE_DATA 3
 #define CMD_SYMBOL_F_UPLOAD 'l'
+#define CMD_SYMBOL_F_SLIDER 's'
 
 #define CMD_SYMBOL_C_CONTEXT 'G'
 #define CMD_SYMBOL_C_SCALE 'S'
@@ -32,3 +33,4 @@ extern void cmd_sys_on_upload_boot_end();
 extern void cmd_sys_on_sleep(int ms);
 
 extern int parseCommand(const unsigned char* cmd_bytes, int len);
+extern int parseNote(unsigned char note, unsigned char vel);

@@ -111,7 +111,7 @@ void collectSysex(unsigned char b){
 		parseCommand(sysex_buf,sysex_buf_len);
 		//std::cout << "------End Parse"<< std::endl;
 	}
-	else{
+	else if(sysex){
 		sysex_buf[sysex_buf_len] = b;
 		sysex_buf_len++;
 	}
@@ -126,7 +126,8 @@ void processMidi(){
     //   std::cout << "\t[" << std::to_string(a) << "]" << std::endl;
 
     // std::cout << "}\nByte dump end"<< std::endl;
-
+	int nc = 0;
+	int bc[4];
     for(auto bb : midiin_bytes){
       if(!sysex){
         if(bb == 0xf0 && !sysex){
@@ -136,9 +137,16 @@ void processMidi(){
           collectSysex(bb);
         }
       }
-      else{
+      else if(sysex){
         collectSysex(bb);
       } 
+	  else if(bc[0] == 0x90 && nc==3){
+		printf("note parse\n");
+		parseNote(bc[1],bc[2]);
+	  }
+	  else{
+		bc[nc++] = bb;
+	  }
     }
 }
 

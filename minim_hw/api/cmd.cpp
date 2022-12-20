@@ -1,7 +1,24 @@
 #include "cmd.h"
 #include "gfx.h"
 
+#include <stdio.h>
+
 static int cmd_mode = 0;
+
+int parseNote(unsigned char note, unsigned char vel){
+    note %= 64;
+    auto vv = &vsliders[note];
+    cmd_gfx_on_context(vv->context);
+    gfx.modexor = 0;
+    gfx_fillSection(vv->x,vv->y,vv->w,vv->h);
+    gfx.modexor = 1;
+    gfx_fillSection(vv->x,vv->y,vv->w,vv->h);
+    float prog = float(vel) / 127.0f;
+    int ww = int(float(vv->w) * prog);
+    gfx_drawRectSize(vv->x,vv->y,vv->w,vv->h);
+    gfx_fillSection(vv->x,vv->y,ww,vv->h);
+    cmd_gfx_on_draw();
+}
 
 int parseCommand(const unsigned char* cmd_bytes, int len){
     for(int i=0; i<len; i++){
@@ -27,6 +44,25 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                     }
                     i+=nibbles;
                 }
+            }
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_SLIDER){
+                int context = cmd_bytes[++i];
+                int note = cmd_bytes[++i];
+                int x = cmd_bytes[++i];
+                int y = cmd_bytes[++i];
+                int w = cmd_bytes[++i];
+                int h = cmd_bytes[++i];
+                int rot = cmd_bytes[++i];
+
+                auto vs = &vsliders[note];
+                vs->context = context;
+                vs->x = x;
+                vs->y = y;
+                vs->w = w;
+                vs->h = h;
+                vs->rot = rot;
+                vs->val = 0;
+                printf("slider registered at %d",note);
             }
         }
         else if(cmd_mode == CMD_SYMBOL_MODE_GFX){

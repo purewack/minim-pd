@@ -1,11 +1,13 @@
 #include "gfx.h"
 
 uint8_t* data_buf;
+VSlider* vsliders;
 
 void gfx_defaults(){
   gfx.modexor = 0;
   gfx.rotated = 1;
   gfx.scale = 1;
+  vsliders = (VSlider*)malloc(sizeof(VSlider)*64);
 }
 void gfx_clear(){
   for(int i=0; i<128; i++){
