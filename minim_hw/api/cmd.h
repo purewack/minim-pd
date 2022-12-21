@@ -33,4 +33,4 @@ extern void cmd_sys_on_upload_boot_end();
 extern void cmd_sys_on_sleep(int ms);
 
 extern int parseCommand(const unsigned char* cmd_bytes, int len);
-extern int parseNote(unsigned char note, unsigned char vel);
+extern int parseVSlider(unsigned char note, unsigned char val);

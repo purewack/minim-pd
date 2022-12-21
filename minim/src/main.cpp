@@ -147,9 +147,9 @@ void processMidi(){
 
 	if(!ex){
 		for(int j=0; j<midiin_bytes.size(); j++){
-			if(midiin_bytes[j+0] == 0x90){
+			if(midiin_bytes[j+0] == 0xB0){
 				std::cout << "parse note" << std::endl;
-				parseNote(midiin_bytes[1],midiin_bytes[2]);
+				parseVSlider(midiin_bytes[1],midiin_bytes[2]);
 				j+=2;
 			}
 		}

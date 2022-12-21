@@ -71,9 +71,7 @@ void post_display(){
   if(ctx == 5){
     gpio_write_bit(GPIOB, 12, 0);
     spi_tx(SPI2, imsgdata.buf, imsgdata.count);
-    while(spi_is_busy(SPI2)){
-      delay(2);
-    }
+    while(spi_is_busy(SPI2)){}
     gpio_write_bit(GPIOB, 12, 1);
     io_mux_irq();
     return;
@@ -83,10 +81,8 @@ void post_display(){
   imsg.length = imsgdata.count;
   imsg.data = (uint8*)imsgdata.buf;
   i2c_master_xfer(ctx_dev,&imsg,1,0);
-  while(ctx_dev->state == I2C_STATE_BUSY){
-    io_mux_irq();
-    delay(2);
-  }
+  while(ctx_dev->state == I2C_STATE_BUSY){}
+  io_mux_irq();
   
 }
 
@@ -288,7 +284,7 @@ void setup(){
       gfx_drawString(version_str,0,64-8);
       gfx_fillSection(0,64-8,i*4,8);
       cmd_gfx_on_draw();
-      delay(1);
+      delay(5);
     }
     gfx_clear();
     cmd_gfx_on_draw();
@@ -335,8 +331,8 @@ void loop(){
     // Serial.println(b[3],DEC);
 
     if(!sysex){
-      if(b[1] == 0x90){
-        parseNote(b[2],b[3]);
+      if(b[1] == 0xB0 && !sysex){
+        parseVSlider(b[2],b[3]);
       }
       else if(b[1] == 0xf0 && !sysex){
         sysex = true;

@@ -1,4 +1,4 @@
-#N canvas 698 335 828 608 12;
+#N canvas 612 173 828 608 12;
 #X obj 134 270 print;
 #X obj 77 270 midiout;
 #X obj 177 270 print;
@@ -55,12 +55,12 @@
 #X msg 569 225 clear \, fill 1 25 64 20 \, send;
 #X msg 460 108 clear \, box 0 0 64 20 1 \, box 0 25 32 20 1 \, box 32 50 32 20 1 \, send, f 40;
 #X msg 573 252 clear \, fill 0 25 32 20 \, send;
-#X msg 15 310 144 10 \$1;
 #X floatatom 16 287 5 0 127 0 - - - 0;
 #X floatatom 31 357 5 0 50 0 - - - 0;
 #X msg 31 380 clear \, rect 0 0 10 10 \, fill 30 30 4 4 \, line 0 0 30 30 \, line 0 50 50 50 \, S 1 \, string 0 40 hello@world \, S 2 \, s 0 50 Hello \, xor 1 \, box 0 60 64 8 1 \, box 10 20 \$1 20 1 \, send;
 #X obj 612 368 metro 100;
 #X msg 14 334 240 \, 120 \, 3 \, 115 \, 2 \, 10 \, 10 \, 20 \, 40 \, 8 \, 0 \, 247;
+#X msg 15 310 176 10 \$1;
 #X connect 3 0 16 0;
 #X connect 4 0 16 0;
 #X connect 5 0 16 0;
@@ -107,8 +107,8 @@
 #X connect 33 0 43 4;
 #X connect 34 0 29 0;
 #X connect 34 0 48 0;
-#X connect 35 0 60 0;
-#X connect 36 0 60 0;
+#X connect 35 0 59 0;
+#X connect 36 0 59 0;
 #X connect 38 0 37 0;
 #X connect 39 0 43 0;
 #X connect 40 0 43 1;
@@ -134,9 +134,9 @@
 #X connect 54 0 16 0;
 #X connect 54 0 18 0;
 #X connect 55 0 16 0;
-#X connect 56 0 1 0;
-#X connect 57 0 56 0;
-#X connect 58 0 59 0;
-#X connect 59 0 16 0;
-#X connect 60 0 34 0;
+#X connect 56 0 61 0;
+#X connect 57 0 58 0;
+#X connect 58 0 16 0;
+#X connect 59 0 34 0;
+#X connect 60 0 1 0;
 #X connect 61 0 1 0;

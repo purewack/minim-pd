@@ -3,7 +3,7 @@
 
 static int cmd_mode = 0;
 
-int parseNote(unsigned char note, unsigned char vel){
+int parseVSlider(unsigned char note, unsigned char val){
     note %= 64;
     auto vv = &vsliders[note];
     cmd_gfx_on_context(vv->context);
@@ -11,7 +11,7 @@ int parseNote(unsigned char note, unsigned char vel){
     gfx_fillSection(vv->x,vv->y,vv->w,vv->h);
     gfx.modexor = 1;
     gfx_fillSection(vv->x,vv->y,vv->w,vv->h);
-    float prog = float(vel) / 127.0f;
+    float prog = float(val) / 127.0f;
     int ww = int(float(vv->w) * prog);
     gfx_drawRectSize(vv->x,vv->y,vv->w,vv->h);
     gfx_fillSection(vv->x,vv->y,ww,vv->h);
