@@ -11,13 +11,10 @@ int parseVariable(unsigned char context, unsigned char slot, unsigned char value
     return 0;
 }
 
-int parseCommand(const unsigned char* cmd_bytes, int len){
+int parseCommand(const unsigned char* cmd_bytes, int len, bool var){
     for(int i=0; i<len; i++){
         if(cmd_bytes[i] == CMD_SYMBOL_F_MODE){
         	cmd_mode = cmd_bytes[++i];
-            if(cmd_mode == CMD_SYMBOL_MODE_DRAW){
-                cmd_gfx_on_draw();
-            }
         }
 
         /// @brief Set frame buffer command code
