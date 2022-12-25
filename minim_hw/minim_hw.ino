@@ -328,15 +328,15 @@ void collectSysex(char* b, int offset){
 void loop(){
   io_mux_irq();
   if(int a = usbmidi.available()){
-    uint32 aa = usbmidi.readPacket();
+    uint32_t aa = usbmidi.readPacket();
     char *b = (char*)&aa;
     // Serial.println(b[1],DEC);
     // Serial.println(b[2],DEC);
     // Serial.println(b[3],DEC);
 
     if(!sysex){
-      if(b[1] == 0x90){
-        parseNote(b[2],b[3]);
+      if(b[1] &= 0x90){
+        parseVariable( b[1]&0x0f, b[2], b[3]);
       }
       else if(b[1] == 0xf0 && !sysex){
         sysex = true;

@@ -2,20 +2,12 @@
 #include "gfx.h"
 
 static int cmd_mode = 0;
+frame_t frames[6];
 
-int parseNote(unsigned char note, unsigned char vel){
-    note %= 64;
-    auto vv = &vsliders[note];
-    cmd_gfx_on_context(vv->context);
-    gfx.modexor = 0;
-    gfx_fillSection(vv->x,vv->y,vv->w,vv->h);
-    gfx.modexor = 1;
-    gfx_fillSection(vv->x,vv->y,vv->w,vv->h);
-    float prog = float(vel) / 127.0f;
-    int ww = int(float(vv->w) * prog);
-    gfx_drawRectSize(vv->x,vv->y,vv->w,vv->h);
-    gfx_fillSection(vv->x,vv->y,ww,vv->h);
-    cmd_gfx_on_draw();
+int parseVariable(unsigned char context, unsigned char slot, unsigned char value){
+    if(context > 5) return;
+    if(slot > FRAME_VAR_LIMIT) return;
+    var_buf[context][slot] = value;
     return 0;
 }
 
@@ -27,8 +19,42 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                 cmd_gfx_on_draw();
             }
         }
-        
-        if(cmd_mode == CMD_SYMBOL_MODE_DATA){
+
+        /// @brief Set frame buffer command code
+        /// @param context 
+        /// @param set, 0 for clear, 1 for post new code, 2 for toggle
+        /// -if set == 1-
+        /// @param bytes 
+        /// @param nibble_buffer
+        if(cmd_mode == CMD_SYMBOL_MODE_FRAME){
+            int context = cmd_bytes[++i];
+            int set = cmd_bytes[++i];
+            if(set == 0){
+                frames[context].isFramed = false;
+                frames[context].cmd_count = 0;
+                continue;
+            }
+            if(set == 2){
+                frames[context].isFramed = ! frames[context].isFramed;
+                continue;
+            }
+            int bytes = cmd_bytes[++i];
+            int nibbles = bytes<<1;
+            unsigned char* buf = (unsigned char*)&cmd_bytes[++i];
+            if(bytes < FRAME_BYTE_LIMIT){
+                frames[context].isFramed = true;
+                frames[context].cmd_count = bytes;
+                auto fbuf = frames[context].cmd_bytes;
+                int d = 0;
+                for(int j=0; j<nibbles; j+=2){
+                    fbuf[d] = uint8_t(buf[j+0]) << 0;
+                    fbuf[d] |= uint8_t(buf[j+1]) << 4;
+                    d++;
+                }
+                i+=nibbles;
+            }
+        }
+        else if(cmd_mode == CMD_SYMBOL_MODE_DATA){
             if(cmd_bytes[i] == CMD_SYMBOL_F_UPLOAD){
                 int start = cmd_bytes[++i];
                 int bytes = cmd_bytes[++i];
@@ -43,24 +69,6 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                     }
                     i+=nibbles;
                 }
-            }
-            else if(cmd_bytes[i] == CMD_SYMBOL_F_SLIDER){
-                int context = cmd_bytes[++i];
-                int note = cmd_bytes[++i];
-                int x = cmd_bytes[++i];
-                int y = cmd_bytes[++i];
-                int w = cmd_bytes[++i];
-                int h = cmd_bytes[++i];
-                int rot = cmd_bytes[++i];
-
-                auto vs = &vsliders[note];
-                vs->context = context;
-                vs->x = x;
-                vs->y = y;
-                vs->w = w;
-                vs->h = h;
-                vs->rot = rot;
-                vs->val = 0;
             }
         }
         else if(cmd_mode == CMD_SYMBOL_MODE_GFX){
