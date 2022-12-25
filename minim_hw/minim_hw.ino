@@ -241,7 +241,7 @@ void setup(){
 
     data_buf = (uint8_t*)malloc(sizeof(uint8_t)*512);
 
-    sysex_string.buf = (char*)malloc(sizeof(char)*128);
+    sysex_string.buf = (char*)malloc(sizeof(char)*1024);
     sysex_string.lim = 1024;
     sarray_clear(sysex_string);
     sysex = false;
