@@ -5,9 +5,9 @@ static int cmd_mode = 0;
 frame_t frames[6];
 
 int parseVariable(unsigned char context, unsigned char slot, unsigned char value){
-    if(context > 5) return;
-    if(slot > FRAME_VAR_LIMIT) return;
-    var_buf[context][slot] = value;
+    if(context > 5) return -1;
+    if(slot > FRAME_VAR_LIMIT) return -1;
+    frames[context].var_bytes[slot] = value;
     return 0;
 }
 

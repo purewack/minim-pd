@@ -326,13 +326,10 @@ void collectSysex(char* b, int offset){
 }
 
 void loop(){
-  io_mux_irq();
+  // auto tt = millis();
   if(int a = usbmidi.available()){
     uint32_t aa = usbmidi.readPacket();
     char *b = (char*)&aa;
-    // Serial.println(b[1],DEC);
-    // Serial.println(b[2],DEC);
-    // Serial.println(b[3],DEC);
 
     if(!sysex){
       if(b[1] &= 0x90){
@@ -347,13 +344,23 @@ void loop(){
     else if(sysex){
       collectSysex(b, 0);
     }
-    
   }
-  // else
-  //   delay(2);
 
-  // gfx.modexor = 1;
-  // gfx_fillSection(0,0,8,8);
-  // cmd_gfx_on_context(5);
-  // cmd_gfx_on_draw();
+  for(int f=0; f<6; f++){
+    if(frames[f].isFramed)
+      parseCommand(frames[f].cmd_bytes,frames[f].cmd_count);
+  }
+
+  // auto dt = millis() - tt;
+  // dt /= 1000;
+
+  io_mux_irq();
+  delay(5);
+  io_mux_irq();
+  delay(5);
+  io_mux_irq();
+  delay(5);
+  io_mux_irq();
+  delay(4);
+  // delay(dt);
 }
