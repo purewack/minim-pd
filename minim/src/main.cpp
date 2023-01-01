@@ -129,12 +129,10 @@ void processMidi(){
     std::cout << "\n}\nByte dump end"<< std::endl;
 	int nc = 0;
 	int bc[4];
-	bool ex = false;
     for(auto bb : midiin_bytes){
       if(!sysex){
         if(bb == 0xf0 && !sysex){
           sysex = true;
-		  ex = true;
           sysex_buf_len = 0;
           std::cout << "Enter SYSEX"<< std::endl;
           collectSysex(bb);
@@ -145,13 +143,11 @@ void processMidi(){
       } 
     }
 
-	if(!ex){
-		for(int j=0; j<midiin_bytes.size(); j++){
-			if(midiin_bytes[j+0] == 0x90){
-				std::cout << "parse note" << std::endl;
-				parseNote(midiin_bytes[1],midiin_bytes[2]);
-				j+=2;
-			}
+	for(int f=0; f<6; f++){
+		if(frames[f].isFramed){
+			parseCommand(frames[f].cmd_bytes,frames[f].cmd_count);
+			frames[f].fps_counter++;
+			printf("frame[%d]@%d\n",f,frames[f].fps_counter);
 		}
 	}
 }

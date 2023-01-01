@@ -1,6 +1,6 @@
 #include "cmd.h"
 #include "gfx.h"
-
+#include <stdio.h>
 static int cmd_mode = 0;
 frame_t frames[6];
 int var_bytes[FRAME_VAR_LIMIT];
@@ -19,17 +19,9 @@ int getCByte(unsigned char cc, unsigned char val){
 }
 
 int setCByte(unsigned char ch, unsigned char cc, unsigned char val){
-    if(ch & 0x1){
-        if(cc > FRAME_VAR_LIMIT) {
-            cSlot = 0;
-            return -1;
-        }
-        cSlot = cc;
-    }
-    else{
-        int ii = int(cc) | (int(val)<<7);
-        var_bytes[cSlot] = ii;
-    }
+    int ii = int(cc) | (int(val)<<7);
+    var_bytes[ch] = ii;
+    return ii;
     return 0;
 }
 
@@ -59,29 +51,29 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                 int context = cmd_bytes[++i];
                 frames[context].isFramed = false;
                 frames[context].cmd_count = 0;
+                printf("cmd frame clear\n");
                 continue;
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_FRAME_TOGGLE){
                 int context = cmd_bytes[++i];
                 frames[context].isFramed = ! frames[context].isFramed;
+                printf("cmd frame toggle %d\n",frames[context].isFramed);
                 continue;
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_FRAME_SET){
                 int context = cmd_bytes[++i];
                 int bytes = cmd_bytes[++i];
-                int nibbles = bytes<<1;
                 unsigned char* buf = (unsigned char*)&cmd_bytes[++i];
                 if(bytes < FRAME_BYTE_LIMIT){
                     frames[context].isFramed = true;
+                    frames[context].fps_counter = 0;
                     frames[context].cmd_count = bytes;
                     auto fbuf = frames[context].cmd_bytes;
-                    int d = 0;
-                    for(int j=0; j<nibbles; j+=2){
-                        fbuf[d] = uint8_t(buf[j+0]) << 0;
-                        fbuf[d] |= uint8_t(buf[j+1]) << 4;
-                        d++;
+                    for(int j=0; j<bytes; j++){
+                        fbuf[j] = buf[j] << 0;
                     }
-                    i+=nibbles;
+                    i+=bytes;
+                    printf("new frame[%d] = %dbytes\n",context,bytes); 
                 }
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_BOOTCMD){
@@ -124,6 +116,7 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                 int y = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
                 int x2 = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
                 int y2 = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                printf("x:%d,y:%d,x2:%d,y2:%d\n",x,y,x2,y2);
                 gfx_drawLine(x,y,x2,y2);
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_RECT){
@@ -162,6 +155,12 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
         else if(cmd_mode == CMD_SYMBOL_MODE_SYS){
             if(cmd_bytes[i] == CMD_SYMBOL_F_SLEEP){
                 cmd_sys_on_sleep(cmd_bytes[++i]);
+            }
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_VAR){
+                int slot = cmd_bytes[++i];
+                int lsb = cmd_bytes[++i];
+                int msb = cmd_bytes[++i];
+                setCByte(slot,lsb,msb);
             }
         }
     }
