@@ -22,7 +22,6 @@ int setCByte(unsigned char ch, unsigned char cc, unsigned char val){
     int ii = int(cc) | (int(val)<<7);
     var_bytes[ch] = ii;
     return ii;
-    return 0;
 }
 
 int parseCommand(const unsigned char* cmd_bytes, int len){

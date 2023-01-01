@@ -118,6 +118,7 @@ void collectSysex(unsigned char b){
 	}
 }
 
+int cb = 0;
 void processMidi(){
 	midiin->getMessage( &midiin_bytes);
 	if(midiin_bytes.size() <= 0) return;
@@ -129,10 +130,12 @@ void processMidi(){
     std::cout << "\n}\nByte dump end"<< std::endl;
 	int nc = 0;
 	int bc[4];
+	bool ex = false;
     for(auto bb : midiin_bytes){
       if(!sysex){
         if(bb == 0xf0 && !sysex){
           sysex = true;
+		  ex = true;
           sysex_buf_len = 0;
           std::cout << "Enter SYSEX"<< std::endl;
           collectSysex(bb);
@@ -142,6 +145,16 @@ void processMidi(){
         collectSysex(bb);
       } 
     }
+
+	if(!ex){
+		if(midiin_bytes[0] == 0xB1){
+			cb = midiin_bytes[1];
+		}
+		else if(midiin_bytes[0] == 0xB0){
+			auto a = setCByte(cb,midiin_bytes[1],midiin_bytes[2]);
+			printf("setCByte: %d\n",a);
+		}
+	}
 
 	for(int f=0; f<6; f++){
 		if(frames[f].isFramed){

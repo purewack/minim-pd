@@ -325,6 +325,7 @@ void collectSysex(char* b, int offset){
   }
 }
 
+int cb = 0;
 void loop(){
   // auto tt = millis();
   if(int a = usbmidi.available()){
@@ -333,7 +334,12 @@ void loop(){
 
     if(!sysex){
       if(b[1] &= 0xB0){
-        setCByte(b[1]&0x0f, b[2], b[3]);
+        if(b[1] == 0xB1){
+          cb = b[2];
+        }
+        else if(b[1] == 0xB0){
+          auto a = setCByte(cb,b[2],b[3]);
+        }
       }
       else if(b[1] == 0xf0 && !sysex){
         sysex = true;
@@ -345,6 +351,7 @@ void loop(){
       collectSysex(b, 0);
     }
   }
+
 
   for(int f=0; f<6; f++){
     if(frames[f].isFramed)
