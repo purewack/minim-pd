@@ -319,32 +319,38 @@ void collectSysex(char* b, int offset){
     if(b[1+i] == 0xf7 && sysex){
       sysex = false;
       parseCommand((unsigned char*)sysex_string.buf,sysex_string.count);
+      logger.println("end sysex");
     }
     else
       sarray_push(sysex_string,b[1+i]);
   }
 }
 
-int cb = 0;
+unsigned char cb = 0;
 void loop(){
   // auto tt = millis();
   if(int a = usbmidi.available()){
     uint32_t aa = usbmidi.readPacket();
     char *b = (char*)&aa;
-
+    logger.println(b[1],DEC);
+    logger.println(b[2],DEC);
+    logger.println(b[3],DEC);
     if(!sysex){
-      if(b[1] &= 0xB0){
-        if(b[1] == 0xB1){
-          cb = b[2];
-        }
-        else if(b[1] == 0xB0){
-          auto a = setCByte(cb,b[2],b[3]);
-        }
+      if(b[1] == 0xB1){
+        cb = b[2];
+        logger.println("setCByte slot");
+        logger.println(cb);
       }
-      else if(b[1] == 0xf0 && !sysex){
+      else if(b[1] == 0xB0){
+        auto a = setCByte(cb,b[2],b[3]);
+        logger.println("setCByte");
+        logger.println(a);
+      } 
+      else if(b[1] == 0xf0){
         sysex = true;
         sarray_clear(sysex_string);
         collectSysex(b, 1);
+        logger.println("start sysex");
       }
     }
     else if(sysex){
@@ -363,11 +369,5 @@ void loop(){
 
   io_mux_irq();
   delay(5);
-  io_mux_irq();
-  delay(5);
-  io_mux_irq();
-  delay(5);
-  io_mux_irq();
-  delay(4);
   // delay(dt);
 }

@@ -1,6 +1,5 @@
 #include "cmd.h"
 #include "gfx.h"
-#include <stdio.h>
 static int cmd_mode = 0;
 frame_t frames[6];
 int var_bytes[FRAME_VAR_LIMIT];
@@ -50,13 +49,11 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                 int context = cmd_bytes[++i];
                 frames[context].isFramed = false;
                 frames[context].cmd_count = 0;
-                printf("cmd frame clear\n");
                 continue;
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_FRAME_TOGGLE){
                 int context = cmd_bytes[++i];
                 frames[context].isFramed = ! frames[context].isFramed;
-                printf("cmd frame toggle %d\n",frames[context].isFramed);
                 continue;
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_FRAME_SET){
@@ -72,7 +69,6 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                         fbuf[j] = buf[j] << 0;
                     }
                     i+=bytes;
-                    printf("new frame[%d] = %dbytes\n",context,bytes); 
                 }
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_BOOTCMD){
@@ -115,7 +111,6 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                 int y = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
                 int x2 = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
                 int y2 = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                printf("x:%d,y:%d,x2:%d,y2:%d\n",x,y,x2,y2);
                 gfx_drawLine(x,y,x2,y2);
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_RECT){
