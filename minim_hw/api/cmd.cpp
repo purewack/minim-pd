@@ -66,7 +66,7 @@ int parseCommand(const unsigned char* cmd_bytes, int len, bool var){
                     }
                     i+=nibbles;
                 }
-            }
+            } 
         }
         else if(cmd_mode == CMD_SYMBOL_MODE_GFX){
             
@@ -96,11 +96,20 @@ int parseCommand(const unsigned char* cmd_bytes, int len, bool var){
                 gfx_drawLine(x,y,x2,y2);
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_RECT){
+                unsigned int vars = cmd_bytes[++i];
                 int x = cmd_bytes[++i];
                 int y = cmd_bytes[++i];
                 int w = cmd_bytes[++i];
                 int h = cmd_bytes[++i];
                 int fill = cmd_bytes[++i];
+
+                int c = cmd_gfx_get_context();
+                if(vars&0b0000001) x = frames[c].var_bytes[x];
+                if(vars&0b0000010) y = frames[c].var_bytes[y];
+                if(vars&0b0000100) w = frames[c].var_bytes[w];
+                if(vars&0b0001000) h = frames[c].var_bytes[h];
+                if(vars&0b0010000) fill = frames[c].var_bytes[fill];
+                
                 if(fill)
                   gfx_fillSection(x,y,w,h);
                 else
@@ -116,18 +125,23 @@ int parseCommand(const unsigned char* cmd_bytes, int len, bool var){
                 i+=j;
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_BITMAP){
+                unsigned int vars = cmd_bytes[++i];
                 int x = cmd_bytes[++i];
                 int y = cmd_bytes[++i];
                 int w = cmd_bytes[++i];
                 int h = cmd_bytes[++i];
-                unsigned int negs = cmd_bytes[++i];
-                if(negs&0b0001) x = -x;
-                if(negs&0b0010) y = -y;
-                if(negs&0b0100) w = -w;
-                if(negs&0b1000) h = -h;
                 int start = cmd_bytes[++i];
                 int bytes_per_col = cmd_bytes[++i];
                 int llen = cmd_bytes[++i];
+
+                int c = cmd_gfx_get_context();
+                if(vars&0b0000001) x = frames[c].var_bytes[x];
+                if(vars&0b0000010) y = frames[c].var_bytes[y];
+                if(vars&0b0000100) w = frames[c].var_bytes[w];
+                if(vars&0b0001000) h = frames[c].var_bytes[h];
+                if(vars&0b0010000) start = frames[c].var_bytes[start];
+                if(vars&0b0100000) bytes_per_col = frames[c].var_bytes[bytes_per_col];
+                if(vars&0b1000000) llen = frames[c].var_bytes[llen];
                 gfx_drawBitmap(x,y,w,h,bytes_per_col,llen,data_buf+start);
             }
             

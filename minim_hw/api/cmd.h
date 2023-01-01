@@ -24,7 +24,6 @@
 
 #define MIDI_BASE 35
 
-#define CMD_SYMBOL_F_VAR 'v'
 #define FRAME_VAR_LIMIT 32
 #define FRAME_BYTE_LIMIT 128
 struct frame_t
