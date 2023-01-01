@@ -3,55 +3,43 @@
 
 static int cmd_mode = 0;
 frame_t frames[6];
+int var_bytes[FRAME_VAR_LIMIT];
+int cSlot = 0; //current var slot pointer
 
-int parseVariable(unsigned char context, unsigned char slot, unsigned char value){
-    if(context > 5) return -1;
-    if(slot > FRAME_VAR_LIMIT) return -1;
-    frames[context].var_bytes[slot] = value;
+//byte 1 LSB = 0b0nnnnnnn
+//byte 2 MSB = 0b0VSnnnnn
+//max value = +- 4095
+// V = variable flag
+// S = sign bit
+int getCByte(unsigned char cc, unsigned char val){
+    int ii = int(cc) | (int(val)<<7);
+    if(ii & (1<<13)) return var_bytes[cc];
+    if(ii & (1<<12)) return -ii;
+    return ii;
+}
+
+int setCByte(unsigned char ch, unsigned char cc, unsigned char val){
+    if(ch & 0x1){
+        if(cc > FRAME_VAR_LIMIT) {
+            cSlot = 0;
+            return -1;
+        }
+        cSlot = cc;
+    }
+    else{
+        int ii = int(cc) | (int(val)<<7);
+        var_bytes[cSlot] = ii;
+    }
     return 0;
 }
 
-int parseCommand(const unsigned char* cmd_bytes, int len, bool var){
+int parseCommand(const unsigned char* cmd_bytes, int len){
     for(int i=0; i<len; i++){
         if(cmd_bytes[i] == CMD_SYMBOL_F_MODE){
         	cmd_mode = cmd_bytes[++i];
         }
 
-        /// @brief Set frame buffer command code
-        /// @param context 
-        /// @param set, 0 for clear, 1 for post new code, 2 for toggle
-        /// -if set == 1-
-        /// @param bytes 
-        /// @param nibble_buffer
-        if(cmd_mode == CMD_SYMBOL_MODE_FRAME){
-            int context = cmd_bytes[++i];
-            int set = cmd_bytes[++i];
-            if(set == 0){
-                frames[context].isFramed = false;
-                frames[context].cmd_count = 0;
-                continue;
-            }
-            if(set == 2){
-                frames[context].isFramed = ! frames[context].isFramed;
-                continue;
-            }
-            int bytes = cmd_bytes[++i];
-            int nibbles = bytes<<1;
-            unsigned char* buf = (unsigned char*)&cmd_bytes[++i];
-            if(bytes < FRAME_BYTE_LIMIT){
-                frames[context].isFramed = true;
-                frames[context].cmd_count = bytes;
-                auto fbuf = frames[context].cmd_bytes;
-                int d = 0;
-                for(int j=0; j<nibbles; j+=2){
-                    fbuf[d] = uint8_t(buf[j+0]) << 0;
-                    fbuf[d] |= uint8_t(buf[j+1]) << 4;
-                    d++;
-                }
-                i+=nibbles;
-            }
-        }
-        else if(cmd_mode == CMD_SYMBOL_MODE_DATA){
+        if(cmd_mode == CMD_SYMBOL_MODE_DATA){
             if(cmd_bytes[i] == CMD_SYMBOL_F_UPLOAD){
                 int start = cmd_bytes[++i];
                 int bytes = cmd_bytes[++i];
@@ -67,87 +55,36 @@ int parseCommand(const unsigned char* cmd_bytes, int len, bool var){
                     i+=nibbles;
                 }
             } 
-        }
-        else if(cmd_mode == CMD_SYMBOL_MODE_GFX){
-            
-            if(cmd_bytes[i] == CMD_SYMBOL_C_CONTEXT){
-                cmd_gfx_on_context(cmd_bytes[++i]);
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_FRAME_CLEAR){
+                int context = cmd_bytes[++i];
+                frames[context].isFramed = false;
+                frames[context].cmd_count = 0;
+                continue;
             }
-            else if(cmd_bytes[i] == CMD_SYMBOL_C_SCALE){
-                gfx.scale = cmd_bytes[++i];
-                if(gfx.scale <= 0) gfx.scale = 1;
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_FRAME_TOGGLE){
+                int context = cmd_bytes[++i];
+                frames[context].isFramed = ! frames[context].isFramed;
+                continue;
             }
-			else if(cmd_bytes[i] == CMD_SYMBOL_C_XOR){
-                gfx.modexor = cmd_bytes[++i];
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_FRAME_SET){
+                int context = cmd_bytes[++i];
+                int bytes = cmd_bytes[++i];
+                int nibbles = bytes<<1;
+                unsigned char* buf = (unsigned char*)&cmd_bytes[++i];
+                if(bytes < FRAME_BYTE_LIMIT){
+                    frames[context].isFramed = true;
+                    frames[context].cmd_count = bytes;
+                    auto fbuf = frames[context].cmd_bytes;
+                    int d = 0;
+                    for(int j=0; j<nibbles; j+=2){
+                        fbuf[d] = uint8_t(buf[j+0]) << 0;
+                        fbuf[d] |= uint8_t(buf[j+1]) << 4;
+                        d++;
+                    }
+                    i+=nibbles;
+                }
             }
-
-            else if(cmd_bytes[i] == CMD_SYMBOL_F_CLEAR){
-                gfx_clear();
-            }
-            else if(cmd_bytes[i] == CMD_SYMBOL_F_DRAW){
-                cmd_gfx_on_draw();
-            }
-
-            else if(cmd_bytes[i] == CMD_SYMBOL_F_LINE){
-                int x = cmd_bytes[++i];
-                int y = cmd_bytes[++i];
-                int x2 = cmd_bytes[++i];
-                int y2 = cmd_bytes[++i];
-                gfx_drawLine(x,y,x2,y2);
-            }
-            else if(cmd_bytes[i] == CMD_SYMBOL_F_RECT){
-                unsigned int vars = cmd_bytes[++i];
-                int x = cmd_bytes[++i];
-                int y = cmd_bytes[++i];
-                int w = cmd_bytes[++i];
-                int h = cmd_bytes[++i];
-                int fill = cmd_bytes[++i];
-
-                int c = cmd_gfx_get_context();
-                if(vars&0b0000001) x = frames[c].var_bytes[x];
-                if(vars&0b0000010) y = frames[c].var_bytes[y];
-                if(vars&0b0000100) w = frames[c].var_bytes[w];
-                if(vars&0b0001000) h = frames[c].var_bytes[h];
-                if(vars&0b0010000) fill = frames[c].var_bytes[fill];
-                
-                if(fill)
-                  gfx_fillSection(x,y,w,h);
-                else
-                  gfx_drawRectSize(x,y,w,h);
-            }
-            else if(cmd_bytes[i] == CMD_SYMBOL_F_STRING){
-                int x = cmd_bytes[++i];
-                int y = cmd_bytes[++i];
-                const char* str = (char*)&cmd_bytes[++i];
-                gfx_drawString(str,x,y); 
-                int j = 0;
-                while(cmd_bytes[i+j] != 0) j++;
-                i+=j;
-            }
-            else if(cmd_bytes[i] == CMD_SYMBOL_F_BITMAP){
-                unsigned int vars = cmd_bytes[++i];
-                int x = cmd_bytes[++i];
-                int y = cmd_bytes[++i];
-                int w = cmd_bytes[++i];
-                int h = cmd_bytes[++i];
-                int start = cmd_bytes[++i];
-                int bytes_per_col = cmd_bytes[++i];
-                int llen = cmd_bytes[++i];
-
-                int c = cmd_gfx_get_context();
-                if(vars&0b0000001) x = frames[c].var_bytes[x];
-                if(vars&0b0000010) y = frames[c].var_bytes[y];
-                if(vars&0b0000100) w = frames[c].var_bytes[w];
-                if(vars&0b0001000) h = frames[c].var_bytes[h];
-                if(vars&0b0010000) start = frames[c].var_bytes[start];
-                if(vars&0b0100000) bytes_per_col = frames[c].var_bytes[bytes_per_col];
-                if(vars&0b1000000) llen = frames[c].var_bytes[llen];
-                gfx_drawBitmap(x,y,w,h,bytes_per_col,llen,data_buf+start);
-            }
-            
-        }
-        else if(cmd_mode == CMD_SYMBOL_MODE_SYS){
-            if(cmd_bytes[i] == CMD_SYMBOL_F_UPLOAD){
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_BOOTCMD){
                 int cc = cmd_bytes[++i];
                 unsigned char* buf = (unsigned char*)&cmd_bytes[++i];
                 if(cc <= 512){
@@ -161,7 +98,69 @@ int parseCommand(const unsigned char* cmd_bytes, int len, bool var){
                     cmd_sys_on_upload_boot_end();
                 }
             }
-            else if(cmd_bytes[i] == CMD_SYMBOL_F_SLEEP){
+        }
+        else if(cmd_mode == CMD_SYMBOL_MODE_GFX){
+            
+            if(cmd_bytes[i] == CMD_SYMBOL_C_CONTEXT){
+                cmd_gfx_on_context(cmd_bytes[++i]);
+            }
+            else if(cmd_bytes[i] == CMD_SYMBOL_C_SCALE){
+                gfx.scale = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                if(gfx.scale <= 0) gfx.scale = 1;
+            }
+			else if(cmd_bytes[i] == CMD_SYMBOL_C_XOR){
+                gfx.modexor = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+            }
+
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_CLEAR){
+                gfx_clear();
+            }
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_DRAW){
+                cmd_gfx_on_draw();
+            }
+
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_LINE){
+                int x = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int y = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int x2 = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int y2 = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                gfx_drawLine(x,y,x2,y2);
+            }
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_RECT){
+                int x = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int y = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int w = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int h = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int fill = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+
+                if(fill)
+                  gfx_fillSection(x,y,w,h);
+                else
+                  gfx_drawRectSize(x,y,w,h);
+            }
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_STRING){
+                int x = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int y = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                const char* str = (char*)&cmd_bytes[++i];
+                gfx_drawString(str,x,y); 
+                int j = 0;
+                while(cmd_bytes[i+j] != 0) j++;
+                i+=j;
+            }
+            else if(cmd_bytes[i] == CMD_SYMBOL_F_BITMAP){
+                int x = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int y = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int w = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int h = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int start = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int bytes_per_col = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                int llen = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                gfx_drawBitmap(x,y,w,h,bytes_per_col,llen,data_buf+start);
+            }
+            
+        }
+        else if(cmd_mode == CMD_SYMBOL_MODE_SYS){
+            if(cmd_bytes[i] == CMD_SYMBOL_F_SLEEP){
                 cmd_sys_on_sleep(cmd_bytes[++i]);
             }
         }

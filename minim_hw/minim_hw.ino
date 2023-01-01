@@ -333,7 +333,7 @@ void loop(){
 
     if(!sysex){
       if(b[1] &= 0xB0){
-        parseVariable( b[1]&0x0f, b[2], b[3]);
+        setCByte(b[1]&0x0f, b[2], b[3]);
       }
       else if(b[1] == 0xf0 && !sysex){
         sysex = true;
