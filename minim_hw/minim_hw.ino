@@ -22,13 +22,17 @@ i2c_msg imsg;
 sarray_t<uint8> imsgdata;
 
 sarray_t<char> sysex_string;
-bool states[2][5];
 bool sysex = false;
 
 int boot_byte_count = 0;
 
+void cmd_parse_hook(int cmd){
+  logger.print("~");
+  logger.println(cmd,DEC);
+}
+
 void cmd_sys_on_upload_boot_begin(){
-  Serial.println("begin boot cmd upload");
+  logger.println("begin boot cmd upload");
   boot_byte_count = 0;
 }
 
@@ -38,10 +42,10 @@ void cmd_sys_on_upload_boot_byte(unsigned char byte){
 }
 
 void cmd_sys_on_upload_boot_end(){
-  Serial.println("begin boot cmd upload");
+  logger.println("begin boot cmd upload");
   EEPROM.write(0,boot_byte_count);
-  Serial.println("recieved bytes");
-  Serial.println(boot_byte_count);
+  logger.println("recieved bytes");
+  logger.println(boot_byte_count);
 }
 
 void cmd_sys_on_sleep(int ms){
@@ -316,10 +320,9 @@ void collectSysex(char* b, int offset){
   //   Serial.println(b[3],DEC);
   // Serial.println("]");
   for(int i = offset; i<3; i++){
-    if(b[1+i] == 0xf7 && sysex){
+    if(b[1+i] == 0xF7 && sysex){
       sysex = false;
       parseCommand((unsigned char*)sysex_string.buf,sysex_string.count);
-      logger.println("end sysex");
     }
     else
       sarray_push(sysex_string,b[1+i]);
@@ -332,25 +335,17 @@ void loop(){
   if(int a = usbmidi.available()){
     uint32_t aa = usbmidi.readPacket();
     char *b = (char*)&aa;
-    logger.println(b[1],DEC);
-    logger.println(b[2],DEC);
-    logger.println(b[3],DEC);
     if(!sysex){
       if(b[1] == 0xB1){
         cb = b[2];
-        logger.println("setCByte slot");
-        logger.println(cb);
       }
       else if(b[1] == 0xB0){
         auto a = setCByte(cb,b[2],b[3]);
-        logger.println("setCByte");
-        logger.println(a);
       } 
-      else if(b[1] == 0xf0){
+      else if(b[1] == 0xF0){
         sysex = true;
         sarray_clear(sysex_string);
         collectSysex(b, 1);
-        logger.println("start sysex");
       }
     }
     else if(sysex){

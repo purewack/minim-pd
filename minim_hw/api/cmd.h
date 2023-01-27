@@ -47,6 +47,8 @@ extern void cmd_sys_on_upload_boot_byte(unsigned char byte);
 extern void cmd_sys_on_upload_boot_end();
 extern void cmd_sys_on_sleep(int ms);
 
+extern void cmd_parse_hook(int cmd);
+
 extern int parseCommand(const unsigned char* cmd_bytes, int len);
-extern int getCByte(unsigned char cc, unsigned char val);
+extern int getCByte(const unsigned char* buf, int* i);
 extern int setCByte(unsigned char ch, unsigned char cc, unsigned char val);

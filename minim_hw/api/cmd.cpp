@@ -10,9 +10,13 @@ int cSlot = 0; //current var slot pointer
 //max value = +- 4095
 // V = variable flag
 // S = sign bit
-int getCByte(unsigned char cc, unsigned char val){
-    int ii = int(cc) | (int(val)<<7);
-    if(ii & (1<<13)) return var_bytes[cc];
+int getCByte(const unsigned char* buf, int* i){
+    int lsb = int(buf[*i + 1]);
+    int msb = int(buf[*i + 0]);
+    int ii = ((msb<<7) | lsb) & 0xFFF;
+    cmd_parse_hook(ii);
+    *i += 2;
+    if(ii & (1<<13)) return var_bytes[ii & 0x7f];
     if(ii & (1<<12)) return -ii;
     return ii;
 }
@@ -25,6 +29,7 @@ int setCByte(unsigned char ch, unsigned char cc, unsigned char val){
 
 int parseCommand(const unsigned char* cmd_bytes, int len){
     for(int i=0; i<len; i++){
+        cmd_parse_hook(cmd_bytes[i]);
         if(cmd_bytes[i] == CMD_SYMBOL_F_MODE){
         	cmd_mode = cmd_bytes[++i];
         }
@@ -92,11 +97,13 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                 cmd_gfx_on_context(cmd_bytes[++i]);
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_C_SCALE){
-                gfx.scale = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                i++;
+                gfx.scale = getCByte(cmd_bytes,&i);
                 if(gfx.scale <= 0) gfx.scale = 1;
             }
 			else if(cmd_bytes[i] == CMD_SYMBOL_C_XOR){
-                gfx.modexor = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                i++;
+                gfx.modexor = getCByte(cmd_bytes,&i);
             }
 
             else if(cmd_bytes[i] == CMD_SYMBOL_F_CLEAR){
@@ -107,18 +114,24 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
             }
 
             else if(cmd_bytes[i] == CMD_SYMBOL_F_LINE){
-                int x = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int y = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int x2 = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int y2 = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                i++;
+                int x = getCByte(cmd_bytes,&i);
+                int y = getCByte(cmd_bytes,&i);
+                int x2 = getCByte(cmd_bytes,&i);
+                int y2 = getCByte(cmd_bytes,&i);
+                cmd_parse_hook(x);
+                cmd_parse_hook(y);
+                cmd_parse_hook(x2);
+                cmd_parse_hook(y2);
                 gfx_drawLine(x,y,x2,y2);
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_RECT){
-                int x = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int y = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int w = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int h = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int fill = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                i++;
+                int x = getCByte(cmd_bytes,&i);
+                int y = getCByte(cmd_bytes,&i);
+                int w = getCByte(cmd_bytes,&i);
+                int h = getCByte(cmd_bytes,&i);
+                int fill = getCByte(cmd_bytes,&i);
 
                 if(fill)
                   gfx_fillSection(x,y,w,h);
@@ -126,8 +139,9 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                   gfx_drawRectSize(x,y,w,h);
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_STRING){
-                int x = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int y = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                i++;
+                int x = getCByte(cmd_bytes,&i);
+                int y = getCByte(cmd_bytes,&i);
                 const char* str = (char*)&cmd_bytes[++i];
                 gfx_drawString(str,x,y); 
                 int j = 0;
@@ -135,13 +149,14 @@ int parseCommand(const unsigned char* cmd_bytes, int len){
                 i+=j;
             }
             else if(cmd_bytes[i] == CMD_SYMBOL_F_BITMAP){
-                int x = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int y = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int w = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int h = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int start = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int bytes_per_col = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
-                int llen = getCByte(cmd_bytes[++i],cmd_bytes[++i]);
+                i++;
+                int x = getCByte(cmd_bytes,&i);
+                int y = getCByte(cmd_bytes,&i);
+                int w = getCByte(cmd_bytes,&i);
+                int h = getCByte(cmd_bytes,&i);
+                int start = getCByte(cmd_bytes,&i);
+                int bytes_per_col = getCByte(cmd_bytes,&i);
+                int llen = getCByte(cmd_bytes,&i);
                 gfx_drawBitmap(x,y,w,h,bytes_per_col,llen,data_buf+start);
             }
             
