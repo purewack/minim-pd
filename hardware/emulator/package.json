@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "compile": "cmake-js compile -d ./native"
+    "install": "cmake-js compile -d ./native"
   },
   "devDependencies": {
     "cmake-js": "^7.2.1",

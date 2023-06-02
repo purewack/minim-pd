@@ -2,8 +2,10 @@
 const { app, BrowserWindow } = require('electron')
 const path = require('path')
 
-const {dummy} = require("./native/build/Release/gfx.node");
-console.log(dummy());
+const {BufferPainter} = require("./native/build/Release/gfx.node");
+const b = new BufferPainter();
+console.log(b);
+console.log(b.asArray());
 
 function createWindow () {
   // Create the browser window.
