@@ -1,0 +1,17 @@
+{
+  "name": "minim-emulator",
+  "version": "1.0.0",
+  "description": "MINIM emulator [node]",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "compile": "cmake-js compile -d ./native"
+  },
+  "devDependencies": {
+    "cmake-js": "^7.2.1",
+    "electron": "^25.0.0"
+  },
+  "dependencies": {
+    "node-addon-api": "^6.1.0"
+  }
+}
