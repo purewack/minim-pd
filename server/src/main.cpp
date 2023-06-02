@@ -5,18 +5,24 @@
 #include <string>
 #include <chrono>
 #include <unistd.h>
-gfx_t gfx;
 
 #define INT(X) (std::stoi(X))
+gfx_t gfx;
+RenderTexture ctx[6]; //emulator screen contexts
+int _scale = 2; //emulator screen scale /px
 
-RenderTexture ctx[6];
-int SS = 2;
+bool sysex = false;
+uint8_t sysex_buf[512];
+int sysex_buf_len = 0;
+
+int context = 0;
+int draw_count = 0;
 
 int initGFXSystem(){
 	char str[64];
 	snprintf(str,64,"M I N I M - Emulator API version[%d]",MINIM_API_VER);
 	data_buf = (uint8_t*)malloc(sizeof(uint8_t)*512);
-    InitWindow(80*SS*8,128*SS,str);
+    InitWindow(80*_scale*8,128*_scale,str);
 	SetTargetFPS(120);
     BeginDrawing();
     ClearBackground(BLACK);
@@ -40,15 +46,12 @@ int endGFXSystem(){
 	free(data_buf);
 	return 0;
 }
-
-int context = 0;
 void cmd_gfx_on_context(int ctx){
 	context = ctx;
 	if(ctx == 5) gfx.rotated = 0;
 	else gfx.rotated = 1;
 }
 
-int draw_count = 0;
 void cmd_gfx_on_draw(){
 	BeginTextureMode(ctx[context]);
 		ClearBackground(BLACK);
@@ -67,6 +70,7 @@ void cmd_sys_on_sleep(int ms){}
 void cmd_sys_on_upload_boot_begin(){}
 void cmd_sys_on_upload_boot_byte(unsigned char c){}
 void cmd_sys_on_upload_boot_end(){}
+void cmd_parse_hook(int){}
 
 int initMidiSystem(){
 	midiin = new RtMidiIn();
@@ -100,9 +104,6 @@ int endMidiSystem(){
 	return 0;
 }
 
-bool sysex = false;
-uint8_t sysex_buf[512];
-int sysex_buf_len = 0;
 
 void collectSysex(unsigned char b){
 	if(b == 0xf7 && sysex){
@@ -118,7 +119,7 @@ void collectSysex(unsigned char b){
 	}
 }
 
-int cb = 0;
+int current_byte = 0;
 void processMidi(){
 	midiin->getMessage( &midiin_bytes);
 	if(midiin_bytes.size() <= 0) return;
@@ -128,73 +129,75 @@ void processMidi(){
       std::cout << "[" << std::to_string(a) << "]";
 
     std::cout << "\n}\nByte dump end"<< std::endl;
-	int nc = 0;
-	int bc[4];
-	bool ex = false;
-    for(auto bb : midiin_bytes){
-      if(!sysex){
-        if(bb == 0xf0 && !sysex){
-          sysex = true;
-		  ex = true;
-          sysex_buf_len = 0;
-          std::cout << "Enter SYSEX"<< std::endl;
-          collectSysex(bb);
-        }
-      }
-      else if(sysex){
-        collectSysex(bb);
-      } 
-    }
+	// int nc = 0;
+	// int bc[4];
+	// bool ex = false;
+    // for(auto bb : midiin_bytes){
+    //   if(!sysex){
+    //     if(bb == 0xf0 && !sysex){
+    //       sysex = true;
+	// 	  ex = true;
+    //       sysex_buf_len = 0;
+    //       std::cout << "Enter SYSEX"<< std::endl;
+    //       collectSysex(bb);
+    //     }
+    //   }
+    //   else if(sysex){
+    //     collectSysex(bb);
+    //   } 
+    // }
 
-	if(!ex){
-		if(midiin_bytes[0] == 0xB1){
-			cb = midiin_bytes[1];
-		}
-		else if(midiin_bytes[0] == 0xB0){
-			auto a = setCByte(cb,midiin_bytes[1],midiin_bytes[2]);
-			printf("setCByte: %d\n",a);
-		}
-	}
+	// if(!ex){
+	// 	if(midiin_bytes[0] == 0xB1){
+	// 		current_byte = midiin_bytes[1];
+	// 	}
+	// 	else if(midiin_bytes[0] == 0xB0){
+	// 		auto a = setCByte(current_byte, midiin_bytes[1], midiin_bytes[2]);
+	// 		printf("set CB: %d\n",a);
+	// 	}
+	// }
 
-	for(int f=0; f<6; f++){
-		if(frames[f].isFramed){
-			parseCommand(frames[f].cmd_bytes,frames[f].cmd_count);
-			frames[f].fps_counter++;
-			printf("frame[%d]@%d\n",f,frames[f].fps_counter);
-		}
-	}
+	// for(int f=0; f<6; f++){
+	// 	if(frames[f].isFramed){
+	// 		parseCommand(frames[f].cmd_bytes,frames[f].cmd_count);
+	// 		frames[f].fps_counter++;
+	// 		printf("frame[%d]@%d\n",f,frames[f].fps_counter);
+	// 	}
+	// }
 }
 
 int main(){
-#ifndef _SRC_MINIM_EMU
+#ifdef _MINIM_TARGET_BUILD
 	audio_init();
 	std::string in;
 	std::cin >> in;
 	audio_end();
 #else
 	initMidiSystem();
-	initGFXSystem();
-	while(!WindowShouldClose()){
+	// initGFXSystem();
+	// while(!WindowShouldClose()){
+	while(1){
 		processMidi();
-		BeginDrawing();
-			ClearBackground(BLACK);
-			for(int i=0; i<5; i++){
-				DrawTexturePro(ctx[i].texture,
-							(Rectangle){0,0,128,-64},
-							(Rectangle){i*70*SS,0,128*SS,64*SS},
-							(Vector2){0,128}, 90.0f, WHITE);
-				DrawRectangleLines(i*70*SS,0,64*SS,128*SS,YELLOW);
-			}
+		usleep(10000);
+		// BeginDrawing();
+		// 	ClearBackground(BLACK);
+		// 	for(int i=0; i<5; i++){
+		// 		DrawTexturePro(ctx[i].texture,
+		// 					(Rectangle){0,0,128,-64},
+		// 					(Rectangle){i*70*_scale,0,128*_scale,64*_scale},
+		// 					(Vector2){0,128}, 90.0f, WHITE);
+		// 		DrawRectangleLines(i*70*_scale,0,64*_scale,128*_scale,YELLOW);
+		// 	}
 			
-			DrawTexturePro(ctx[5].texture,
-						(Rectangle){0,0,128,-64},
-						(Rectangle){5*75*SS,0,128*SS*2,64*SS*2},
-						(Vector2){0,0}, 0.0f, WHITE);
-			DrawRectangleLines(5*75*SS,0,128*SS*2,64*SS*2,YELLOW);
-		EndDrawing();
+		// 	DrawTexturePro(ctx[5].texture,
+		// 				(Rectangle){0,0,128,-64},
+		// 				(Rectangle){5*75*_scale,0,128*_scale*2,64*_scale*2},
+		// 				(Vector2){0,0}, 0.0f, WHITE);
+		// 	DrawRectangleLines(5*75*_scale,0,128*_scale*2,64*_scale*2,YELLOW);
+		// EndDrawing();
 	}
 	endMidiSystem();
-	endGFXSystem();
+	// endGFXSystem();
 #endif
   	return 0;
 }

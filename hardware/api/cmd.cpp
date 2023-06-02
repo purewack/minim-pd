@@ -10,6 +10,7 @@ int cSlot = 0; //current var slot pointer
 //max value = +- 4095
 // V = variable flag
 // S = sign bit
+
 int getCByte(const unsigned char* buf, int* i){
     int lsb = int(buf[*i + 1]);
     int msb = int(buf[*i + 0]);

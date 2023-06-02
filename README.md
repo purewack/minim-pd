@@ -20,4 +20,4 @@ The `[plonk~]` object is available to use as a quick audiable metronome tick, us
 ### `[bank~]` :
 
 The logic diagram below shows the distinct states each *motif* can be in at one time; the states are altered with trigger button commands, in combination with a shift button state:
-![image states](./minim_states.drawio.png)
+![image states](./puredata/minim_states.drawio.png)

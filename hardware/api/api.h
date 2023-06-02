@@ -6,7 +6,7 @@
 #include "cmd.h"
 
 //for arduino ide
-#ifndef _SRC_MINIM_EMU
+#ifdef _MINIM_TARGET_BUILD
 #include "gfx.cpp"
 #include "cmd.cpp"
 #endif

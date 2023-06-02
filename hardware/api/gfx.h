@@ -2,27 +2,28 @@
 
 #include <stdint.h>
 
-#ifndef _SRC_MINIM_EMU
+#ifdef _MINIM_TARGET_BUILD
 #include <Arduino.h>
 #else
 #include <stdlib.h>
 #endif
 
-#include "gfx/fonttiny.h"
+// #include "gfx/fonttiny.h"
 
-struct gfx_t {
-  int inited = 0;
-  int rotated = 0;
-  int scale = 1;
-  int modexor = 0;
-  volatile int transferring = 0;
+// struct gfx_t {
+//   int inited = 0;
+//   int rotated = 0;
+//   int scale = 1;
+//   int modexor = 0;
+//   volatile int transferring = 0;
 
-  uint32_t fbuf_top[128]; // 128 vertical columns
-  uint32_t fbuf_bot[128]; // 128 vertical columns
-};
-extern gfx_t gfx;
-extern uint8_t* data_buf;
+//   uint32_t fbuf_top[128]; // 128 vertical columns
+//   uint32_t fbuf_bot[128]; // 128 vertical columns
+// };
+// extern gfx_t gfx;
+// extern uint8_t* data_buf;
 
+const char* gfx_dummy();
 void gfx_defaults();
 void gfx_clear();
 void gfx_drawHline(int x, int y, int w);

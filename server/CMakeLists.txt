@@ -8,7 +8,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-Wno-narrowing )
 
-add_definitions( -D_SRC_MINIM_EMU=1 )
+# add_definitions( -D_MINIM_TARGET_BUILD=0 )
 
 add_subdirectory(deps/libpd)
 add_subdirectory(deps/rtmidi)
