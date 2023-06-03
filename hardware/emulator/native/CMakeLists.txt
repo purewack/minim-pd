@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 # Name of the project (will be the name of the plugin)
-project (gfx)
+project (minim)
 set(CMAKE_CXX_STANDARD 17)
 # Don't add this line if you will try_compile with boost.
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

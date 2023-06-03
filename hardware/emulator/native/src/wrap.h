@@ -4,11 +4,11 @@
 #include "../../../api/gfx.h"
 
 using namespace std;
-namespace GFX{
-    class BufferPainterWrap : public Napi::ObjectWrap<BufferPainterWrap> {
+namespace MINIM{
+    class ControlSurface : public Napi::ObjectWrap<ControlSurface> {
     public:
         static Napi::Object Init(Napi::Env env, Napi::Object exports); //Init function for setting the export key to JS
-        BufferPainterWrap(const Napi::CallbackInfo& info); //Constructor to initialise
+        ControlSurface(const Napi::CallbackInfo& info); //Constructor to initialise
 
     private:
         static Napi::FunctionReference constructor; //reference to store the class definition that needs to be exported to JS
@@ -16,8 +16,8 @@ namespace GFX{
      
         Napi::Value asArray(const Napi::CallbackInfo& info);
         Napi::Value getPixel(const Napi::CallbackInfo& info);
-        Napi::Value _reset(const Napi::CallbackInfo& info);
-        Napi::Value _clear(const Napi::CallbackInfo& info);
+        void _reset(const Napi::CallbackInfo& info);
+        void _clear(const Napi::CallbackInfo& info);
         Napi::Value _drawHline(const Napi::CallbackInfo& info);
         Napi::Value _drawVline(const Napi::CallbackInfo& info);
         Napi::Value _drawLine(const Napi::CallbackInfo& info);
@@ -30,4 +30,4 @@ namespace GFX{
 };
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports);
-NODE_API_MODULE(gfx, InitAll);
+NODE_API_MODULE(minim, InitAll);

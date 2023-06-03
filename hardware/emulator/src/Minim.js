@@ -1,7 +1,7 @@
-import './MinimScreen.css'
+import './Minim.css'
 import {useEffect, useRef} from 'react'
-const {BufferPainter} = window.require('./native/build/Release/gfx.node');
-const sharedPainter = new BufferPainter()
+const {ControlSurface} = window.require('./native/build/Release/minim.node');
+const sharedPainter = new ControlSurface()
 
 function plotBuffer(context, horizontal){
     context.fillStyle = '#000000'

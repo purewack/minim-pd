@@ -1,5 +1,4 @@
-import './App.css';
-import MinimScreen from './MinimScreen'
+import MinimScreen from './Minim'
 
 function App() {
   return (
