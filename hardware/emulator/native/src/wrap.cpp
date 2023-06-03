@@ -13,7 +13,13 @@ Napi::Object GFX::BufferPainterWrap::Init(Napi::Env env, Napi::Object exports)
   Napi::Function bufpaint = DefineClass(env, "BufferPainterWrap", {
     InstanceMethod("getPixel", &BufferPainterWrap::getPixel),
     InstanceMethod("asArray", &BufferPainterWrap::asArray),
-    InstanceMethod("hello", &BufferPainterWrap::hello)
+    InstanceMethod("_reset", &BufferPainterWrap::_reset),
+    InstanceMethod("_clear", &BufferPainterWrap::_clear),
+    InstanceMethod("_drawHline", &BufferPainterWrap::_drawHline),
+    InstanceMethod("_drawVline", &BufferPainterWrap::_drawVline),
+    InstanceMethod("_drawLine", &BufferPainterWrap::_drawLine),
+    InstanceMethod("_drawRectSize", &BufferPainterWrap::_drawRectSize),
+    InstanceMethod("_fillSection", &BufferPainterWrap::_fillSection),
   });
 
   constructor = Napi::Persistent(bufpaint);
@@ -21,10 +27,6 @@ Napi::Object GFX::BufferPainterWrap::Init(Napi::Env env, Napi::Object exports)
 
   exports.Set("BufferPainter", bufpaint);
   return exports;
-}
-
-Napi::Value GFX::BufferPainterWrap::hello(const Napi::CallbackInfo& info){
-  return Napi::String::New(info.Env(),"Hello");
 }
 
 GFX::BufferPainterWrap::BufferPainterWrap(const Napi::CallbackInfo& info) : Napi::ObjectWrap<GFX::BufferPainterWrap>(info)  {
@@ -46,15 +48,9 @@ Napi::Value GFX::BufferPainterWrap::getPixel(const Napi::CallbackInfo& info){
         .ThrowAsJavaScriptException();
     return info.Env().Undefined();
   }
-  if (!info[0].IsNumber() || !info[1].IsNumber()) {
-    Napi::Error::New(info.Env(), "Expected numbers as arguments (x,y)")
-        .ThrowAsJavaScriptException();
-    return info.Env().Undefined();
-  }
-
   auto x = info[0].As<Napi::Number>().Int32Value() % 128;
   auto y = info[1].As<Napi::Number>().Int32Value() % 64;
-  if(x < 32)
+  if(y < 32)
     return Napi::Boolean::New(info.Env(), this->gfx->fbuf_top[x] & (1<<y));
   else
     return Napi::Boolean::New(info.Env(), this->gfx->fbuf_bot[x] & (1<<(y-32)));
@@ -77,4 +73,88 @@ Napi::Value GFX::BufferPainterWrap::asArray(const Napi::CallbackInfo& info){
     }
   }
   return buf;
+}
+
+
+Napi::Value GFX::BufferPainterWrap::_reset(const Napi::CallbackInfo& info){
+  this->gfx->reset();
+  return info.Env().Undefined();
+}
+Napi::Value GFX::BufferPainterWrap::_clear(const Napi::CallbackInfo& info){
+  this->gfx->clear();
+  return info.Env().Undefined();
+}
+Napi::Value GFX::BufferPainterWrap::_drawHline(const Napi::CallbackInfo& info){
+  if (info.Length() != 3) {
+    Napi::Error::New(info.Env(), "Expected 3 arguments")
+        .ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  auto x = info[0].As<Napi::Number>().Int32Value();
+  auto y = info[1].As<Napi::Number>().Int32Value();
+  auto w = info[2].As<Napi::Number>().Int32Value();
+
+  this->gfx->drawHline(x,y,w);
+  return info.Env().Undefined();
+}
+Napi::Value GFX::BufferPainterWrap::_drawVline(const Napi::CallbackInfo& info){
+  if (info.Length() != 3) {
+    Napi::Error::New(info.Env(), "Expected 3 arguments")
+        .ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  auto x = info[0].As<Napi::Number>().Int32Value();
+  auto y = info[1].As<Napi::Number>().Int32Value();
+  auto h = info[2].As<Napi::Number>().Int32Value();
+
+  this->gfx->drawVline(x,y,h);
+  return info.Env().Undefined();
+}
+Napi::Value GFX::BufferPainterWrap::_drawLine(const Napi::CallbackInfo& info){
+  if (info.Length() != 4) {
+    Napi::Error::New(info.Env(), "Expected 4 arguments")
+        .ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+
+  auto x   = info[0].As<Napi::Number>().Int32Value();
+  auto y   = info[1].As<Napi::Number>().Int32Value();
+  auto x2  = info[2].As<Napi::Number>().Int32Value();
+  auto y2  = info[3].As<Napi::Number>().Int32Value();
+
+  this->gfx->drawLine(x,y,x2,y2);  
+  return info.Env().Undefined();
+}
+Napi::Value GFX::BufferPainterWrap::_drawRectSize(const Napi::CallbackInfo& info){
+  if (info.Length() != 4) {
+    Napi::Error::New(info.Env(), "Expected 4 arguments")
+        .ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  auto x   = info[0].As<Napi::Number>().Int32Value();
+  auto y   = info[1].As<Napi::Number>().Int32Value();
+  auto w   = info[2].As<Napi::Number>().Int32Value();
+  auto h   = info[3].As<Napi::Number>().Int32Value();
+
+  this->gfx->drawRectSize(x,y,w,h);
+  return info.Env().Undefined();
+}
+Napi::Value GFX::BufferPainterWrap::_fillSection(const Napi::CallbackInfo& info){
+  if (info.Length() != 4) {
+    Napi::Error::New(info.Env(), "Expected 4 arguments")
+        .ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  auto x   = info[0].As<Napi::Number>().Int32Value();
+  auto y   = info[1].As<Napi::Number>().Int32Value();
+  auto w   = info[2].As<Napi::Number>().Int32Value();
+  auto h   = info[3].As<Napi::Number>().Int32Value();
+
+  this->gfx->fillSection(x,y,w,h);
+  return info.Env().Undefined();
 }

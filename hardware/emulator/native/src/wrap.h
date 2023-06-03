@@ -14,20 +14,18 @@ namespace GFX{
         static Napi::FunctionReference constructor; //reference to store the class definition that needs to be exported to JS
         BufferPainter* gfx; //internal instance of actualclass used to perform actual operations.
      
-        Napi::Value hello(const Napi::CallbackInfo& info);
         Napi::Value asArray(const Napi::CallbackInfo& info);
         Napi::Value getPixel(const Napi::CallbackInfo& info);
-        // void reset(const Napi::CallbackInfo& info);
-        // void clear(const Napi::CallbackInfo& info);
-        // void drawPixel(const Napi::CallbackInfo& info);
-        // void drawHline(const Napi::CallbackInfo& info);
-        // void drawVline(const Napi::CallbackInfo& info);
-        // void drawLine(const Napi::CallbackInfo& info);
-        // void drawRectSize(const Napi::CallbackInfo& info);
-        // void fillSection(const Napi::CallbackInfo& info);
-        // void drawBitmap(const Napi::CallbackInfo& info);
-        // void drawChar(const Napi::CallbackInfo& info);
-        // void drawString(const Napi::CallbackInfo& info);
+        Napi::Value _reset(const Napi::CallbackInfo& info);
+        Napi::Value _clear(const Napi::CallbackInfo& info);
+        Napi::Value _drawHline(const Napi::CallbackInfo& info);
+        Napi::Value _drawVline(const Napi::CallbackInfo& info);
+        Napi::Value _drawLine(const Napi::CallbackInfo& info);
+        Napi::Value _drawRectSize(const Napi::CallbackInfo& info);
+        Napi::Value _fillSection(const Napi::CallbackInfo& info);
+        // void _drawBitmap(const Napi::CallbackInfo& info);
+        // void _drawChar(const Napi::CallbackInfo& info);
+        // void _drawString(const Napi::CallbackInfo& info);
     };
 };
 

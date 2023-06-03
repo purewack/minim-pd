@@ -32,6 +32,11 @@ export default function MinimScreen({horizontal = true}){
     useEffect(() => {
         const canvas = canvasRef.current
         const context = canvas.getContext('2d')
+        sharedPainter._clear()
+        sharedPainter._drawLine(0,0,127,63);
+        sharedPainter._drawLine(0,63,127,0);
+        sharedPainter._drawHline(0,32,127);
+        sharedPainter._drawRectSize(0,0,128,64);
         plotBuffer(context, horizontal)
     }, [])
 
