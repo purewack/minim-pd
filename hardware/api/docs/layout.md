@@ -1,9 +1,8 @@
 # Specs
-* 10 MIDI buttons, 8 for control, 2 for shift/alt functions
-* 10 RGB leds for status of buttons
+* 10 MIDI buttons
 * Rotary Encoder
 * Main Display (SPI)
-* 4 status displays in between buttons (I2C 1 & I2C 2 SSD13xx)
+* 5 status displays in between buttons (I2C 1 & I2C 2 SSD13xx)
 
 ### DSP
 * DSP sense pin for mode detection 

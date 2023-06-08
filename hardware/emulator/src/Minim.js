@@ -1,7 +1,7 @@
 import './Minim.css'
 import {useEffect, useRef} from 'react'
-const {ControlSurface} = window.require('./native/build/Release/minim.node');
-const sharedPainter = new ControlSurface()
+const {BufferPainter} = window.require('./native/build/Release/minim.node');
+const sharedPainter = new BufferPainter()
 
 function plotBuffer(context, horizontal){
     context.fillStyle = '#000000'
@@ -32,11 +32,11 @@ export default function MinimScreen({horizontal = true}){
     useEffect(() => {
         const canvas = canvasRef.current
         const context = canvas.getContext('2d')
-        sharedPainter._clear()
-        sharedPainter._drawLine(0,0,127,63);
-        sharedPainter._drawLine(0,63,127,0);
-        sharedPainter._drawHline(0,32,127);
-        sharedPainter._drawRectSize(0,0,128,64);
+        sharedPainter.clear()
+        sharedPainter.drawLine(0,0,127,63);
+        sharedPainter.drawLine(0,63,127,0);
+        sharedPainter.drawLine(0,32,127,32);
+        sharedPainter.drawRect(0,0,128,64,false);
         plotBuffer(context, horizontal)
     }, [])
 

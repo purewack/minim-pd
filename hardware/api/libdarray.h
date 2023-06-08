@@ -1,5 +1,9 @@
 #pragma once
-
+#ifdef _MINIM_TARGET_BUILD
+#include <Arduino.h>
+#else
+#include <stdlib.h>
+#endif
 
 template <typename data_T> 
 struct darray_t {

@@ -46,13 +46,13 @@ int endGFXSystem(){
 	free(data_buf);
 	return 0;
 }
-void cmd_gfx_on_context(int ctx){
+void hookOnGfxContextChange(int ctx){
 	context = ctx;
 	if(ctx == 5) gfx.rotated = 0;
 	else gfx.rotated = 1;
 }
 
-void cmd_gfx_on_draw(){
+void hookOnGfxDraw(){
 	BeginTextureMode(ctx[context]);
 		ClearBackground(BLACK);
 		for(int x=0; x<128; x++){
@@ -66,11 +66,11 @@ void cmd_gfx_on_draw(){
 	EndTextureMode();
 }
 
-void cmd_sys_on_sleep(int ms){}
-void cmd_sys_on_upload_boot_begin(){}
-void cmd_sys_on_upload_boot_byte(unsigned char c){}
-void cmd_sys_on_upload_boot_end(){}
-void cmd_parse_hook(int){}
+void hookOnSleep(int ms){}
+void hookOnUploadBootBegin(){}
+void hookOnUploadBootByte(unsigned char c){}
+void hookOnUploadBootEnd(){}
+void hookOnParse(int){}
 
 int initMidiSystem(){
 	midiin = new RtMidiIn();

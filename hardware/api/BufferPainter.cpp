@@ -1,17 +1,38 @@
 #include "gfx.h"
+#include "gfx/fonttiny.h"
 
-void BufferPainter::reset(){
+std::vector<uint8_t> API::BufferPainter::getBufferCopy(){
+  std::vector<uint8_t> pixels;
+  for(int yy=0; yy<32; yy++){
+    for(int xx=0; xx<128; xx++){
+      pixels.push_back((this->fbuf_top[xx] & (1<<yy)) ? 1 : 0);
+    }
+  }
+  for(int yy=0; yy<32; yy++){
+    for(int xx=0; xx<128; xx++){
+      pixels.push_back((this->fbuf_bot[xx] & (1<<yy)) ? 1 : 0);
+    }
+  }
+  return pixels;
+}
+uint8_t API::BufferPainter::getPixel(unsigned char x, unsigned char y){
+  x %= 128;
+  y %= 64;
+  if(y >= 32) return (this->fbuf_bot[x] & (1<<(y-32)));
+  return (this->fbuf_top[x] & (1<<(y)));
+}
+void API::BufferPainter::resetScaleRotate(){
   this->modexor = 0;
-  this->rotated = 1;
+  this->rotated = 0;
   this->scale = 1;
 }
-void BufferPainter::clear(){
+void API::BufferPainter::clear(){
   for(int i=0; i<128; i++){
     this->fbuf_top[i] = 0;
     this->fbuf_bot[i] = 0;
   }
 }
-void BufferPainter::drawHline(int x, int y, int w){
+void API::BufferPainter::drawHline(int x, int y, int w){
 if(w < 0) {w *= -1; x -= w;}
   if(y<0) return;
   if(y>63) return;
@@ -27,7 +48,7 @@ if(w < 0) {w *= -1; x -= w;}
       bb[i] |= bbpx;
   }
 }
-void BufferPainter::drawVline(int x, int y, int h){  
+void API::BufferPainter::drawVline(int x, int y, int h){  
 if(h < 0) {h *= -1; y -= h-1;}
   if(x<0) return;
   if(x>127) return;
@@ -44,7 +65,7 @@ if(h < 0) {h *= -1; y -= h-1;}
       bb[x] |= bbpx;
   }
 }
-void BufferPainter::drawLine(int x, int y, int x2, int y2){
+void API::BufferPainter::drawLine(int x, int y, int x2, int y2){
   
     if(this->rotated){
         auto a = y;
@@ -97,7 +118,7 @@ void BufferPainter::drawLine(int x, int y, int x2, int y2){
   }
 }
 
-void BufferPainter::drawRectSize(int x, int y, int w, int h){
+void API::BufferPainter::drawRectSize(int x, int y, int w, int h){
   //this->modexor = 0;
   if(this->rotated){
     this->drawHline(y,63-x,h);//W
@@ -113,7 +134,7 @@ void BufferPainter::drawRectSize(int x, int y, int w, int h){
   }
 }
 
-void BufferPainter::fillSection(int xoff, int yoff, int xlen, int ylen){
+void API::BufferPainter::fillSection(int xoff, int yoff, int xlen, int ylen){
   if(this->rotated){
       int32_t a = yoff;
       yoff = 64-xoff-xlen;
@@ -162,7 +183,7 @@ void BufferPainter::fillSection(int xoff, int yoff, int xlen, int ylen){
   
 }
 
-void BufferPainter::drawPixel(int x, int y, int tx, int ty){
+void API::BufferPainter::drawPixel(int x, int y, int tx, int ty){
 
   if(this->rotated){
     tx += this->scale;
@@ -199,7 +220,7 @@ void BufferPainter::drawPixel(int x, int y, int tx, int ty){
 }
 
 
-void BufferPainter::drawBitmap(int x, int y, int w, int h, int bpc, int blen, const uint8_t* buf){
+void API::BufferPainter::drawBitmap(int x, int y, int w, int h, int bpc, int blen, const uint8_t* buf){
   int nw = w < 0;
   int nh = h < 0;
   if(nw) w = -w;
@@ -212,7 +233,7 @@ void BufferPainter::drawBitmap(int x, int y, int w, int h, int bpc, int blen, co
       uint8_t ybyte = 0;
       ybyte |= (buf[bb%blen]);
       
-      if(!nh && ybyte & (1<<(yy%8)) || nh && ybyte & (1<<(8-(yy%8))))
+      if((!nh && ybyte & (1<<(yy%8))) || (nh && ybyte & (1<<(8-(yy%8)))))
         this->drawPixel(xxx,yy,x,y);
     }
   }

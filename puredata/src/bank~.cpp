@@ -1,5 +1,6 @@
 
 #include <cmath>
+#include <cstdlib>
 
 extern "C" {
     #include "m_pd.h"

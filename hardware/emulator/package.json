@@ -20,7 +20,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --verbose",
     "eject": "react-scripts eject",
     "install": "cmake-js compile -d ./native",
     "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",

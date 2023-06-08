@@ -1,7 +1,9 @@
-#include "include/libdarray.h"
 #include "include/io.h"
 #include "include/common.h"
+#include "api/libdarray.h"
 #include "api/api.h"
+#include "api/gfx.h"
+#include "api/responder.h"
 #include <libmaple/gpio.h>
 #include <libmaple/i2c.h>
 #include <libmaple/spi.h>
@@ -10,7 +12,6 @@
 #include <USBCompositeSerial.h>
 #include <EEPROM.h>
 
-uint8 midi_base = 35;
 USBMIDI usbmidi;
 USBCompositeSerial logger;
 
@@ -26,33 +27,33 @@ bool sysex = false;
 
 int boot_byte_count = 0;
 
-void cmd_parse_hook(int cmd){
+void hookOnParse(int cmd){
   logger.print("~");
   logger.println(cmd,DEC);
 }
 
-void cmd_sys_on_upload_boot_begin(){
+void hookOnUploadBootBegin(){
   logger.println("begin boot cmd upload");
   boot_byte_count = 0;
 }
 
-void cmd_sys_on_upload_boot_byte(unsigned char byte){
+void hookOnUploadBootByte(unsigned char byte){
   EEPROM.write(1+boot_byte_count,byte);
   boot_byte_count++;
 }
 
-void cmd_sys_on_upload_boot_end(){
+void hookOnUploadBootEnd(){
   logger.println("begin boot cmd upload");
   EEPROM.write(0,boot_byte_count);
   logger.println("recieved bytes");
   logger.println(boot_byte_count);
 }
 
-void cmd_sys_on_sleep(int ms){
+void hookOnSleep(int ms){
   delay(ms);
 }
 
-void cmd_gfx_on_context(int c){
+void hookOnGfxContextChange(int c){
     ctx = c;
     gfx.rotated = ctx == 5 ? 0 : 1;
     if(ctx == 0 || ctx == 1) {
@@ -166,7 +167,7 @@ void begin_oled(){
     
 }
 
-void cmd_gfx_on_draw(){
+void hookOnGfxDraw(){
 
   sarray_clear(imsgdata);
     sarray_push(imsgdata,(uint8)0x00);//cmd byte
@@ -236,8 +237,8 @@ void setup(){
   
     USBComposite.clear();
     USBComposite.setProductId(0x0031);
-    USBComposite.setManufacturerString("M O T I F");
-    USBComposite.setProductString("MINIM-5-1");
+    USBComposite.setManufacturerString("M O T I V");
+    USBComposite.setProductString("MINIM");
     usbmidi.registerComponent();
     logger.registerComponent();
     USBComposite.begin();
@@ -276,13 +277,13 @@ void setup(){
     gfx_defaults();
     gfx_clear();
     for(int i=0; i<6; i++){
-      cmd_gfx_on_context(i);
+      hookOnGfxContextChange(i);
       begin_oled();
-      cmd_gfx_on_draw();
+      hookOnGfxDraw();
       delay(100);
     }
 
-    cmd_gfx_on_context(5);
+    hookOnGfxContextChange(5);
     gfx.modexor = 1;
     gfx.scale = 1;
     char version_str[32];
@@ -291,11 +292,11 @@ void setup(){
       gfx_clear();
       gfx_drawString(version_str,0,64-8);
       gfx_fillSection(0,64-8,i*4,8);
-      cmd_gfx_on_draw();
+      hookOnGfxDraw();
       delay(1);
     }
     gfx_clear();
-    cmd_gfx_on_draw();
+    hookOnGfxDraw();
         
     int boot_cmd = EEPROM.read(0) ;
     if(boot_cmd != 0xffff && boot_cmd){
@@ -311,7 +312,7 @@ void setup(){
 } 
 
 
-void collectSysex(char* b, int offset){
+void collectMidi(char* b, int offset){
   
   // Serial.println("[");
   // Serial.println(b[0],DEC);
@@ -345,11 +346,11 @@ void loop(){
       else if(b[1] == 0xF0){
         sysex = true;
         sarray_clear(sysex_string);
-        collectSysex(b, 1);
+        collectMidi(b, 1);
       }
     }
     else if(sysex){
-      collectSysex(b, 0);
+      collectMidi(b, 0);
     }
   }
 
