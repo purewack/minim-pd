@@ -11,6 +11,7 @@ Napi::Object MINIM::DisplayList::Init(Napi::Env env, Napi::Object exports)
     InstanceMethod("clear", &MINIM::DisplayList::clear),
     InstanceMethod("add", &MINIM::DisplayList::add),
     InstanceMethod("post", &MINIM::DisplayList::post),
+    InstanceMethod("getCommandAt", &MINIM::DisplayList::getCommandAt),
     InstanceMethod("modifyAt", &MINIM::DisplayList::modifyAt),
     InstanceMethod("link", &MINIM::DisplayList::link),
     InstanceMethod("unlink", &MINIM::DisplayList::unlink),
@@ -40,6 +41,23 @@ Napi::Value MINIM::DisplayList::asArray(const Napi::CallbackInfo& info){
   Napi::HandleScope scope(env);
   auto commands = this->list->getBufferCopy();
   return Napi::Buffer<uint8_t>::Copy(env,commands.data(),commands.size());
+}
+Napi::Value MINIM::DisplayList::getCommandAt(const Napi::CallbackInfo& info){
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    if (info.Length() != 1){
+        Napi::Error::New(info.Env(), "Expected at location")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    }
+    auto at = (info[0].As<Napi::Number>().Uint32Value());
+    if(at > this->list->getCount()){
+        Napi::Error::New(info.Env(), "Invalid at location")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    }
+    auto cmd = this->list->getCommandAt(at);
+    return Napi::Number::New(info.Env(), cmd);
 }
 
 Napi::Value MINIM::DisplayList::add(const Napi::CallbackInfo& info){ 

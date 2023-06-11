@@ -16,6 +16,7 @@ describe('DisplayList',()=>{
         const data = [...list.asArray().values()]
         expect(data.length).toBe(1);
         expect(data[0]).toBe(0x80);
+        expect(list.getCommandAt(0)).toBe(0x80);
     })
 
     describe('Byte stream', ()=>{
@@ -26,6 +27,7 @@ describe('DisplayList',()=>{
             const data = [...list.asArray().values()]
             expect(data.length).toBe(3);
             expect(data).toEqual(expect.arrayContaining([0x80,0x81,0x82]));
+            expect(list.getCommandAt(1)).toBe(0x81);
         })
 
         test('attempt modify list[2] = 0x11 without linkage', ()=>{

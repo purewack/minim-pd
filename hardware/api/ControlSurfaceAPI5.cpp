@@ -48,7 +48,8 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
             //modify variable
             this->cmdList[context].modifyAt(note,vel);
             //update display for context
-            this->updateContextsFlag |= (1<<this->context); 
+            this->updateContextsFlag |= (1<<context); 
+            this->context = context;
             draws += 1;
         }
     }
@@ -58,7 +59,7 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
 void API::ControlSurfaceAPI5::updateRequiredContexts(){
     for(int i=0; i<6; i++){
         if(this->updateContextsFlag & (1<<i))
-            this->parseCommandList(this->context);
+            this->parseCommandList(i);
     }
     this->updateContextsFlag = 0;
 }
@@ -66,38 +67,42 @@ void API::ControlSurfaceAPI5::updateRequiredContexts(){
 
 
 int API::ControlSurfaceAPI5::parseCommandList(int context){
-
+    if(context > 5) return 0;
+    
     int commandCount = 0;
     this->gfx.clear();
     this->gfx.resetScaleRotate();
-    auto list = this->cmdList[context];
-    auto count = list.getCount();
+    auto list = &this->cmdList[context];
+    auto count = list->getCount();
 
     for(int i=0; i<count; i++){
-        if(list.getCommandAt(i++) == CMD_SYMBOL_C_SCALE){
+        if(list->getCommandAt(i) == CMD_SYMBOL_C_SCALE){
             commandCount++;
-            gfx.scale = list.getCommandAt(i);
+            gfx.scale = list->getCommandAt(i++);
             if(gfx.scale <= 0) gfx.scale = 1;
         }
-        else if(list.getCommandAt(i++) == CMD_SYMBOL_C_XOR){
+        else if(list->getCommandAt(i) == CMD_SYMBOL_C_XOR){
             commandCount++;
-            gfx.modexor = list.getCommandAt(i);
+            gfx.modexor = list->getCommandAt(i+1);
+            i+=1;
         }
-        else if(list.getCommandAt(i++) == CMD_SYMBOL_F_LINE){
+        else if(list->getCommandAt(i) == CMD_SYMBOL_F_LINE){
             commandCount++;
-            int x = list.getCommandAt(i++);
-            int y = list.getCommandAt(i++);
-            int x2 = list.getCommandAt(i++);
-            int y2 = list.getCommandAt(i++);
+            int x = list->getCommandAt(i+1);
+            int y = list->getCommandAt(i+2);
+            int x2 = list->getCommandAt(i+3);
+            int y2 = list->getCommandAt(i+4);
             gfx.drawLine(x,y,x2,y2);
+            i+=4;
         }
-        else if(list.getCommandAt(i++) == CMD_SYMBOL_F_RECT){
+        else if(list->getCommandAt(i) == CMD_SYMBOL_F_RECT){
             commandCount++;
-            int x = list.getCommandAt(i++);
-            int y = list.getCommandAt(i++);
-            int w = list.getCommandAt(i++);
-            int h = list.getCommandAt(i++);
-            int fill = list.getCommandAt(i++);
+            int x = list->getCommandAt(i+1);
+            int y = list->getCommandAt(i+2);
+            int w = list->getCommandAt(i+3);
+            int h = list->getCommandAt(i+4);
+            int fill = list->getCommandAt(i+5);
+            i+=5;
 
             if(fill)
                 gfx.fillSection(x,y,w,h);

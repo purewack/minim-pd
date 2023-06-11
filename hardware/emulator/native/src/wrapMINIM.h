@@ -38,6 +38,7 @@ namespace MINIM{
         Napi::Value clear(const Napi::CallbackInfo & info);
         Napi::Value add(const Napi::CallbackInfo & info);
         Napi::Value post(const Napi::CallbackInfo & info);
+        Napi::Value getCommandAt(const Napi::CallbackInfo & info);
         Napi::Value modifyAt(const Napi::CallbackInfo & info);
         Napi::Value link(const Napi::CallbackInfo & info);
         Napi::Value unlink(const Napi::CallbackInfo & info);
@@ -58,6 +59,7 @@ namespace MINIM{
         Napi::Value asArrayAtContext(const Napi::CallbackInfo& info);
         Napi::Value getPixelAtContext(const Napi::CallbackInfo& info);
         Napi::Value getCommandListAtContext(const Napi::CallbackInfo& info);
+        Napi::Value parseCommandListAtContext(const Napi::CallbackInfo& info);
         Napi::Value parseMidiStream(const Napi::CallbackInfo& info);
         Napi::Value parseMidiStreamUpdate(const Napi::CallbackInfo& info);
     };

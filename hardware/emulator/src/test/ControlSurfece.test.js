@@ -96,4 +96,33 @@ describe('ControlSurface', ()=>{
         expect(data1).toEqual(expect.arrayContaining(result1));
         expect(draws).toBe(4);
     })
+
+    test('check parsed buffer contents',()=>{
+        const stream = [
+            0x90,5,10,
+            0xF0,0x00,0x7F,0x7F,1,
+            114, 0, 0, 2, 2, 1,
+            108, 2, 2, 5, 5,
+            0x90,10,15
+        ];
+        const commands = [
+            114, 0, 0, 2, 2, 1,
+            108, 2, 2, 5, 5,
+        ]
+        const buf = [
+            1,1,0,0,0,
+            1,1,0,0,0,
+            0,0,1,0,0,
+            0,0,0,1,0,
+            0,0,0,0,1
+        ]
+
+        const cs = new ControlSurface();
+        const draws = cs.parseMIDIStreamUpdate(new Uint8Array(stream));
+        const cmds = [...cs.getCommandListAtContext(1).values()];
+        const pixels = [...cs.asArrayAtContext(1,5).values()]
+        expect(draws).toBe(3);
+        expect(cmds).toEqual(expect.arrayContaining(commands))
+        expect(pixels).toEqual(expect.arrayContaining(buf))
+    })
 })

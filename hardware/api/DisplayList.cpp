@@ -9,7 +9,8 @@ API::DisplayList::DisplayList(uint8_t* buffer){
 }
 
 API::DisplayList::~DisplayList(){
-    free(this->commands.buf);
+    // if(this->commands.buf)
+    // free(this->commands.buf);
 }
 
 void API::DisplayList::unlinkAll(){

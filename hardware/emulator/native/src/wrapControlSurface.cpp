@@ -11,6 +11,8 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
     InstanceMethod("getPixelAtContext", &MINIM::ControlSurface::getPixelAtContext),
     InstanceMethod("getCommandListAtContext", &MINIM::ControlSurface::getCommandListAtContext),
     InstanceMethod("parseMIDIStream", &MINIM::ControlSurface::parseMidiStream),
+    InstanceMethod("parseMIDIStreamUpdate", &MINIM::ControlSurface::parseMidiStreamUpdate),
+    InstanceMethod("parseCommandListAtContext", &MINIM::ControlSurface::parseCommandListAtContext),
   });
 
   constructor = Napi::Persistent(buf);
@@ -29,13 +31,38 @@ MINIM::ControlSurface::ControlSurface(const Napi::CallbackInfo& info) : Napi::Ob
 Napi::Value MINIM::ControlSurface::asArrayAtContext(const Napi::CallbackInfo& info){
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
-    if( info.Length() != 1){
-        Napi::Error::New(info.Env(), "Expected 1 argument, context number")
+    if( info.Length() < 1){
+        Napi::Error::New(info.Env(), "Expected more than 0 arguments, context number")
             .ThrowAsJavaScriptException();
         return info.Env().Undefined();
     }
-    auto b = MINIM::BufferPainter::asArrayFromBufferPainter(&this->cs->gfx);
-    return Napi::Buffer<uint8_t>::Copy(info.Env(),b.data(),b.size());
+    
+    int context = info[0].As<Napi::Number>().Int32Value() % 6;
+
+    int x = 0;
+    int y = 0;
+    int w = 128;
+    int h = 64;
+
+    if (info.Length() == 5) {
+        x = info[1].As<Napi::Number>().Int32Value() % 128;
+        y = info[2].As<Napi::Number>().Int32Value() % 64;
+        w = info[3].As<Napi::Number>().Int32Value() % 128;
+        h = info[4].As<Napi::Number>().Int32Value() % 64;
+    }
+    else if (info.Length() == 3) {
+        w = info[1].As<Napi::Number>().Int32Value() % 128;
+        h = info[2].As<Napi::Number>().Int32Value() % 64;
+    }
+    else if (info.Length() == 2) {
+        w = h = (info[1].As<Napi::Number>().Int32Value() % 64);
+    }
+
+    int cmds = this->cs->parseCommandList(context);
+    int realCmds = this->cs->cmdList[context].getCount();
+    info.Env().RunScript("console.log(\'cmds:" + std::to_string(cmds) + " real:" + std::to_string(realCmds) + "\')");
+    auto pixels = MINIM::BufferPainter::asArrayFromBufferPainter(&this->cs->gfx, x,y,w,h);
+    return Napi::Buffer<uint8_t>::Copy(info.Env(),pixels.data(),pixels.size());
 }
 Napi::Value MINIM::ControlSurface::getPixelAtContext(const Napi::CallbackInfo& info){
     Napi::Env env = info.Env();
@@ -63,7 +90,7 @@ Napi::Value MINIM::ControlSurface::getCommandListAtContext(const Napi::CallbackI
   }
   
   auto context = (info[0].As<Napi::Number>().Uint32Value());
-  if(context < 0 || context > 6) {
+  if(context < 0 || context > 5) {
       Napi::Error::New(info.Env(), "Invalid context number")
           .ThrowAsJavaScriptException();
       return info.Env().Undefined();
@@ -71,6 +98,26 @@ Napi::Value MINIM::ControlSurface::getCommandListAtContext(const Napi::CallbackI
   auto list = this->cs->cmdList[context].getBufferCopy();
   return Napi::Buffer<uint8_t>::Copy(info.Env(),list.data(),list.size());
 }
+
+Napi::Value MINIM::ControlSurface::parseCommandListAtContext(const Napi::CallbackInfo& info){
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    if( info.Length() != 1){
+        Napi::Error::New(info.Env(), "Expected 1 argument, context number")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    }
+
+    auto context = (info[0].As<Napi::Number>().Uint32Value());
+    if(context < 0 || context > 5) {
+        Napi::Error::New(info.Env(), "Invalid context number")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    } 
+    auto cmds = this->cs->parseCommandList(context);
+    return Napi::Number::New(info.Env(), cmds);
+}
+
 Napi::Value MINIM::ControlSurface::parseMidiStream(const Napi::CallbackInfo& info){
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
@@ -98,7 +145,7 @@ Napi::Value MINIM::ControlSurface::parseMidiStream(const Napi::CallbackInfo& inf
     return Napi::Number::New(info.Env(), this->cs->parseMidiStream(data,len));
 }
 Napi::Value MINIM::ControlSurface::parseMidiStreamUpdate(const Napi::CallbackInfo& info){
-    auto v = this->parseMidiStream(info);
+    auto draws = this->parseMidiStream(info);
     this->cs->updateRequiredContexts();
-    return v;
+    return draws;
 }
