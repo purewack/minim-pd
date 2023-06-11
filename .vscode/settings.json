@@ -85,7 +85,12 @@
         "xmemory0": "cpp",
         "xstddef": "cpp",
         "xtr1common": "cpp",
-        "__memory": "cpp"
+        "__memory": "cpp",
+        "*.tcc": "cpp",
+        "cinttypes": "cpp",
+        "hashtable": "cpp",
+        "csignal": "cpp",
+        "list": "cpp"
     },
     "cmake.configureOnOpen": false,
     "C_Cpp.dimInactiveRegions": false,

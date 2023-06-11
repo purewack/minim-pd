@@ -5,20 +5,18 @@
 #include <stdint.h>
 #include "libdarray.h"
 
+#include "../emulator/native/src/friend.h"
 namespace API{
-class DisplayList;
 class BufferPainter {
-  friend class DisplayList;
-
 private:
   int inited = 0;
-  int rotated = 0;
-  int scale = 1;
-  int modexor = 0;
   uint32_t fbuf_top[128]; // 128 vertical columns of upper 32 bits
   uint32_t fbuf_bot[128]; // 128 vertical columns of lower 32 bits
 
 public:
+  int rotated = 0;
+  int scale = 1;
+  int modexor = 0;
   std::vector<uint8_t> getBufferCopy();
   void clear();
   void resetScaleRotate();
@@ -35,22 +33,23 @@ public:
 };
 
 class DisplayList {
+  friend class MINIM::DisplayList;
+
 private:
     sarray_t<uint8_t> commands;
-    int32_t links[128];    
+    int8_t links[128];    
     void unlinkAll();
 public:
-    DisplayList();
+    DisplayList(uint8_t* buffer = nullptr);
     ~DisplayList();
     void clear();
     void add(unsigned char byte);
     void link(uint32_t listAt, uint8_t byteAt);
     void unlink(uint32_t byteAt);
     void modifyAt(uint32_t byte, uint8_t value);
-    // void addAt(uint32_t at, uint8_t* bytes, uint32_t count);
-    // void removeAt(uint32_t at, uint32_t count);
-
-    int parseCommands(BufferPainter* gfx);
-    int accessRawBuffer(uint8_t* pointer);
+ 
+    std::vector<uint8_t> getBufferCopy();
+    int getCommandAt(int i);
+    int getCount();
 };
 }

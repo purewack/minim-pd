@@ -6,10 +6,13 @@
 #define CMD_BYTE_COUNT_MAX 1024
 #define CMD_VAR_COUNT_MAX 128
 
+#define NOTE_ON  0x90
+#define NOTE_OFF 0x80
+
 //sysex manID = 00 7f 7f
-#define CMD_SYSEX_START '\xf0'
-#define CMD_SYSEX_END   '\xf7'
-const char CMD_SYSEX_ID[4] = {CMD_SYSEX_START,0x00,0x7f,0x7f};
+#define CMD_SYSEX_START 0xF0
+#define CMD_SYSEX_END   0xF7
+const unsigned char CMD_SYSEX_ID[4] = {CMD_SYSEX_START,0x00,0x7f,0x7f};
 
 #define CMD_SYMBOL_C_SCALE 's'   //83
 #define CMD_SYMBOL_C_XOR 'x'     //88

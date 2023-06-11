@@ -29,7 +29,7 @@ void oled_onCommand(t_oled *x, t_symbol *s, int argc, t_atom *argv);
 #include <limits>
 #include <iostream>
 #include <fstream>
-#include "../../hardware/api/cmd.h"
+#include "../../hardware/api/api.h"
 
 void oled_fresh(t_oled *oled){
     SETFLOAT(oled->a_table+oled->a_table_i,(float)(0xf0));

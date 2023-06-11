@@ -8,7 +8,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # you should add this line in every CMake.js based project.
 include_directories(${CMAKE_JS_INC})
 # Declare the location of the source files
-file(GLOB SOURCE_FILES "src/*.cpp" "src/*.h" "../../api/gfx.h" "../../api/BufferPainter.cpp")
+file(GLOB SOURCE_FILES 
+        "src/*.cpp" 
+        "src/*.h" 
+        "../../api/*.h" 
+        "../../api/*.cpp"
+)
 # This line will tell CMake that we're building a shared library
 # from the above source files
 # named after the project's name

@@ -1,4 +1,4 @@
-#include "wrap.h"
+#include "wrapMINIM.h"
 
 Napi::FunctionReference MINIM::BufferPainter::constructor;
 
@@ -40,6 +40,17 @@ Napi::Value MINIM::BufferPainter::getPixel(const Napi::CallbackInfo& info){
   return Napi::Number::New(info.Env(), this->gfx->getPixel(x,y));
 }
 
+std::vector<uint8_t> MINIM::BufferPainter::asArrayFromBufferPainter(API::BufferPainter* gfx, int x, int y,int w,int h){
+  auto pixels = gfx->getBufferCopy();
+  auto section = std::vector<uint8_t>();
+  for(int yy=y; yy<h+y; yy++){
+    for(int xx=x; xx<w+x; xx++){
+      section.push_back(pixels[xx + yy*128]);
+    }
+  }
+  return section;
+}
+
 Napi::Value MINIM::BufferPainter::asArray(const Napi::CallbackInfo& info){
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
@@ -71,15 +82,9 @@ Napi::Value MINIM::BufferPainter::asArray(const Napi::CallbackInfo& info){
     return info.Env().Undefined();
   }
   
-  auto pixels = this->gfx->getBufferCopy();
-  auto section = std::vector<unsigned char>();
-  for(int yy=y; yy<h+y; yy++){
-    for(int xx=x; xx<w+x; xx++){
-      section.push_back(pixels[xx + yy*128]);
-    }
-  }
+  auto pixels = MINIM::BufferPainter::asArrayFromBufferPainter(this->gfx, x,y,w,h);
 
-  return Napi::Buffer<uint8_t>::Copy(env,section.data(),section.size());
+  return Napi::Buffer<uint8_t>::Copy(env,pixels.data(),pixels.size());
 }
 
 
