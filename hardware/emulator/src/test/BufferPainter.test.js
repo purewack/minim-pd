@@ -138,4 +138,18 @@ describe('BufferPainter',()=>{
             }
         })
     })
+
+    describe('16x16', () => { 
+        test('fill all',()=>{
+            const gfx = new BufferPainter()
+            gfx.clear()
+            gfx.drawRect(0,0,16,16,true);
+            {
+                const data = [...gfx.asArray(0,0,16,16).values()]
+                expect(data.length).toBe(16*16);
+                expect(data).toEqual(expect.arrayContaining(
+                    Array.from(new Array(16*16), () => 1)));
+            }
+        })
+    })
 })

@@ -18,8 +18,8 @@ std::vector<uint8_t> API::BufferPainter::getBufferCopy(){
 uint8_t API::BufferPainter::getPixel(unsigned char x, unsigned char y){
   x %= 128;
   y %= 64;
-  if(y >= 32) return (this->fbuf_bot[x] & (1<<(y-32)));
-  return (this->fbuf_top[x] & (1<<(y)));
+  if(y >= 32) return (this->fbuf_bot[x] & (1<<(y-32))) ? 1 : 0;
+  return (this->fbuf_top[x] & (1<<(y))) ? 1 : 0;
 }
 void API::BufferPainter::resetScaleRotate(){
   this->modexor = 0;

@@ -17,13 +17,13 @@ function plotBuffer(context, horizontal){
         }
     }
     else{
-        // for(let y=0; y<128; y++){
-        //     for(let x=0; x<64; x++){
-        //         if(!sharedPainter.getPixel(x,y)) continue
-        //         context.fillStyle = 'white'
-        //         context.fillRect(x,y,1,1);
-        //     }
-        // }
+        for(let y=0; y<128; y++){
+            for(let x=0; x<64; x++){
+                if(!sharedPainter.getPixel(x,y)) continue
+                context.fillStyle = 'white'
+                context.fillRect(y,x,1,1);
+            }
+        }
     }
 }
 
