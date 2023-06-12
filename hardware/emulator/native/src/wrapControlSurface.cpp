@@ -13,6 +13,7 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
     InstanceMethod("parseMIDIStream", &MINIM::ControlSurface::parseMidiStream),
     InstanceMethod("parseMIDIStreamUpdate", &MINIM::ControlSurface::parseMidiStreamUpdate),
     InstanceMethod("parseCommandListAtContext", &MINIM::ControlSurface::parseCommandListAtContext),
+    InstanceMethod("showLinksAtContext", &MINIM::ControlSurface::showLinksAtContext),
   });
 
   constructor = Napi::Persistent(buf);
@@ -116,6 +117,26 @@ Napi::Value MINIM::ControlSurface::parseCommandListAtContext(const Napi::Callbac
     } 
     auto cmds = this->cs->parseCommandList(context);
     return Napi::Number::New(info.Env(), cmds);
+}
+Napi::Value MINIM::ControlSurface::showLinksAtContext(const Napi::CallbackInfo& info){
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    if( info.Length() != 2){
+        Napi::Error::New(info.Env(), "Expected 3 arguments: context number, count")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    }
+
+    auto context = (info[0].As<Napi::Number>().Uint32Value());
+    if(context < 0 || context > 5) {
+        Napi::Error::New(info.Env(), "Invalid context number")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    } 
+
+    auto count = (info[1].As<Napi::Number>().Uint32Value());
+    auto values = this->cs->cmdList[context].getLinkBufferCopy();
+    return Napi::Buffer<unsigned char>::Copy(info.Env(),values.data(),count);
 }
 
 Napi::Value MINIM::ControlSurface::parseMidiStream(const Napi::CallbackInfo& info){

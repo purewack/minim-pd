@@ -9,12 +9,13 @@ API::DisplayList::DisplayList(uint8_t* buffer){
 }
 
 API::DisplayList::~DisplayList(){
-    // if(this->commands.buf)
-    // free(this->commands.buf);
+    if(this->commands.buf)
+    free(this->commands.buf);
 }
 
 void API::DisplayList::unlinkAll(){
-    for(int i=0; i<CMD_VAR_COUNT_MAX; i++) this->links[i] = -1;
+    for(int i=0; i<128; i++) this->links[i] = -1;
+    this->lastLink = 0;
 }
 
 void API::DisplayList::clear(){
@@ -27,22 +28,29 @@ void API::DisplayList::add(unsigned char byte){
 int API::DisplayList::getCount(){
     return this->commands.count;
 }
-
-void API::DisplayList::link(uint32_t listAt, uint8_t byteAt){
+int API::DisplayList::getLinkCount(){
+    return this->lastLink;
+}
+int API::DisplayList::autoLink(uint32_t listByte){
+    this->link(listByte,this->lastLink);
+    return ++this->lastLink;
+}
+void API::DisplayList::link(uint32_t listAt, uint8_t linkAt){
     if(listAt > this->commands.lim) return;
-    if(byteAt >= CMD_VAR_COUNT_MAX) return;
-    this->links[byteAt] = listAt;
+    if(linkAt >= 128) return;
+    this->links[linkAt] = listAt;
 }
-void API::DisplayList::unlink(uint32_t byteAt){
-    if(byteAt >= CMD_VAR_COUNT_MAX) return;
-    this->links[byteAt] = -1;
+void API::DisplayList::unlink(uint32_t linkAt){
+    if(linkAt >= 128) return;
+    this->links[linkAt] = -1;
 }
 
-void API::DisplayList::modifyAt(uint32_t byte, uint8_t value){
-    if(byte > CMD_VAR_COUNT_MAX) return;
-    if(this->links[byte] == -1) return;
-    this->commands.buf[this->links[byte]] = value;
+void API::DisplayList::modifyAt(uint8_t slot, uint8_t value){
+    if(slot >= 128) return;
+    if(this->links[slot] == -1) return;
+    this->commands.buf[this->links[slot]] = value;
 }
+
 
 int API::DisplayList::getCommandAt(int i){
     if(i < 0 || i > this->commands.count) return -1;
@@ -53,5 +61,11 @@ std::vector<uint8_t> API::DisplayList::getBufferCopy(){
     auto list = std::vector<uint8_t>();
     for(int i=0; i<this->commands.count; i++)
         list.push_back(this->commands.buf[i]);
+    return list;
+}
+std::vector<uint8_t> API::DisplayList::getLinkBufferCopy(){
+    auto list = std::vector<uint8_t>();
+    for(int i=0; i<128; i++)
+        list.push_back(this->links[i]);
     return list;
 }

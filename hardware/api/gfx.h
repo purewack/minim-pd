@@ -38,18 +38,22 @@ class DisplayList {
 private:
     sarray_t<uint8_t> commands;
     int8_t links[128];    
+    int lastLink = 0;
     void unlinkAll();
 public:
     DisplayList(uint8_t* buffer = nullptr);
     ~DisplayList();
     void clear();
     void add(unsigned char byte);
-    void link(uint32_t listAt, uint8_t byteAt);
-    void unlink(uint32_t byteAt);
-    void modifyAt(uint32_t byte, uint8_t value);
+    void link(uint32_t listAt, uint8_t linkAt);
+    void unlink(uint32_t linkAt);
+    int autoLink(uint32_t linkAt);
+    void modifyAt(uint8_t slot, uint8_t value);
  
     std::vector<uint8_t> getBufferCopy();
+    std::vector<uint8_t> getLinkBufferCopy();
     int getCommandAt(int i);
+    int getLinkCount();
     int getCount();
 };
 }
