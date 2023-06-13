@@ -25,7 +25,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test --verbose",
     "eject": "react-scripts eject",
-    "install": "cmake-js compile -d ./native",
+    "install": "node-gyp rebuild -C ./native",
     "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:127.0.0.1:3000 && electron ."
   },
@@ -51,7 +51,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.10",
     "concurrently": "^8.1.0",
     "jest": "^27.5.1",
-    "node-gyp": "^9.3.1",
+    "node-gyp": "^9.4.0",
     "wait-on": "^7.0.1"
   }
 }
