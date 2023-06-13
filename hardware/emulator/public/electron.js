@@ -9,12 +9,12 @@ function createWindow() {
     width: 800,
     height: 300,
     webPreferences: {
-      contextIsolation: false,
+      contextIsolation: true,
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
-      // preload: isDev 
-      //   ? path.join(app.getAppPath(), './public/preload.js') // Loading it from the public folder for dev
-      //   : path.join(app.getAppPath(), './build/preload.js'), // Loading it from the build folder for production
+      preload: isDev 
+        ? path.join(app.getAppPath(), './public/preload.js') // Loading it from the public folder for dev
+        : path.join(app.getAppPath(), './build/preload.js'), // Loading it from the build folder for production
     },
   });
   win.loadURL(
@@ -23,29 +23,23 @@ function createWindow() {
       : `file://${path.join(__dirname, '../build/index.html')}`
   );
   // Open the DevTools.
-  // if (isDev) {
-  //   win.webContents.openDevTools({ mode: 'detach' });
-  // }
+  if (isDev) {
+    win.webContents.openDevTools({ mode: 'detach' });
+  }
 
-  ipcMain.on('openMIDIIO', 
-    ()=>{
-      const win = new BrowserWindow({
-        title:'MIDI Prefs',
-        width: 400,
-        height: 400,
-        webPreferences: {
-          contextIsolation: false,
-          nodeIntegration: true,
-          nodeIntegrationInWorker: true,
-        },
-      });
-      win.loadURL(
-        isDev
-          ? 'http://localhost:3000/midi'
-          : `file://${path.join(__dirname, '../build/index.html/midi')}`
-      );
-    }
-  )
+  // ipcMain.on('openMIDIIO', 
+  //   ()=>{
+  //     const win = new BrowserWindow({
+  //       title:'MIDI Prefs',
+  //       width: 400,
+  //       height: 400,
+  //     });
+  //     win.loadURL(
+  //       isDev
+  //         ? 'http://localhost:3000/midi'
+  //         : `file://${path.join(__dirname, '../build/index.html/midi')}`
+  //     );
+  //   }
 }
 
 // This method will be called when Electron has finished

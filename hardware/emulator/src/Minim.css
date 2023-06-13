@@ -1,7 +1,4 @@
-.MinimScreen{
+.ContextScreen{
     border:solid yellow 1px;
-    width:10rem;
-    transform-origin: 0% 0%;
-    /* transform: rotate(90deg); */
     image-rendering: pixelated;
 }

@@ -2,7 +2,7 @@
 #include "gfx.h"
 #include <stdbool.h>
 
-#include "../emulator/native/src/friend.h"
+#include "friend.h"
 namespace API{
 class ControlSurfaceAPI5 {
     friend class MINIM::ControlSurface;

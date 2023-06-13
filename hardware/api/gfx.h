@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include "libdarray.h"
 
-#include "../emulator/native/src/friend.h"
+#include "friend.h"
 namespace API{
 class BufferPainter {
 private:
@@ -52,8 +52,8 @@ public:
  
     std::vector<uint8_t> getBufferCopy();
     std::vector<uint8_t> getLinkBufferCopy();
-    int getCommandAt(int i);
-    int getLinkCount();
-    int getCount();
+    unsigned int getCommandAt(unsigned int i);
+    unsigned int getLinkCount();
+    unsigned int getCount();
 };
 }

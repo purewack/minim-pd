@@ -27,6 +27,7 @@ void API::BufferPainter::resetScaleRotate(){
   this->scale = 1;
 }
 void API::BufferPainter::clear(){
+  resetScaleRotate();
   for(int i=0; i<128; i++){
     this->fbuf_top[i] = 0;
     this->fbuf_bot[i] = 0;
@@ -152,7 +153,7 @@ void API::BufferPainter::fillSection(int xoff, int yoff, int xlen, int ylen){
   if(yoff >= 32){
     yoff -= 32;
     uint32_t bb = ylen >= 32 ? 0xffffffff : ((1<<ylen)-1);
-    for(uint32_t i=xoff; i<xoff+xlen; i++){
+    for(int i=xoff; i<xoff+xlen; i++){
       if(i<0) continue;
       if(i>127) return;
       if(this->modexor)
@@ -167,7 +168,7 @@ void API::BufferPainter::fillSection(int xoff, int yoff, int xlen, int ylen){
     uint32_t bt = ylen >= 32 ? 0xffffffff : ((1<<ylen)-1);
     uint32_t bb = ylen2 >= 32 ? 0xffffffff : ((1<<ylen2)-1);
 
-    for(uint32_t i=xoff; i<xoff+xlen; i++){
+    for(int i=xoff; i<xoff+xlen; i++){
       if(i<0) continue;
       if(i>127) return;
       if(this->modexor){
@@ -220,24 +221,24 @@ void API::BufferPainter::drawPixel(int x, int y, int tx, int ty){
 }
 
 
-void API::BufferPainter::drawBitmap(int x, int y, int w, int h, int bpc, int blen, const uint8_t* buf){
-  int nw = w < 0;
-  int nh = h < 0;
-  if(nw) w = -w;
-  if(nh) h = -h;
-  for(int xx=0; xx<w; xx++){
-    int xxx = nw ? w-xx : xx;
-    for(int yy=0; yy<h; yy++){
-      int yyy = nh ? h-yy : yy;
-      uint8_t bb = (xxx*bpc) + (yy>>3)%bpc;
-      uint8_t ybyte = 0;
-      ybyte |= (buf[bb%blen]);
+// void API::BufferPainter::drawBitmap(int x, int y, int w, int h, int bpc, int blen, const uint8_t* buf){
+//   int nw = w < 0;
+//   int nh = h < 0;
+//   if(nw) w = -w;
+//   if(nh) h = -h;
+//   for(int xx=0; xx<w; xx++){
+//     int xxx = nw ? w-xx : xx;
+//     for(int yy=0; yy<h; yy++){
+//       int yyy = nh ? h-yy : yy;
+//       uint8_t bb = (xxx*bpc) + (yy>>3)%bpc;
+//       uint8_t ybyte = 0;
+//       ybyte |= (buf[bb%blen]);
       
-      if((!nh && ybyte & (1<<(yy%8))) || (nh && ybyte & (1<<(8-(yy%8)))))
-        this->drawPixel(xxx,yy,x,y);
-    }
-  }
-}
+//       if((!nh && ybyte & (1<<(yy%8))) || (nh && ybyte & (1<<(8-(yy%8)))))
+//         this->drawPixel(xxx,yy,x,y);
+//     }
+//   }
+// }
 
 // #ifdef _MINIM_TARGET_BUILD
 // #include "gfx/fonttiny.cpp"

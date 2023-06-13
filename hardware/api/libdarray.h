@@ -54,7 +54,7 @@ void darray_insert(darray_t<data_T> &a, data_T t, unsigned int i){
     
     if(a.count+1 > a.buf_len) add_space(a);
     
-    for(int j=a.count; j>i; j--){
+    for(unsigned int j=a.count; j>i; j--){
         auto aa = a.buf[j-1];
         a.buf[j] = aa;
     }
@@ -105,7 +105,7 @@ template <typename T>
 void sarray_insert(sarray_t<T> &a, T t, unsigned int i){
     if(i >= a.count) return sarray_push(a,t);
 
-    for(int j=a.count; j>i; j--){
+    for(unsigned int j=a.count; j>i; j--){
         auto aa = a.buf[j-1];
         a.buf[j] = aa;
     }
@@ -117,7 +117,7 @@ void sarray_insert(sarray_t<T> &a, T t, unsigned int i){
 template <typename T> 
 void sarray_remove(sarray_t<T> &a, int i){
     if(a.count == 0) return;
-    for(int j=i; j<(a.count); j++){
+    for(unsigned int j=i; j<(a.count); j++){
         auto aa = a.buf[j+1];
         a.buf[j] = aa;
     }

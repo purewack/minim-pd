@@ -25,10 +25,10 @@ void API::DisplayList::clear(){
 void API::DisplayList::add(unsigned char byte){
     sarray_push(this->commands, byte);
 }
-int API::DisplayList::getCount(){
+unsigned int API::DisplayList::getCount(){
     return this->commands.count;
 }
-int API::DisplayList::getLinkCount(){
+unsigned int API::DisplayList::getLinkCount(){
     return this->lastLink;
 }
 int API::DisplayList::autoLink(uint32_t listByte){
@@ -52,14 +52,14 @@ void API::DisplayList::modifyAt(uint8_t slot, uint8_t value){
 }
 
 
-int API::DisplayList::getCommandAt(int i){
-    if(i < 0 || i > this->commands.count) return -1;
+unsigned int API::DisplayList::getCommandAt(unsigned int i){
+    if(i > this->commands.count) return -1;
     return this->commands.buf[i];
 }
 
 std::vector<uint8_t> API::DisplayList::getBufferCopy(){
     auto list = std::vector<uint8_t>();
-    for(int i=0; i<this->commands.count; i++)
+    for(unsigned int i=0; i<this->commands.count; i++)
         list.push_back(this->commands.buf[i]);
     return list;
 }

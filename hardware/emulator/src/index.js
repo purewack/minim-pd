@@ -2,7 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import {BrowserRouter, Route, Routes} from 'react-router-dom'
 import './index.css';
-import App, { SettingsMidi } from './App';
+import App from './App';
+import SettingsMidi from './MidiPrefs';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

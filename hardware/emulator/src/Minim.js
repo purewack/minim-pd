@@ -1,51 +1,39 @@
 import './Minim.css'
-import {useEffect, useRef} from 'react'
-const {BufferPainter} = window.require('./native/build/Release/minim.node');
-const sharedPainter = new BufferPainter()
+import {useEffect, useRef, useState} from 'react'
 
-function plotBuffer(context, horizontal){
+function plotCSContext(context, contextNumber, horizontal){
     context.fillStyle = '#000000'
     context.fillRect(0, 0, context.canvas.width, context.canvas.height)
+    for(let y=0; y<64; y++){
+        for(let x=0; x<128; x++){
+            if(!window.ControlSurface.getPixelAtContext(contextNumber,x,y)) continue
+            context.fillStyle = 'white'
 
-    if(horizontal){
-        for(let y=0; y<64; y++){
-            for(let x=0; x<128; x++){
-                if(!sharedPainter.getPixel(x,y)) continue
-                context.fillStyle = 'white'
+            if(horizontal)
                 context.fillRect(x,y,1,1);
-            }
-        }
-    }
-    else{
-        for(let y=0; y<128; y++){
-            for(let x=0; x<64; x++){
-                if(!sharedPainter.getPixel(x,y)) continue
-                context.fillStyle = 'white'
-                context.fillRect(y,x,1,1);
-            }
+            else 
+                context.fillRect(64-y,x,1,1);
         }
     }
 }
 
-export default function MinimScreen({context, horizontal = true}){
+export default function ContextScreen({contextNumber, horizontal = true}){
     const canvasRef = useRef()
+    const [canvas, setCanvas] = useState(null)
     useEffect(() => {
         const canvas = canvasRef.current
-        const context = canvas.getContext('2d')
-        sharedPainter.clear()
-        sharedPainter.drawLine(0,0,127,63);
-        sharedPainter.drawLine(0,63,127,0);
-        sharedPainter.drawLine(0,32,127,32);
-        sharedPainter.drawRect(0,0,128,64,false);
-        plotBuffer(context, horizontal)
-    }, [])
+        setCanvas(canvas);
+    }, [contextNumber])
 
     return (
         <canvas 
-            className='MinimScreen'
+            className='ContextScreen'
             width={horizontal ? 128 : 64}
             height={horizontal ? 64 : 128}
             ref={canvasRef}
+            onClick={()=>{
+                plotCSContext(canvas.getContext('2d'),contextNumber,horizontal);
+            }}
         />
     )
 }

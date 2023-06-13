@@ -96,6 +96,14 @@ Napi::Value MINIM::ControlSurface::getCommandListAtContext(const Napi::CallbackI
           .ThrowAsJavaScriptException();
       return info.Env().Undefined();
   } 
+  std::string s = "console.log(\'cmds ";
+    for(int i=0; i<16; i++){
+      s +=  std::to_string(this->cs->cmdList[context].getCommandAt(i)) + ", ";
+    }
+    s += " context: " + std::to_string(context); 
+    s += "\')";
+
+    info.Env().RunScript(s);
   auto list = this->cs->cmdList[context].getBufferCopy();
   return Napi::Buffer<uint8_t>::Copy(info.Env(),list.data(),list.size());
 }
@@ -156,14 +164,19 @@ Napi::Value MINIM::ControlSurface::parseMidiStream(const Napi::CallbackInfo& inf
     Napi::Uint8Array buf = info[0].As<Napi::Uint8Array>();
     auto data = reinterpret_cast<uint8_t*>(buf.Data());
     auto len = buf.ByteLength() / sizeof(uint8_t);
-    // std::string s = "console.log(\'data";
+    // std::string s = "console.log(\'data ";
     // for(int i=0; i<len; i++){
     //   s +=  std::to_string(data[i]) + ", ";
     // }
+    // s += " len " + std::to_string(len);
     // s += "\')";
     // info.Env().RunScript(s);
     // info.Env().RunScript("console.log(\'" + std::string(this->cs->MidiStreamHasSysex(data,len) == 1 ? "Has Sysex" : "No Sysex flag in stream") + "\')");
-    return Napi::Number::New(info.Env(), this->cs->parseMidiStream(data,len));
+    auto draws = this->cs->parseMidiStream(data,len);
+    // auto updates = this->cs->updateContextsFlag;
+    // info.Env().RunScript("console.log(\'" + std::to_string(updates) + "\')");
+    
+    return Napi::Number::New(info.Env(), draws);
 }
 Napi::Value MINIM::ControlSurface::parseMidiStreamUpdate(const Napi::CallbackInfo& info){
     auto draws = this->parseMidiStream(info);

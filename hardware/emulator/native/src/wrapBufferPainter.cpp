@@ -90,6 +90,11 @@ Napi::Value MINIM::BufferPainter::asArray(const Napi::CallbackInfo& info){
 
 Napi::Value MINIM::BufferPainter::clear(const Napi::CallbackInfo& info){
   this->gfx->clear();
+  // auto xo = this->gfx->modexor;
+  // std::string s = "console.log(\'clear xor:";
+  //   s += xo ? "yes" : "no";
+  //   s += "\')";
+  //   info.Env().RunScript(s);
   return info.Env().Undefined();
 }
 Napi::Value MINIM::BufferPainter::drawPixel(const Napi::CallbackInfo& info){
@@ -107,8 +112,8 @@ Napi::Value MINIM::BufferPainter::drawPixel(const Napi::CallbackInfo& info){
   return info.Env().Undefined();
 }
 Napi::Value MINIM::BufferPainter::drawLine(const Napi::CallbackInfo& info){
-  if (info.Length() != 4) {
-    Napi::Error::New(info.Env(), "Expected 4 arguments")
+  if (info.Length() < 4) {
+    Napi::Error::New(info.Env(), "Expected > 4 arguments")
         .ThrowAsJavaScriptException();
     return info.Env().Undefined();
   }
@@ -118,7 +123,10 @@ Napi::Value MINIM::BufferPainter::drawLine(const Napi::CallbackInfo& info){
   auto y   = info[1].As<Napi::Number>().Int32Value();
   auto x2  = info[2].As<Napi::Number>().Int32Value();
   auto y2  = info[3].As<Napi::Number>().Int32Value();
-
+  
+  auto useXor = info.Length() >= 5 ? info[4].As<Napi::Boolean>().Value() : false;
+  if(useXor) this->gfx->modexor = 1;
+  
   this->gfx->drawLine(x,y,x2,y2);  
   return info.Env().Undefined();
 }
@@ -133,12 +141,22 @@ Napi::Value MINIM::BufferPainter::drawRect(const Napi::CallbackInfo& info){
   auto y    = info[1].As<Napi::Number>().Int32Value();
   auto w    = info[2].As<Napi::Number>().Int32Value();
   auto h    = info[3].As<Napi::Number>().Int32Value();
-  auto fill = info.Length() == 5 ? info[4].As<Napi::Boolean>().Value() : false;
+  auto fill = info.Length() >= 5 ? info[4].As<Napi::Boolean>().Value() : false;
 
+  auto useXor = info.Length() >= 6 ? info[5].As<Napi::Boolean>().Value() : false;
+  if(useXor) this->gfx->modexor = 1;
+  
   if(fill)
     this->gfx->fillSection(x,y,w,h);
   else
     this->gfx->drawRectSize(x,y,w,h);
+
+  // std::string s = "console.log(\'drawRect :";
+  //   s += fill ? "fill" : "nofill";
+  //   s += " - ";
+  //   s += useXor ? "xor" : "noxor";
+  //   s += "\')";
+  //   info.Env().RunScript(s);
   return info.Env().Undefined();
 }
 

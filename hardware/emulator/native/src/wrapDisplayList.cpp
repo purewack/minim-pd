@@ -78,7 +78,7 @@ Napi::Value MINIM::DisplayList::post(const Napi::CallbackInfo& info){
     }
     this->list->clear();
     Napi::Array b = info[0].As<Napi::Array>();
-    for(int i = 0; i<b.Length(); i++)
+    for(unsigned int i = 0; i<b.Length(); i++)
     {
       Napi::Value v = b[i];
       if (v.IsNumber())

@@ -90,7 +90,8 @@
         "cinttypes": "cpp",
         "hashtable": "cpp",
         "csignal": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "filesystem": "cpp"
     },
     "cmake.configureOnOpen": false,
     "C_Cpp.dimInactiveRegions": false,
