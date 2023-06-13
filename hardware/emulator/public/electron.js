@@ -1,21 +1,22 @@
 const path = require('path');
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const isDev = require('electron-is-dev');
 
 function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
+    title:'MINIM Emulator App',
     width: 800,
     height: 300,
     webPreferences: {
       contextIsolation: false,
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
+      // preload: isDev 
+      //   ? path.join(app.getAppPath(), './public/preload.js') // Loading it from the public folder for dev
+      //   : path.join(app.getAppPath(), './build/preload.js'), // Loading it from the build folder for production
     },
   });
-
-  // and load the index.html of the app.
-  // win.loadFile("index.html");
   win.loadURL(
     isDev
       ? 'http://localhost:3000'
@@ -25,6 +26,26 @@ function createWindow() {
   // if (isDev) {
   //   win.webContents.openDevTools({ mode: 'detach' });
   // }
+
+  ipcMain.on('openMIDIIO', 
+    ()=>{
+      const win = new BrowserWindow({
+        title:'MIDI Prefs',
+        width: 400,
+        height: 400,
+        webPreferences: {
+          contextIsolation: false,
+          nodeIntegration: true,
+          nodeIntegrationInWorker: true,
+        },
+      });
+      win.loadURL(
+        isDev
+          ? 'http://localhost:3000/midi'
+          : `file://${path.join(__dirname, '../build/index.html/midi')}`
+      );
+    }
+  )
 }
 
 // This method will be called when Electron has finished

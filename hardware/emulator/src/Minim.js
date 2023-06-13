@@ -27,7 +27,7 @@ function plotBuffer(context, horizontal){
     }
 }
 
-export default function MinimScreen({horizontal = true}){
+export default function MinimScreen({context, horizontal = true}){
     const canvasRef = useRef()
     useEffect(() => {
         const canvas = canvasRef.current
