@@ -237,7 +237,11 @@ Napi::Value MINIM::ControlSurface::showParseErrors(const Napi::CallbackInfo& inf
                 .ThrowAsJavaScriptException();
             return info.Env().Undefined();
         } 
-        return Napi::Number::New(info.Env(),this->cs->errorLocation[context]);
+        auto er = this->cs->errorLocation[context];
+        if(er >= 0)
+            return Napi::Number::New(info.Env(),er);
+        else 
+            return info.Env().Null();
     }
 
     auto errorsBits = this->cs->errorContextsFlag;

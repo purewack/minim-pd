@@ -67,25 +67,32 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
         if(midiStreamBytes[i] == CMD_SYSEX_START){
             this->sysex = true;
             if(memcmp(&midiStreamBytes[i],CMD_SYSEX_ID,4) == 0){
+                
                 //mode: write display list to context
                 i+=4;
                 auto context = midiStreamBytes[i++];
                 if(context > 5) context = 0;
-                
-                this->errorContextsFlag &= ~(1<<context);
-                this->errorLocation[context] = -1;
+
+                if(midiStreamBytes[i+1] & 0x80){
+                    this->sysex = false;
+                    i+=1;
+                    this->updateContextsFlag |= (1<<context);
+                    continue;
+                }
 
                 auto write = this->writeContextStream(context, &midiStreamBytes[i], midiStreamBytesLength-i);
                 
                 if(write < 0){
                     //error parsing around byte -write
-                    this->cmdList[context].clear();
                     this->errorContextsFlag |= (1<<context);
                     this->errorLocation[context] = -write;
+                    this->cmdList[context].clear();
                 }
                 else {
                     i += write-1;
-                    this->updateContextsFlag |= (1<<context); 
+                    this->updateContextsFlag |= (1<<context);
+                    this->errorContextsFlag &= ~(1<<context);
+                    this->errorLocation[context] = -1;
                 }
         
                 this->context = context;

@@ -17,27 +17,25 @@ function plotCSContext(context, contextNumber, horizontal){
     }
 }
 
-export default function ContextScreen({contextNumber, horizontal = true, draws}){
+export default function ContextScreen({contextNumber, horizontal = true, draws, errorAt}){
     const canvasRef = useRef()
-    const [canvas, setCanvas] = useState(null)
-
     const update = (canvas)=>{plotCSContext(canvas.getContext('2d'),contextNumber,horizontal);}
 
     useEffect(() => {
         const cv = canvasRef.current
-        setCanvas(cv);
         if(cv) update(cv)
     }, [contextNumber, draws])
 
     return (
-        <div className='ContextScreen'>
+        <div className={(errorAt ? 'ContextScreen Error ' : 'ContextScreen ') + 'C' + contextNumber }>
         <canvas 
             width={horizontal ? 128 : 64}
             height={horizontal ? 64 : 128}
             ref={canvasRef}
-            onClick={()=>{update(canvas)}}
+            onClick={()=>{update(canvasRef.current)}}
         />
         <span className='ContextScreenInfo'>{draws}</span>
+        {errorAt ? <span className='ContextScreenError'>Parse error at byte:{errorAt}</span> : null}
         </div>
     )
 }

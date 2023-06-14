@@ -1,13 +1,31 @@
+.MinimScreenArray{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-block: 1rem;
+}
+
 .ContextScreen{
     position: relative;
     display: inline-block;
     border:solid yellow 1px;
+    box-sizing: border-box;
+    font-size: x-small;
 }
 
 .ContextScreen canvas {
     image-rendering: pixelated;
 }
 
+.ContextScreen.Error {
+    border:solid red 3px;
+}
+.ContextScreenError{
+    color: pink;
+    position:absolute;
+    bottom:0;
+    left:0;
+}
 .ContextScreenInfo {
     opacity: 0.3;
     color: yellow;
@@ -16,8 +34,12 @@
     left:0;
 }
 .ContextScreen:hover {
-    border:solid white 1px;
+    border:solid white 3px;
 }
 .ContextScreen:hover .ContextScreenInfo {
     opacity: 1.0;
+}
+
+.ContextScreen.C0 canvas {
+    height:7rem;
 }

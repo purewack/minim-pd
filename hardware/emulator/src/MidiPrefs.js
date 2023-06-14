@@ -52,9 +52,20 @@ export function FlowMidi(){
   </div>
 }
   
-export function InjectMidiPanel(){
-  return <form>
-    <textarea name="inputStream" />
-    <input type="submit" name="Inject" onClick={(e)=>{e.preventDefault()}}/>
+export function InjectMidiPanel({streamCheck, onNewStream}){
+  return <form className='InjectMidiPanel' onSubmit={(e)=>{
+    e.preventDefault()
+    const textStream = e.target.inputStream.value
+    const textArray = textStream.split(' ');
+    const numArray = textArray.map(v => parseInt(v))
+    // numArray.forEach(v => {
+    //   if(v > 255 || v < 0) throw Error('invalid input stream at: ' + v)
+    // });
+    window.ControlSurface.parseMIDIStream(new Uint8Array(numArray))
+    streamCheck()
+    onNewStream(textStream)
+  }}>
+    <input type='text' name="inputStream" className='inputStream'/>
+    <input type="submit" name="inject"/>
   </form>
 }

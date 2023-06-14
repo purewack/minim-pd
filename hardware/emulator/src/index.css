@@ -1,9 +1,10 @@
 body {
   margin: 0;
-  background-color: #333;
-  color:ivory;
+  background-color:aliceblue;
+  color:black;
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
   monospace;
+  font-size: small;
 }
 
 code, h1, h2, h3, p, span {
@@ -73,4 +74,22 @@ h1, h2, h3 {
 }
 .MidiIO .Option.Active {
   background-color: gold;
+}
+
+.CurrentStream {
+  background-color: white;
+  color:black;
+}
+
+.InjectMidiPanel .inputStream{
+  width:100%;
+  color: white;
+  background-color: black;
+  outline: none !important;
+  border: none;
+  font: inherit;
+}
+.InjectMidiPanel .inputStream:focus {
+  outline: none !important;
+  border:1px solid red;
 }
