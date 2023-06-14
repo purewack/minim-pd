@@ -1,4 +1,23 @@
 .ContextScreen{
+    position: relative;
+    display: inline-block;
     border:solid yellow 1px;
+}
+
+.ContextScreen canvas {
     image-rendering: pixelated;
+}
+
+.ContextScreenInfo {
+    opacity: 0.3;
+    color: yellow;
+    position:absolute;
+    top:0;
+    left:0;
+}
+.ContextScreen:hover {
+    border:solid white 1px;
+}
+.ContextScreen:hover .ContextScreenInfo {
+    opacity: 1.0;
 }

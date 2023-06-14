@@ -17,23 +17,27 @@ function plotCSContext(context, contextNumber, horizontal){
     }
 }
 
-export default function ContextScreen({contextNumber, horizontal = true}){
+export default function ContextScreen({contextNumber, horizontal = true, draws}){
     const canvasRef = useRef()
     const [canvas, setCanvas] = useState(null)
+
+    const update = (canvas)=>{plotCSContext(canvas.getContext('2d'),contextNumber,horizontal);}
+
     useEffect(() => {
-        const canvas = canvasRef.current
-        setCanvas(canvas);
-    }, [contextNumber])
+        const cv = canvasRef.current
+        setCanvas(cv);
+        if(cv) update(cv)
+    }, [contextNumber, draws])
 
     return (
+        <div className='ContextScreen'>
         <canvas 
-            className='ContextScreen'
             width={horizontal ? 128 : 64}
             height={horizontal ? 64 : 128}
             ref={canvasRef}
-            onClick={()=>{
-                plotCSContext(canvas.getContext('2d'),contextNumber,horizontal);
-            }}
+            onClick={()=>{update(canvas)}}
         />
+        <span className='ContextScreenInfo'>{draws}</span>
+        </div>
     )
 }
