@@ -24,8 +24,16 @@
 // console.log(list,links)
 // console.log('end test')
 
-const {BufferPainter} = require('./build/Release/minim.node');
-const gfx = new BufferPainter()
-gfx.clear()
-gfx.drawRect(0,0,20,20,true)
-console.log(gfx.getPixel(6,6));
+
+// const {BufferPainter} = require('./build/Release/minim.node');
+// const gfx = new BufferPainter()
+// gfx.clear()
+// gfx.drawRect(0,0,20,20,true)
+// console.log(gfx.getPixel(6,6));
+
+const {ControlSurface} = require('./build/Release/minim.node');
+const cs = new ControlSurface()
+console.log(ControlSurface.CMD_LINE)
+console.log(ControlSurface.CMD_RECT)
+console.log(ControlSurface.CMD_LINK)
+console.log(ControlSurface.SYSEX_ID)

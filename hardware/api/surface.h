@@ -10,6 +10,8 @@ private:
     bool sysex = false;
     uint8_t context = 0;
     uint8_t updateContextsFlag = 0;
+    uint8_t errorContextsFlag = 0;
+    uint32_t errorLocation[6];
     API::DisplayList cmdList[6];
     API::BufferPainter gfx;
     int writeContextStream(int context, const unsigned char* midiBytes, const int midiBytesCount);

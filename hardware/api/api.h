@@ -8,6 +8,7 @@
 //sysex manID = 00 7f 7f
 #define CMD_SYSEX_START 0xF0
 #define CMD_SYSEX_END   0xF7
+#define CMD_SYSEX_STRING "\xf0\0\x7f\x7f" 
 const unsigned char CMD_SYSEX_ID[4] = {CMD_SYSEX_START,0x00,0x7f,0x7f};
 
 #define CMD_SYMBOL_C_SCALE 's'   //83
@@ -17,7 +18,6 @@ const unsigned char CMD_SYSEX_ID[4] = {CMD_SYSEX_START,0x00,0x7f,0x7f};
 #define CMD_SYMBOL_F_STRING 's'  //115
 #define CMD_SYMBOL_F_BITMAP 'b'  //98
 
-#define CMD_SYMBOL_F_DRAW 'u'    //117
 #define CMD_SYMBOL_F_UPLOAD 'U' //85
 
 #define NOTE_ON  0x90

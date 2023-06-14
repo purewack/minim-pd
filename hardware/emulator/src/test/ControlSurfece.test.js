@@ -214,5 +214,32 @@ describe('ControlSurface', ()=>{
         expect([...cs.getCommandListAtContext(1).values()]).toEqual(expect.arrayContaining([
             114, 1, 2, 3, 4, 42,
         ]))
+        expect([...cs.showParseUpdates().values()]).toEqual(expect.arrayContaining([
+            0,1,1,0,0,0
+        ]))
+    })
+
+    test('invalid command stream',()=>{
+        const cs = new ControlSurface();
+
+        cs.parseMIDIStreamUpdate(new Uint8Array([
+            0xF0,0x00,0x7F,0x7F,2,
+            114, 0, 0, 2, 2, 1,
+            20, 2, 2, 5, 5,
+            0xF7
+        ]));
+        expect([...cs.showParseErrors().values()]).toEqual(expect.arrayContaining([
+            0,0,1,0,0,0
+        ]))
+
+        cs.parseMIDIStreamUpdate(new Uint8Array([
+            0xF0,0x00,0x7F,0x7F,2,
+            114, 0, 0, 2, 2, 1,
+            114, 2, 2, 5, 5,
+            0xF7
+        ]));
+        expect([...cs.showParseErrors().values()]).toEqual(expect.arrayContaining([
+            0,0,1,0,0,0
+        ]))
     })
 })

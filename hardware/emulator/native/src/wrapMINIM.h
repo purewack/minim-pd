@@ -63,6 +63,8 @@ namespace MINIM{
         Napi::Value showLinksAtContext(const Napi::CallbackInfo& info);
         Napi::Value parseMidiStream(const Napi::CallbackInfo& info);
         Napi::Value parseMidiStreamUpdate(const Napi::CallbackInfo& info);
+        Napi::Value showParseUpdates(const Napi::CallbackInfo& info);
+        Napi::Value showParseErrors(const Napi::CallbackInfo& info);
     };
 };
 

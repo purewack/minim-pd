@@ -2,6 +2,13 @@
 #include "api.h"
 #include <cstring>
 
+bool isArgsValid(const unsigned char* midiBytes, unsigned int count){
+    for(unsigned int i=0; i<count; i++){
+        if( midiBytes[i] & 0x80 ) return false;
+    }
+    return true;
+}
+
 int API::ControlSurfaceAPI5::writeContextStream(int context, const unsigned char* midiBytes, const int midiBytesCount){
     if(context < 0 || context > 5) return 0;
     
@@ -9,7 +16,9 @@ int API::ControlSurfaceAPI5::writeContextStream(int context, const unsigned char
     list->clear();
     int i;
     for(i=0; i<midiBytesCount; i++){
+        if( midiBytes[i] & 0x80 ) return i;
         if( midiBytes[i] == CMD_SYMBOL_F_LINK){
+            if(!isArgsValid(& midiBytes[i+1],2)) return -i;
             int atHigh = midiBytes[i+1]; 
             int atLow  = midiBytes[i+2];
             int listByte = atLow | (atHigh<<7); 
@@ -18,7 +27,8 @@ int API::ControlSurfaceAPI5::writeContextStream(int context, const unsigned char
             continue;
         }
         else if( midiBytes[i] == CMD_SYMBOL_F_LINE){
-            list->add(midiBytes[i]);   //l
+            if(!isArgsValid(& midiBytes[i+1],4)) return -i;
+            list->add(midiBytes[i]);   //line
             list->add(midiBytes[i+1]); //x
             list->add(midiBytes[i+2]); //y
             list->add(midiBytes[i+3]); //x2
@@ -27,7 +37,8 @@ int API::ControlSurfaceAPI5::writeContextStream(int context, const unsigned char
             continue;
         }
         else if( midiBytes[i] == CMD_SYMBOL_F_RECT){
-            list->add(midiBytes[i]);   //r
+            if(!isArgsValid(& midiBytes[i+1],5)) return -i;
+            list->add(midiBytes[i]);   //rect
             list->add(midiBytes[i+1]); //x
             list->add(midiBytes[i+2]); //y
             list->add(midiBytes[i+3]); //w
@@ -36,7 +47,9 @@ int API::ControlSurfaceAPI5::writeContextStream(int context, const unsigned char
             i+=5;
             continue;
         }
-        else if( midiBytes[i] & 0x80 ) return i;
+        else {
+            return -i;
+        }
     }
     return i;
 }
@@ -56,10 +69,25 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
             if(memcmp(&midiStreamBytes[i],CMD_SYSEX_ID,4) == 0){
                 //mode: write display list to context
                 i+=4;
-                int context = midiStreamBytes[i++];
+                auto context = midiStreamBytes[i++];
                 if(context > 5) context = 0;
-                i += this->writeContextStream(context, &midiStreamBytes[i], midiStreamBytesLength-i) - 1;
-                this->updateContextsFlag |= (1<<context); 
+                
+                this->errorContextsFlag &= ~(1<<context);
+                this->errorLocation[context] = -1;
+
+                auto write = this->writeContextStream(context, &midiStreamBytes[i], midiStreamBytesLength-i);
+                
+                if(write < 0){
+                    //error parsing around byte -write
+                    this->cmdList[context].clear();
+                    this->errorContextsFlag |= (1<<context);
+                    this->errorLocation[context] = -write;
+                }
+                else {
+                    i += write-1;
+                    this->updateContextsFlag |= (1<<context); 
+                }
+        
                 this->context = context;
                 draws += 1;
             }
@@ -68,9 +96,9 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
             this->sysex = false;
         }
         if(((midiStreamBytes[i]>>4) == 0x9) && !this->sysex){
-            char context = (midiStreamBytes[i] & 0x0F) % 6;
-            char note    = midiStreamBytes[i+1];
-            char vel     = midiStreamBytes[i+2];
+            unsigned char context = (midiStreamBytes[i] & 0x0F) % 6;
+            unsigned char note    = midiStreamBytes[i+1];
+            unsigned char vel     = midiStreamBytes[i+2];
             i += 2;
             //modify variable
             this->cmdList[context].modifyAt(note,vel);
@@ -101,8 +129,9 @@ int API::ControlSurfaceAPI5::parseCommandList(int context){
     this->gfx.resetScaleRotate();
     auto list = &this->cmdList[context];
     auto count = list->getCount();
+    this->updateContextsFlag &= ~(1<<context);
 
-    for(int i=0; i<count; i++){
+    for(unsigned int i=0; i<count; i++){
         if(list->getCommandAt(i) == CMD_SYMBOL_C_SCALE){
             commandCount++;
             gfx.scale = list->getCommandAt(i++);
