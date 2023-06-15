@@ -23,6 +23,9 @@ button, input[type=submit] {
   background-color: var(--c-high);
   color: var(--c-high-alt);
   border: none;
+  margin-right: 0.25rem;
+  /* margin-block: 2px; */
+  border-bottom:2px solid var(--c-sel);
 }
 button:hover, input[type=submit]:hover {
   background-color: var(--c-hover);
@@ -43,7 +46,7 @@ button:hover, input[type=submit]:hover {
   color: var(--c-main);
   display: flex;
   justify-content: space-between;
-  border-bottom: solid var(--c-back) 1px;
+  border-bottom:2px solid var(--c-sel);
 }
 .CurrentMenu {
   overflow-y: scroll;

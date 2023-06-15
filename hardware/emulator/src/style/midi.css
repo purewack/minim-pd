@@ -21,12 +21,15 @@
 .InjectMidiPanel {
   background-color: var(--c-back);
 }
+.InjectMidiPanel form {
+  display: flex;
+}
 .InjectMidiPanel .inputStream{
-  width:100%;
   color: var(--c-main);
   background-color: var(--c-back);
   border: none;
   font: inherit;
+  flex-grow: 1;
 }
 .InjectMidiPanel .inputStream:hover {
   background-color: var(--c-hover);
