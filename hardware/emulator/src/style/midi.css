@@ -1,0 +1,60 @@
+
+.MidiFlow {
+  display: flex;
+  align-items: center;
+  width: min-content;
+  user-select: none;
+  z-index: 10;
+  color: var(--c-high-alt);
+}
+.MidiFlow:hover {
+  background-color: var(--c-hover);
+}
+.MidiFlow .In, .MidiFlow .Out {
+  border:solid var(--c-high-alt) 1px;
+  width: 1rem;
+  height: 1rem;
+  margin:1px;
+}
+
+
+.InjectMidiPanel {
+  background-color: var(--c-back);
+}
+.InjectMidiPanel .inputStream{
+  width:100%;
+  color: var(--c-main);
+  background-color: var(--c-back);
+  border: none;
+  font: inherit;
+}
+.InjectMidiPanel .inputStream:hover {
+  background-color: var(--c-hover);
+}
+.InjectMidiPanel .inputStream:focus {
+  outline: none !important;
+  background-color: var(--c-sel);
+  color: var(--c-sel-alt);
+}
+
+
+
+
+
+.MidiIO::before{
+  display: block;
+}
+.MidiIO{
+  height: 100%;
+  padding: 1rem;
+}
+.MidiIO .Option {
+  background-color: var(--c-high);
+  color: var(--c-main);
+  width: fit-content;
+  padding-inline: 1rem;
+  border-radius: 1rem 0;
+}
+.MidiIO .Option.Active {
+  background-color: gold;
+}

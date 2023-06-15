@@ -1,0 +1,36 @@
+* {
+    transition: color 0.25s, background-color 0.25s, outline 0.25s;
+}
+
+:root{
+    --c-main: #222;
+    --c-main-alt: midnightblue;
+    --c-back: #eee;
+    --c-back-alt: white;
+    --c-sel: rgb(23, 191, 115);
+    --c-sel-alt: rgb(229, 253, 252);
+    --c-high: rgb(111, 191, 231);
+    --c-high-alt: rgb(247, 248, 214);
+    --c-hover: rgb(184, 233, 248);
+    --c-hover-alt: rgb(0, 0, 0);
+    --c-error: red;
+    --c-error-alt: pink;
+}
+
+
+@media (prefers-color-scheme: dark) {
+    :root{
+        --c-main: #eee;
+        --c-main-alt: ivory;
+        --c-back: #222;
+        --c-back-alt: rgb(26, 1, 42);
+        --c-sel: rgb(37, 99, 186);
+        --c-sel-alt: rgb(220, 229, 255);
+        --c-high: rgb(82, 59, 183);
+        --c-high-alt: hsl(318, 80%, 94%);
+        --c-hover: rgb(174, 170, 250);
+        --c-hover-alt: white;
+        --c-error: red;
+        --c-error-alt: pink;
+    }
+}

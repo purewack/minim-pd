@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import './style/midi.css'
 
 export default function SettingsMidi({className, ...restProps}){
     const [midiAccess, setMidiAccess] = useState(null)
@@ -51,21 +52,33 @@ export function FlowMidi(){
     </span>
   </div>
 }
-  
-export function InjectMidiPanel({streamCheck, onNewStream}){
-  return <form className='InjectMidiPanel' onSubmit={(e)=>{
-    e.preventDefault()
-    const textStream = e.target.inputStream.value
-    const textArray = textStream.split(' ');
-    const numArray = textArray.map(v => parseInt(v))
-    // numArray.forEach(v => {
-    //   if(v > 255 || v < 0) throw Error('invalid input stream at: ' + v)
-    // });
-    window.ControlSurface.parseMIDIStream(new Uint8Array(numArray))
-    streamCheck()
-    onNewStream(textStream)
-  }}>
-    <input type='text' name="inputStream" className='inputStream'/>
-    <input type="submit" name="inject"/>
-  </form>
+
+
+export function InjectMidiPanel({stream, setStream, checkStream}){
+  const inputRef = useRef()
+
+  return <div className='InjectMidiPanel' >
+    <span>Stream:</span>
+    <form onSubmit={(e)=>{
+      e.preventDefault()
+      const textStream = e.target.inputStream.value
+      const textArray = textStream.replace(/\s+/g, ' ').trim().split(' ');
+      const numArray = textArray.map(v => parseInt(v))
+      // numArray.forEach(v => {
+      //   if(v > 255 || v < 0) throw Error('invalid input stream at: ' + v)
+      // });
+      window.ControlSurface.parseMIDIStream(new Uint8Array(numArray))
+      checkStream()
+      setStream(textStream)
+    }}>
+      <input ref={inputRef} type='text' name="inputStream" placeholder={stream} className='inputStream'/>
+      <input type="submit" name="inject" value="Inject"/>
+      <button type="submit" name="start" onClick={()=>{
+        if(inputRef.current){
+          inputRef.current.value += ' '
+        }
+      }}>+Start</button>
+      <button type="submit" name="start">+End</button>
+    </form>
+  </div>
 }

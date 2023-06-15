@@ -1,7 +1,9 @@
 #include "wrapMINIM.h"
-#include "../../../api/api.h"
+#include "api.h"
+#include "util.h"
 
 Napi::FunctionReference MINIM::ControlSurface::constructor;
+
 
 Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports) 
 {
@@ -19,18 +21,28 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
     InstanceMethod("showParseErrors", &MINIM::ControlSurface::showParseErrors),
   });
 
-    buf["SYSEX_ID"] = std::string(CMD_SYSEX_STRING);
-    buf["SYSEX_START"] = CMD_SYSEX_START;
-    buf["SYSEX_END"]   = CMD_SYSEX_END;
-    buf["NOTE_ON"]  = NOTE_ON;
-    buf["NOTE_OFF"] = NOTE_OFF;
-    buf["CMD_ALTER"] = CMD_SYMBOL_F_ALTER;
-    buf["CMD_LINK"] = CMD_SYMBOL_F_LINK;
-    buf["CMD_LINE"] = CMD_SYMBOL_F_LINE;
-    buf["CMD_RECT"] = CMD_SYMBOL_F_RECT;
-    buf["CMD_STRING"] = CMD_SYMBOL_F_STRING;
-    buf["CMD_BITMAP"] = CMD_SYMBOL_F_BITMAP;
-    buf["CMD_UPLOAD"] = CMD_SYMBOL_F_UPLOAD;
+  auto list = API::generateCommandDescriptors();
+  auto listArray = Napi::Array::New(env);
+  unsigned int j=0;
+  for(auto i:list){
+    auto cmd = Napi::Object::New(env);
+    cmd["name"] = i["name"];
+    cmd["symbol"] = std::stoi(i["symbol"]);
+    cmd["arguments"] = std::stoi(i["arguments"]);
+    listArray[j++] = cmd;
+  }
+  
+  auto contextList = API::generateContextDescriptors();
+  for(auto i:contextList){
+    auto cmd = Napi::Object::New(env);
+    cmd["name"] = i["name"];
+    cmd["symbol"] = i["symbol"];
+    cmd["arguments"] = std::stoi(i["arguments"]);
+    listArray[j++] = cmd;
+  }
+  
+  buf["commands"] = listArray;
+
 
   constructor = Napi::Persistent(buf);
   constructor.SuppressDestruct();

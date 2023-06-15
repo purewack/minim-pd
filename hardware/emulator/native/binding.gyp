@@ -8,14 +8,16 @@
           "src/wrapControlSurface.cpp",
           "src/wrapInit.cpp",
 
-          "../../api/BufferPainter.cpp",
-          "../../api/DisplayList.cpp",
-          "../../api/ControlSurfaceAPI5.cpp",
+          "../../api/src/BufferPainter.cpp",
+          "../../api/src/DisplayList.cpp",
+          "../../api/src/ControlSurfaceAPI5.cpp",
+          "../../api/src/utilCommandFactory.cpp",
         ],
       'include_dirs': [
           "<!@(node -p \"require('node-addon-api').include\")",
           "src",
-          "../../api"
+          "../../api/include",
+          "../../api/gfx"
         ],
       'dependencies': ["<!(node -p \"require('node-addon-api').gyp\")"],
       'defines': [ 'NAPI_DISABLE_CPP_EXCEPTIONS' ]

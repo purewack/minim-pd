@@ -1,0 +1,53 @@
+body {
+  margin: 0;
+  background-color: var(--c-back-alt);
+  color:var(--c-main);
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  monospace;
+  font-size: small;
+}
+
+code, h1, h2, h3, p, span {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+h1, h2, h3 {
+  font-weight: normal;
+}
+
+*, *::after, *::before{
+  box-sizing: border-box;
+}
+
+button, input[type=submit] {
+  background-color: var(--c-high);
+  color: var(--c-high-alt);
+  border: none;
+}
+button:hover, input[type=submit]:hover {
+  background-color: var(--c-hover);
+  color: var(--c-hover-alt);
+}
+
+
+.App{
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.MenuTitle {
+  text-transform:uppercase;
+  background-color: var(--c-high);
+  color: var(--c-main);
+  display: flex;
+  justify-content: space-between;
+  border-bottom: solid var(--c-back) 1px;
+}
+.CurrentMenu {
+  overflow-y: scroll;
+  flex-grow: 1;
+  background-color: var(--c-back);
+  color:var(--c-main);
+}

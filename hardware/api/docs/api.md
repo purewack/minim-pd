@@ -40,23 +40,21 @@ Upon recieving a `0xF0 0x00 0x7F 0x7F` string, the parser switches to sysex mode
 
 ## Display List Commands
 
-```s{factor}``` - Set Graphics drawing scale for bitmaps and text to {factor} integer value
+`S{factor}` - Set Graphics drawing scale for bitmaps and text to {factor} integer value
 
-```x{mode}``` - Set Graphics drawing mode, if non zero use XOR drawing mode, otherwise normal mode
+`X{mode}` - Set Graphics drawing mode, if non zero use XOR drawing mode, otherwise normal mode
 
-```l{x,y,x2,y2}``` - Draw a line from {x},{y} to {x2},{y2}
+`l{x,y,x2,y2}` - Draw a line from {x},{y} to {x2},{y2}
 
-```r{x,y,w,h,fill}``` - Draw a rectangle of {w}*{h} at {x},{y}. Fill flag 0 for filled in, otherwise draw outline of px wide based of {fill} number
+`r{x,y,w,h,fill}` - Draw a rectangle of {w}*{h} at {x},{y}. Fill flag 0 for filled in, otherwise draw outline of px wide based of {fill} number
 
-```s{x,y,text}``` - Draw a string of lower chars of {size} at x,y. Fill flag 0 for filled in, otherwise draw outline of px wide based of {fill} number
+`s{x,y,text}` - Draw a string of lower chars of {size} at x,y. Fill flag 0 for filled in, otherwise draw outline of px wide based of {fill} number
 
-## Display List Manipulation
+# Display List Manipulation
 
-```G{ context, start, count, bytes... }``` - Set Graphics context for display list {context} and upload display list commands 
+`V{addressMSB, addressLSB}` - register memory location defined by addressMSB + addressLSB bits (14bit). the link is auto increased per context in the order of registration, e.g. link Display List @ address 4 -link-> slot 0, link Display List @ address 2 -link-> slot 1 etc ...
 
-```A {mem slot, value}``` - Alter memory slot of graphicsList, useful for animation
-
-```a {mem_msb, mem_lsb, value}``` - Alter memory location of graphicsList directly
+`0x90 {slot, value}` - noteOn message can alter memory if memory location was previously linked/bound, channel = context (LSB nibble of 0x9<span style="color:limegreen">0</span>)
 
 # Technical 
 

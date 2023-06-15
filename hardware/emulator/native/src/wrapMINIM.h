@@ -1,8 +1,12 @@
 #include <napi.h>
 #include <iostream>
 
-#include "../../../api/gfx.h"
-#include "../../../api/surface.h"
+#include "gfx.h"
+#include "surface.h"
+
+namespace API{
+    void autoBindCommands(Napi::Env env, Napi::Function& obj);
+}
 
 using namespace std;
 namespace MINIM{

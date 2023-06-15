@@ -6,8 +6,8 @@ function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
     title:'MINIM Emulator App',
-    width: 800,
-    height: 300,
+    width: 640,
+    height: 260,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: true,

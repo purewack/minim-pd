@@ -1,2 +1,4 @@
 build
 node_modules
+src/auto_gen
+quick_test.js

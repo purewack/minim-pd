@@ -1,5 +1,5 @@
 #include "gfx.h"
-#include "gfx/fonttiny.h"
+#include "fonttiny.h"
 
 std::vector<uint8_t> API::BufferPainter::getBufferCopy(){
   std::vector<uint8_t> pixels;

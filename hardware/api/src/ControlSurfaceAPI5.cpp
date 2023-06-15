@@ -17,7 +17,7 @@ int API::ControlSurfaceAPI5::writeContextStream(int context, const unsigned char
     int i;
     for(i=0; i<midiBytesCount; i++){
         if( midiBytes[i] & 0x80 ) return i;
-        if( midiBytes[i] == CMD_SYMBOL_F_LINK){
+        if( midiBytes[i] == CMD_SYMBOL_LINK){
             if(!isArgsValid(& midiBytes[i+1],2)) return -i;
             int atHigh = midiBytes[i+1]; 
             int atLow  = midiBytes[i+2];
@@ -26,7 +26,7 @@ int API::ControlSurfaceAPI5::writeContextStream(int context, const unsigned char
             i+=2;
             continue;
         }
-        else if( midiBytes[i] == CMD_SYMBOL_F_LINE){
+        else if( midiBytes[i] == CMD_SYMBOL_LINE){
             if(!isArgsValid(& midiBytes[i+1],4)) return -i;
             list->add(midiBytes[i]);   //line
             list->add(midiBytes[i+1]); //x
@@ -36,7 +36,7 @@ int API::ControlSurfaceAPI5::writeContextStream(int context, const unsigned char
             i+=4;
             continue;
         }
-        else if( midiBytes[i] == CMD_SYMBOL_F_RECT){
+        else if( midiBytes[i] == CMD_SYMBOL_RECT){
             if(!isArgsValid(& midiBytes[i+1],5)) return -i;
             list->add(midiBytes[i]);   //rect
             list->add(midiBytes[i+1]); //x
@@ -139,17 +139,17 @@ int API::ControlSurfaceAPI5::parseCommandList(int context){
     this->updateContextsFlag &= ~(1<<context);
 
     for(unsigned int i=0; i<count; i++){
-        if(list->getCommandAt(i) == CMD_SYMBOL_C_SCALE){
+        if(list->getCommandAt(i) == CMD_SYMBOL_SCALE){
             commandCount++;
             gfx.scale = list->getCommandAt(i++);
             if(gfx.scale <= 0) gfx.scale = 1;
         }
-        else if(list->getCommandAt(i) == CMD_SYMBOL_C_XOR){
+        else if(list->getCommandAt(i) == CMD_SYMBOL_XOR){
             commandCount++;
             gfx.modexor = list->getCommandAt(i+1);
             i+=1;
         }
-        else if(list->getCommandAt(i) == CMD_SYMBOL_F_LINE){
+        else if(list->getCommandAt(i) == CMD_SYMBOL_LINE){
             commandCount++;
             int x = list->getCommandAt(i+1);
             int y = list->getCommandAt(i+2);
@@ -158,7 +158,7 @@ int API::ControlSurfaceAPI5::parseCommandList(int context){
             gfx.drawLine(x,y,x2,y2);
             i+=4;
         }
-        else if(list->getCommandAt(i) == CMD_SYMBOL_F_RECT){
+        else if(list->getCommandAt(i) == CMD_SYMBOL_RECT){
             commandCount++;
             int x = list->getCommandAt(i+1);
             int y = list->getCommandAt(i+2);
@@ -172,7 +172,7 @@ int API::ControlSurfaceAPI5::parseCommandList(int context){
             else
                 gfx.drawRectSize(x,y,w,h);
         }
-        // else if(cmds[i] == CMD_SYMBOL_F_STRING){
+        // else if(cmds[i] == CMD_SYMBOL_STRING){
         //     i++;
         //     int x = getCByte(cmds,&i);
         //     int y = getCByte(cmds,&i);
@@ -182,7 +182,7 @@ int API::ControlSurfaceAPI5::parseCommandList(int context){
         //     while(cmds[i+j] != 0) j++;
         //     i+=j;
         // }
-        // else if(cmds[i] == CMD_SYMBOL_F_BITMAP){
+        // else if(cmds[i] == CMD_SYMBOL_BITMAP){
         //     i++;
         //     int x = getCByte(cmds,&i);
         //     int y = getCByte(cmds,&i);

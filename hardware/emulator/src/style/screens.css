@@ -8,33 +8,38 @@
 .ContextScreen{
     position: relative;
     display: inline-block;
-    border:solid yellow 1px;
     box-sizing: border-box;
     font-size: x-small;
 }
 
 .ContextScreen canvas {
     image-rendering: pixelated;
+    border:solid var(--c-high) 1px;
+    background-color: var(--c-back);
+    color: var(--c-main);
 }
 
 .ContextScreen.Error {
-    border:solid red 3px;
+    outline:solid  var(--c-error) 3px;
 }
 .ContextScreenError{
-    color: pink;
-    position:absolute;
-    bottom:0;
-    left:0;
-}
-.ContextScreenInfo {
-    opacity: 0.3;
-    color: yellow;
+    color: var(--c-error-alt);
     position:absolute;
     top:0;
     left:0;
 }
-.ContextScreen:hover {
-    border:solid white 3px;
+.ContextScreen:hover .ContextScreenError{
+    color: var(--c-main);
+} 
+.ContextScreenInfo {
+    opacity: 0.3;
+    color: var(--c-high);
+    position:absolute;
+    bottom:0;
+    left:0;
+}
+.ContextScreen:hover{
+    outline:solid var(--c-hover) 3px;
 }
 .ContextScreen:hover .ContextScreenInfo {
     opacity: 1.0;

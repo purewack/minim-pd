@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ContextScreen from './Minim'
 import { FlowMidi, InjectMidiPanel } from './MidiPrefs';
+import './style/app.css';
 
 function App() {
   const [draws, setDraws] = useState([0,0,0,0,0,0])
@@ -23,13 +24,16 @@ function App() {
   return (
     <div className="App">
       <div className='MenuTitle'>
-        {/* <span>MINIM Panel</span> */}
+        <span>MINIM</span>
         <FlowMidi />
+        <span>Quit</span>
       </div>
 
-      <span className='CurrentStream'>Stream: {midiStream}</span>
-      
-      <InjectMidiPanel streamCheck={checkUpdatesAndErrors} onNewStream={(s)=>{setMidiStream(s)}}/>
+      <InjectMidiPanel 
+        checkStream={checkUpdatesAndErrors} 
+        setStream={(s)=>{setMidiStream(s)}} 
+        stream={midiStream}
+      />
       
       <div className='MinimScreenArray'>
         <ContextScreen draws={draws[1]} errorAt={errorCmds[1]} contextNumber={1} horizontal={false}/>

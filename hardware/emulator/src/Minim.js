@@ -1,13 +1,17 @@
-import './Minim.css'
+import './style/screens.css'
 import {useEffect, useRef, useState} from 'react'
 
-function plotCSContext(context, contextNumber, horizontal){
-    context.fillStyle = '#000000'
+function plotCSContext(canvas, contextNumber, horizontal){
+    const context = canvas.getContext('2d')
+    const sty = getComputedStyle(canvas)
+    const bg = sty.backgroundColor
+    const fg = sty.color
+    context.fillStyle = bg
     context.fillRect(0, 0, context.canvas.width, context.canvas.height)
     for(let y=0; y<64; y++){
         for(let x=0; x<128; x++){
             if(!window.ControlSurface.getPixelAtContext(contextNumber,x,y)) continue
-            context.fillStyle = 'white'
+            context.fillStyle = fg
 
             if(horizontal)
                 context.fillRect(x,y,1,1);
@@ -19,7 +23,7 @@ function plotCSContext(context, contextNumber, horizontal){
 
 export default function ContextScreen({contextNumber, horizontal = true, draws, errorAt}){
     const canvasRef = useRef()
-    const update = (canvas)=>{plotCSContext(canvas.getContext('2d'),contextNumber,horizontal);}
+    const update = (canvas)=>{plotCSContext(canvas,contextNumber,horizontal);}
 
     useEffect(() => {
         const cv = canvasRef.current
