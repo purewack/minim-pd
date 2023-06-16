@@ -10,7 +10,16 @@
     cmd["symbol"] = std::to_string(SYM);\
     cmd["arguments"] = std::to_string(SYM##_ARG);\
     cmd["name"] = std::string(SYM##_ABR);\
+    cmd["type"] = std::string(SYM##_TYPE);\
     cmdList.push_back(cmd);\
+} 
+#define AUTO_BIND_X(SYM,NAME,ARG,TYPE) {\
+    auto cmd = std::map<std::string, std::string>();\
+    cmd["symbol"] = SYM;\
+    cmd["arguments"] = ARG;\
+    cmd["name"] = NAME;\
+    cmd["type"] = TYPE;\
+    contextCmds.push_back(cmd);\
 } 
 
 std::vector<std::map<std::string, std::string>> API::generateCommandDescriptors(){
@@ -28,14 +37,6 @@ std::vector<std::map<std::string, std::string>> API::generateCommandDescriptors(
     return cmdList;
 }
 
-#define AUTO_BIND_X(SYM,NAME,ARG) {\
-    auto cmd = std::map<std::string, std::string>();\
-    cmd["symbol"] = SYM;\
-    cmd["arguments"] = ARG;\
-    cmd["name"] = NAME;\
-    contextCmds.push_back(cmd);\
-} 
-
 std::vector<std::map<std::string, std::string>> API::generateContextDescriptors(){
     auto contextCmds = std::vector<std::map<std::string, std::string>>();
 
@@ -44,18 +45,15 @@ std::vector<std::map<std::string, std::string>> API::generateContextDescriptors(
     startStr += std::to_string(CMD_SYSEX_ID[1]) + " ";
     startStr += std::to_string(CMD_SYSEX_ID[2]) + " ";
     startStr += std::to_string(CMD_SYSEX_ID[3]);
-
-    AUTO_BIND_X(startStr,"start",std::to_string(1));
+    AUTO_BIND_X(startStr,"start",std::to_string(1),"status");
 
     startStr = "";
     startStr += std::to_string(CMD_SYSEX_ID[0]) + " ";
     startStr += std::to_string(CMD_SYSEX_ID[1]) + " ";
     startStr += std::to_string(CMD_SYSEX_ID[2]) + " ";
     startStr += std::to_string(CMD_SYSEX_DEBUG);
-
-    AUTO_BIND_X(startStr,"debug",std::to_string(1));
-
-    AUTO_BIND_X(std::to_string(CMD_SYSEX_END),"end",std::to_string(0));
+    AUTO_BIND_X(startStr,"debug",std::to_string(1),"status");
+    AUTO_BIND_X(std::to_string(CMD_SYSEX_END),"end",std::to_string(0),"status");
 
     return contextCmds;
 }

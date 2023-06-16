@@ -16,22 +16,11 @@ contextBridge.exposeInMainWorld('ControlSurface', {
 
     showLinksAtContext: (context,count)=> _cs.showLinksAtContext(context,count),
     
-    /* 
-    SYSEX_ID
-    SYSEX_START
-    SYSEX_END
-    NOTE_ON
-    NOTE_OFF
-    CMD_ALTER
-    CMD_LINK
-    CMD_LINE
-    CMD_RECT
-    CMD_STRING
-    CMD_BITMAP
-    CMD_UPLOAD
-    */
-    apiCommand: (cmd)=> ControlSurface[cmd]
-    
+    getAPICommands: (name)=> {
+        if(name === undefined)
+            return [...ControlSurface.commands]
+        return ControlSurface.commands[ControlSurface.indexes[name]]
+    }
 })
 // contextBridge.exposeInMainWorld('BufferPainter', {
 //     clear: ()=> {sharedPainter.clear()},

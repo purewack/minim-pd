@@ -43,8 +43,8 @@ export default function SettingsMidi({className, ...restProps}){
   
 
 
-export function FlowMidi(){
-  return <div className='MidiFlow'>
+export function FlowMidi({...restProps}){
+  return <div className='MidiFlow' {...restProps}>
     <span className='In'/>
     <span className='Out'/>
     <span>
@@ -54,15 +54,27 @@ export function FlowMidi(){
 }
 
 
-export function InjectMidiPanel({stream, setStream, checkStream}){
+export function InjectMidiPanel({stream, setStream, checkStream, ...restProps}){
   const inputRef = useRef()
+  const [code, setCode] = useState([])
+  const cleanStreamWhitespace = (stream)=> stream.replace(/\s+/g, ' ').trim().split(' ')
 
-  return <div className='InjectMidiPanel' >
-    <span>Stream:</span>
+  const buildStream = (cc)=>{
+    inputRef.current.value = '';
+    cc.forEach(c => {
+      inputRef.current.value += c.symbol + ' ';
+      c.arguments.forEach(a => {
+        inputRef.current.value +=  '- '
+      })
+    })
+  }
+
+  return <div className='InjectMidiPanel' {...restProps} >
+
     <form onSubmit={(e)=>{
       e.preventDefault()
       const textStream = e.target.inputStream.value
-      const textArray = textStream.replace(/\s+/g, ' ').trim().split(' ');
+      const textArray = cleanStreamWhitespace(textStream)
       const numArray = textArray.map(v => parseInt(v))
       // numArray.forEach(v => {
       //   if(v > 255 || v < 0) throw Error('invalid input stream at: ' + v)
@@ -71,14 +83,34 @@ export function InjectMidiPanel({stream, setStream, checkStream}){
       checkStream()
       setStream(textStream)
     }}>
-      <input ref={inputRef} type='text' name="inputStream" placeholder={stream} className='inputStream'/>
       <input type="submit" name="inject" value="Inject"/>
-      <button type="submit" name="start" onClick={()=>{
-        if(inputRef.current){
-          inputRef.current.value += ' '
-        }
-      }}>+Start</button>
-      <button type="submit" name="start">+End</button>
+      <input ref={inputRef} type='text' name="inputStream" placeholder='numeric stream' className='inputStream'/>
+      <input type="submit" name="inject" value="CLEAR" onClick={(e)=>{
+        e.preventDefault()
+        setCode([])
+        inputRef.current.value = ''
+      }}/>
     </form>
+
+    <div className='codeblocks'>
+        {code.map(c => <span className={'codeblock ' + c?.type}>{c?.name}{c.arguments.length ? '(' + c.arguments + ')' : null}</span>)}
+      </div>
+    
+    <div className='inputCommands'>
+      {window.ControlSurface.getAPICommands().map(c => 
+        <button key={'btn_'+c.name} onClick={()=>{
+          setCode(arr => {
+            let cc = [...arr]
+              cc.push({name: c.name, type:c.type, symbol:c.symbol, arguments:[...Array(c.arguments).fill('-')], maxArguments:c.arguments})
+              buildStream(cc)
+            return cc;
+          })
+        }}>{c.name}</button>
+      )}
+      <span>:</span>
+      <button onClick={()=>{
+        
+      }}>Insert Test Stream</button>
+      </div>
   </div>
 }

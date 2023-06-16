@@ -23,7 +23,7 @@ button, input[type=submit] {
   background-color: var(--c-high);
   color: var(--c-high-alt);
   border: none;
-  margin-right: 0.25rem;
+  /* margin-right: 0.25rem; */
   /* margin-block: 2px; */
   border-bottom:2px solid var(--c-sel);
 }

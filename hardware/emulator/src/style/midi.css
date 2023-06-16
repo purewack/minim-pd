@@ -40,6 +40,37 @@
   color: var(--c-sel-alt);
 }
 
+.InjectMidiPanel .inputCommands{
+  display: flex;
+  flex-wrap: wrap;
+  gap:0.25rem;
+}
+
+.InjectMidiPanel .codeblocks {
+  display: flex;
+  flex-wrap: wrap;
+  margin-block: 0.25rem;
+  height: fit-content;
+}
+
+.InjectMidiPanel .codeblock {
+  margin-right: 0.5rem;
+  border-right: solid black 2px;
+  color:darkblue;
+}
+.InjectMidiPanel .codeblock.function{
+  background-color: lightblue;
+}
+.InjectMidiPanel .codeblock.constant{
+  background-color: lightgoldenrodyellow;
+}
+.InjectMidiPanel .codeblock.status{
+  background-color: greenyellow;
+}
+.InjectMidiPanel .codeblock.variable{
+  background-color:plum;
+}
+
 
 
 

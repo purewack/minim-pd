@@ -21,31 +21,53 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
     InstanceMethod("showParseErrors", &MINIM::ControlSurface::showParseErrors),
   });
 
-  auto list = API::generateCommandDescriptors();
+  constructor = Napi::Persistent(buf);
+  constructor.SuppressDestruct();
+
+  auto cmdList = API::generateCommandDescriptors();
   auto listArray = Napi::Array::New(env);
   unsigned int j=0;
-  for(auto i:list){
-    auto cmd = Napi::Object::New(env);
-    cmd["name"] = i["name"];
-    cmd["symbol"] = std::stoi(i["symbol"]);
-    cmd["arguments"] = std::stoi(i["arguments"]);
-    listArray[j++] = cmd;
-  }
-  
+
   auto contextList = API::generateContextDescriptors();
   for(auto i:contextList){
     auto cmd = Napi::Object::New(env);
     cmd["name"] = i["name"];
     cmd["symbol"] = i["symbol"];
     cmd["arguments"] = std::stoi(i["arguments"]);
+    cmd["type"] = i["type"];
+    listArray[j++] = cmd;
+  }
+
+  for(auto i:cmdList){
+    auto cmd = Napi::Object::New(env);
+    cmd["name"] = i["name"];
+    cmd["symbol"] = std::stoi(i["symbol"]);
+    cmd["arguments"] = std::stoi(i["arguments"]);
+    cmd["type"] = i["type"];
     listArray[j++] = cmd;
   }
   
   buf["commands"] = listArray;
 
+  auto nameArray = Napi::Object::New(env);
+  j=0;
+  for(auto i:contextList){
+    nameArray[i["name"]] = uint32_t(j++);
+  }
+  for(auto i:cmdList){
+    nameArray[i["name"]] = uint32_t(j++);
+  }
+  buf["names"] = nameArray;
 
-  constructor = Napi::Persistent(buf);
-  constructor.SuppressDestruct();
+  auto symbolArray = Napi::Object::New(env);
+  j=0;
+  for(auto i:contextList){
+    symbolArray[i["symbol"]] = uint32_t(j++);
+  }
+  for(auto i:cmdList){
+    symbolArray[i["symbol"]] = uint32_t(j++);
+  }
+  buf["symbols"] = symbolArray;
 
   exports.Set("ControlSurface", buf);
   return exports;
@@ -155,12 +177,19 @@ Napi::Value MINIM::ControlSurface::parseCommandListAtContext(const Napi::Callbac
     return Napi::Number::New(info.Env(), cmds);
 }
 
+void onParseElement(const char* element,void* data){
+    auto env = reinterpret_cast<Napi::Env*>(data);
+    std::string s = "console.log('";
+    s += element;
+    s += "');";
+    env->RunScript(s);
+}
 
 Napi::Value MINIM::ControlSurface::parseMidiStream(const Napi::CallbackInfo& info){
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
-    if( info.Length() != 1){
-        Napi::Error::New(info.Env(), "Expected 1 argument, midi stream Int8Array")
+    if( info.Length() < 1){
+        Napi::Error::New(info.Env(), "Expected 1 argument: (Uint8Array midiStream), or (Uint8Array midiStream, (string onElement)=>{})")
             .ThrowAsJavaScriptException();
         return info.Env().Undefined();
     }
@@ -173,18 +202,13 @@ Napi::Value MINIM::ControlSurface::parseMidiStream(const Napi::CallbackInfo& inf
     Napi::Uint8Array buf = info[0].As<Napi::Uint8Array>();
     auto data = reinterpret_cast<uint8_t*>(buf.Data());
     auto len = buf.ByteLength() / sizeof(uint8_t);
-    // std::string s = "console.log(\'data ";
-    // for(int i=0; i<len; i++){
-    //   s +=  std::to_string(data[i]) + ", ";
-    // }
-    // s += " len " + std::to_string(len);
-    // s += "\')";
-    // info.Env().RunScript(s);
-    // info.Env().RunScript("console.log(\'" + std::string(this->cs->MidiStreamHasSysex(data,len) == 1 ? "Has Sysex" : "No Sysex flag in stream") + "\')");
-    auto draws = this->cs->parseMidiStream(data,len);
-    // auto updates = this->cs->updateContextsFlag;
-    // info.Env().RunScript("console.log(\'" + std::to_string(updates) + "\')");
-    
+
+    int draws = 0;
+    if( info.Length() == 2)
+        this->cs->parseMidiStream(data,len,onParseElement,reinterpret_cast<void*>(&env));
+    else 
+        this->cs->parseMidiStream(data,len);
+
     return Napi::Number::New(info.Env(), draws);
 }
 Napi::Value MINIM::ControlSurface::parseMidiStreamUpdate(const Napi::CallbackInfo& info){

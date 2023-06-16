@@ -7,6 +7,7 @@ function App() {
   const [draws, setDraws] = useState([0,0,0,0,0,0])
   const [errorCmds, setErrorCmds] = useState([null,null,null,null,null,null])
   const [midiStream, setMidiStream] = useState('')
+  const [midiInjectPanel, setMidiInjectPanel] = useState(false)
 
   const checkUpdatesAndErrors = ()=>{
     const d = [...window.ControlSurface.showParseUpdates().values()]
@@ -25,15 +26,16 @@ function App() {
     <div className="App">
       <div className='MenuTitle'>
         <span>MINIM</span>
-        <FlowMidi />
+        <FlowMidi onClick={()=>setMidiInjectPanel(s=>!s)}/>
         <span>Quit</span>
       </div>
 
-      <InjectMidiPanel 
+      {<InjectMidiPanel 
+        style={{display: midiInjectPanel ? 'block' : 'none'}}
         checkStream={checkUpdatesAndErrors} 
         setStream={(s)=>{setMidiStream(s)}} 
         stream={midiStream}
-      />
+      />}
       
       <div className='MinimScreenArray'>
         <ContextScreen draws={draws[1]} errorAt={errorCmds[1]} contextNumber={1} horizontal={false}/>
