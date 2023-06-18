@@ -59,7 +59,7 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
   for(auto i:cmdList){
     nameArray[i["name"]] = uint32_t(j++);
   }
-  buf["names"] = nameArray;
+  buf["nameToIdx"] = nameArray;
 
   auto symbolArray = Napi::Object::New(env);
   j=0;
@@ -69,7 +69,27 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
   for(auto i:cmdList){
     symbolArray[i["symbol"]] = uint32_t(j++);
   }
-  buf["symbols"] = symbolArray;
+  buf["symbolToIdx"] = symbolArray;
+
+  auto nameToSymbolArray = Napi::Object::New(env);
+  j=0;
+  for(auto i:contextList){
+    nameToSymbolArray[i["name"]] = i["symbol"];
+  }
+  for(auto i:cmdList){
+    nameToSymbolArray[i["name"]] = i["symbol"];
+  }
+  buf["nameToSymbol"] = nameToSymbolArray;
+
+  auto symbolToName = Napi::Object::New(env);
+  j=0;
+  for(auto i:contextList){
+    symbolToName[i["symbol"]] = i["name"];
+  }
+  for(auto i:cmdList){
+    symbolToName[i["symbol"]] = i["name"];
+  }
+  buf["symbolToName"] = symbolToName;
 
   exports.Set("ControlSurface", buf);
   return exports;

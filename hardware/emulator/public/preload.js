@@ -22,7 +22,10 @@ contextBridge.exposeInMainWorld('ControlSurface', {
         return ControlSurface.commands[ControlSurface.indexes[name]]
     },
     getSymbol: (name)=>{
-        return ControlSurface.commands[ControlSurface.names[name]].symbol
+        return ControlSurface.nameToSymbol[name]
+    },
+    getName: (symbol)=>{
+        return ControlSurface.symbolToName[symbol]
     }
 })
 // contextBridge.exposeInMainWorld('BufferPainter', {

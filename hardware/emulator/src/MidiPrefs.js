@@ -79,6 +79,9 @@ export function InjectMidiPanel({stream, streamParser, setStream, checkStream, .
       // numArray.forEach(v => {
       //   if(v > 255 || v < 0) throw Error('invalid input stream at: ' + v)
       // });
+      streamParser(new Uint8Array(numArray),(str)=>{
+        console.log(str)
+      })
       streamParser(new Uint8Array(numArray))
       checkStream()
       setStream(textStream)
@@ -93,7 +96,7 @@ export function InjectMidiPanel({stream, streamParser, setStream, checkStream, .
     </form>
 
     <div className='codeblocks'>
-        {code.map(c => <span className={'codeblock ' + c?.type}>{c?.name}{c.arguments.length ? '(' + c.arguments + ')' : null}</span>)}
+        {code.map((c,i) => <span key={i + c.name} className={'codeblock ' + c?.type}>{c?.name}{c.arguments.length ? '(' + c.arguments + ')' : null}</span>)}
       </div>
     
     <div className='inputCommands'>

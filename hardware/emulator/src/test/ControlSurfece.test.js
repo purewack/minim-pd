@@ -1,6 +1,6 @@
 const {ControlSurface} = require('../../native/build/Release/minim.node');
 
-const CMD = (cmd)=>ControlSurface.commands[ControlSurface.names[cmd]].symbol
+const CMD = (cmd)=>parseInt(ControlSurface.nameToSymbol[cmd])
 
 describe('ControlSurface', ()=>{
     test('parse stream single context', ()=>{
