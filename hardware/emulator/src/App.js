@@ -32,6 +32,7 @@ function App() {
 
       {<InjectMidiPanel 
         style={{display: midiInjectPanel ? 'block' : 'none'}}
+        streamParser={window.ControlSurface.parseMIDIStream}
         checkStream={checkUpdatesAndErrors} 
         setStream={(s)=>{setMidiStream(s)}} 
         stream={midiStream}

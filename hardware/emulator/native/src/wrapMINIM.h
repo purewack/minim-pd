@@ -62,13 +62,21 @@ namespace MINIM{
 
         Napi::Value asArrayAtContext(const Napi::CallbackInfo& info);
         Napi::Value getPixelAtContext(const Napi::CallbackInfo& info);
-        Napi::Value getCommandListAtContext(const Napi::CallbackInfo& info);
-        Napi::Value parseCommandListAtContext(const Napi::CallbackInfo& info);
+        
+        Napi::Value parseDisplayListAtContext(const Napi::CallbackInfo& info);
+        Napi::Value getDisplayListAtContext(const Napi::CallbackInfo& info);
         Napi::Value showLinksAtContext(const Napi::CallbackInfo& info);
+        
         Napi::Value parseMidiStream(const Napi::CallbackInfo& info);
         Napi::Value parseMidiStreamUpdate(const Napi::CallbackInfo& info);
+       
         Napi::Value showParseUpdates(const Napi::CallbackInfo& info);
         Napi::Value showParseErrors(const Napi::CallbackInfo& info);
+    };
+
+    struct ParseData{
+        Napi::Function* callback;
+        Napi::Env* env;
     };
 };
 

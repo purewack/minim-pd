@@ -54,7 +54,7 @@ export function FlowMidi({...restProps}){
 }
 
 
-export function InjectMidiPanel({stream, setStream, checkStream, ...restProps}){
+export function InjectMidiPanel({stream, streamParser, setStream, checkStream, ...restProps}){
   const inputRef = useRef()
   const [code, setCode] = useState([])
   const cleanStreamWhitespace = (stream)=> stream.replace(/\s+/g, ' ').trim().split(' ')
@@ -79,7 +79,7 @@ export function InjectMidiPanel({stream, setStream, checkStream, ...restProps}){
       // numArray.forEach(v => {
       //   if(v > 255 || v < 0) throw Error('invalid input stream at: ' + v)
       // });
-      window.ControlSurface.parseMIDIStream(new Uint8Array(numArray))
+      streamParser(new Uint8Array(numArray))
       checkStream()
       setStream(textStream)
     }}>
@@ -109,7 +109,13 @@ export function InjectMidiPanel({stream, setStream, checkStream, ...restProps}){
       )}
       <span>:</span>
       <button onClick={()=>{
-        
+        let str = ''
+        str += window.ControlSurface.getSymbol('start') + ' '
+        str += '1 '
+        str += window.ControlSurface.getSymbol('rect') + ' '
+        str += '0 0 30 30 1 '
+        str += window.ControlSurface.getSymbol('end')
+        inputRef.current.value = str;
       }}>Insert Test Stream</button>
       </div>
   </div>

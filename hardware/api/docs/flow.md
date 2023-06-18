@@ -1,3 +1,4 @@
+# Class Flow
 ```mermaid
     graph LR;
 
@@ -38,3 +39,6 @@
     ctrl --> midi_in
 
 ```
+
+# Function Flow
+

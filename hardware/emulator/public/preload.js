@@ -4,7 +4,7 @@ const _cs = new ControlSurface()
 // const sharedPainter = new BufferPainter()
 
 contextBridge.exposeInMainWorld('ControlSurface', {
-    parseMIDIStream: (streamUint8Array) => _cs.parseMIDIStream(streamUint8Array),
+    parseMIDIStream: (streamUint8Array, parseHook = undefined) => _cs.parseMIDIStream(streamUint8Array, parseHook),
     parseMIDIStreamUpdate: (streamUint8Array) => _cs.parseMIDIStreamUpdate(streamUint8Array),
 
     getPixelAtContext: (context, x,y)=> _cs.getPixelAtContext(context,x,y),
@@ -20,6 +20,9 @@ contextBridge.exposeInMainWorld('ControlSurface', {
         if(name === undefined)
             return [...ControlSurface.commands]
         return ControlSurface.commands[ControlSurface.indexes[name]]
+    },
+    getSymbol: (name)=>{
+        return ControlSurface.commands[ControlSurface.names[name]].symbol
     }
 })
 // contextBridge.exposeInMainWorld('BufferPainter', {

@@ -4,6 +4,11 @@
 
 #include "friend.h"
 namespace API{
+
+struct ParseArgs {
+    void(*onParseCommand)(const char* command, void* data);
+    void* onParseData;
+};
 class ControlSurfaceAPI5 {
     friend class MINIM::ControlSurface;
 private:
@@ -14,23 +19,25 @@ private:
     int32_t errorLocation[6];
     API::DisplayList cmdList[6];
     API::BufferPainter gfx;
-    bool isArgsValid(const unsigned char* midiBytes, unsigned int count);
-    int MidiStreamHasSysex(const unsigned char* midiStreamBytes, int midiStreamBytesLength);
-    int parseCommandList(int forContext);
-    int parseContextStream(
-        int context, 
+    bool _isArgsValid(const unsigned char* midiBytes, unsigned int count);
+    int _MidiStreamHasSysex(const unsigned char* midiStreamBytes, int midiStreamBytesLength);
+    int _commitContextStream(
+        unsigned int context, 
         const unsigned char* midiBytes, 
         const int midiBytesCount, 
-        void(*onParseCommand)(const char* command, void* data),
-        void* onParseData
+        ParseArgs& parseArgs
     );
     
 public:
+    int parseDisplayList(unsigned int forContext);
+    int parseMidiStream(
+        const unsigned char* midiStreamBytes, 
+        int midiStreamBytesLength
+    );
     int parseMidiStream(
         const unsigned char* midiStreamBytes, 
         int midiStreamBytesLength, 
-        void(*onParseCommand)(const char* command, void* data) = nullptr,
-        void* onParseData = nullptr
+        ParseArgs& parseArgs
     );
     void updateRequiredContexts();
 };
