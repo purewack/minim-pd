@@ -43,7 +43,7 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
   for(auto i:cmdList){
     auto cmd = Napi::Object::New(env);
     cmd["name"] = i["name"];
-    cmd["symbol"] = std::stoi(i["symbol"]);
+    cmd["symbol"] = i["symbol"];
     cmd["arguments"] = std::stoi(i["arguments"]);
     cmd["type"] = i["type"];
     listArray[j++] = cmd;
@@ -173,7 +173,11 @@ Napi::Value MINIM::ControlSurface::getDisplayListAtContext(const Napi::CallbackI
       return info.Env().Undefined();
   } 
 
-  auto list = this->cs->cmdList[context].getBufferCopy();
+    unsigned char buf[CMD_BYTE_COUNT_MAX];
+    auto cc =  this->cs->cmdList[context].accessBuffer(buf);
+  auto list = std::vector<uint8_t>();
+  for(int i=0; i<cc; i++)
+    list.push_back(buf[i]);
   return Napi::Buffer<uint8_t>::Copy(info.Env(),list.data(),list.size());
 }
 
@@ -263,7 +267,9 @@ Napi::Value MINIM::ControlSurface::showLinksAtContext(const Napi::CallbackInfo& 
     } 
 
     auto count = (info[1].As<Napi::Number>().Uint32Value());
-    auto values = this->cs->cmdList[context].getLinkBufferCopy();
+    unsigned char buf[CMD_LINK_COUNT_MAX];
+    auto cc = this->cs->cmdList[context].accessLinkBuffer(buf);
+    auto values = std::vector<unsigned char>();
     return Napi::Buffer<unsigned char>::Copy(info.Env(),values.data(),count);
 }
 
