@@ -12,10 +12,8 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
-      preload: isDev 
-        ? path.join(app.getAppPath(), './public/preload.js') // Loading it from the public folder for dev
-        : path.join(app.getAppPath(), './build/preload.js'), // Loading it from the build folder for production
-    },
+      preload: path.join(__dirname, "preload.js") 
+   },
   });
   win.loadURL(
     isDev

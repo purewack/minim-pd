@@ -41,8 +41,6 @@ export default function SettingsMidi({className, ...restProps}){
     </div>
   }
   
-
-
 export function FlowMidi({...restProps}){
   return <div className='MidiFlow' {...restProps}>
     <span className='In'/>
@@ -54,60 +52,76 @@ export function FlowMidi({...restProps}){
 }
 
 
-export function InjectMidiPanel({stream, streamParser, setStream, checkStream, ...restProps}){
-  const inputRef = useRef()
-  const [code, setCode] = useState([])
-  const cleanStreamWhitespace = (stream)=> stream.replace(/\s+/g, ' ').trim().split(' ')
 
-  const buildStream = (cc)=>{
-    inputRef.current.value = '';
-    cc.forEach(c => {
-      inputRef.current.value += c.symbol + ' ';
-      c.arguments.forEach(a => {
-        inputRef.current.value +=  '- '
-      })
-    })
+
+
+const cleanStreamWhitespace = (stream)=> stream.replace(/\s+/g, ' ').trim().split(' ')
+
+export function textStreamToBlock(textStream){
+  let blocks = []
+  const textArray = cleanStreamWhitespace(textStream)
+  const numArray = textArray.map(v => parseInt(v))
+  window.ControlSurface.parseMIDIStream(new Uint8Array(numArray),(str,where)=>{
+    console.log(where, str)
+    blocks.push(symbolToBlock())
+  })
+  window.ControlSurface.parseMIDIStream(new Uint8Array(numArray))
+  return blocks
+}
+
+export function symbolToBlock(symbol, args){
+  const name = window.ControlSurface.getName(symbol)
+  const c = window.ControlSurface.getAPICommands(name)
+  return { 
+    ...c,
+    arguments: (args ? args : [...Array(c.arguments).fill('-')]),
+    maxArguments: c.arguments
   }
+}
+
+
+
+
+
+export function StreamCodeBlocks({blockArray}){
+  return <div className='codeblocks'>
+    {blockArray.map((c,i) => 
+      <span 
+        key={i + c.name} 
+        className={'codeblock ' + c?.type}
+      >
+        {c?.name}{c.arguments.length ? '(' + c.arguments + ')' : null}
+      </span>)}
+  </div>
+}
+
+export function InjectMidiPanel({stream, ...restProps}){
+  const inputRef = useRef()
+  const [showOriginalStream, setShowOriginalStream] = useState(false)
+  const [code, setCode] = useState([])
 
   return <div className='InjectMidiPanel' {...restProps} >
 
     <form onSubmit={(e)=>{
       e.preventDefault()
       const textStream = e.target.inputStream.value
-      const textArray = cleanStreamWhitespace(textStream)
-      const numArray = textArray.map(v => parseInt(v))
-      // numArray.forEach(v => {
-      //   if(v > 255 || v < 0) throw Error('invalid input stream at: ' + v)
-      // });
-      streamParser(new Uint8Array(numArray),(str)=>{
-        console.log(str)
-      })
-      streamParser(new Uint8Array(numArray))
-      checkStream()
-      setStream(textStream)
+      
     }}>
       <input type="submit" name="inject" value="Inject"/>
       <input ref={inputRef} type='text' name="inputStream" placeholder='numeric stream' className='inputStream'/>
-      <input type="submit" name="inject" value="CLEAR" onClick={(e)=>{
+      <input type="submit" name="clear" value="CLEAR" onClick={(e)=>{
         e.preventDefault()
         setCode([])
         inputRef.current.value = ''
       }}/>
     </form>
 
-    <div className='codeblocks'>
-        {code.map((c,i) => <span key={i + c.name} className={'codeblock ' + c?.type}>{c?.name}{c.arguments.length ? '(' + c.arguments + ')' : null}</span>)}
-      </div>
+    <StreamCodeBlocks blockArray={stream}/>
     
     <div className='inputCommands'>
       {window.ControlSurface.getAPICommands().map(c => 
         <button key={'btn_'+c.name} onClick={()=>{
-          setCode(arr => {
-            let cc = [...arr]
-              cc.push({name: c.name, type:c.type, symbol:c.symbol, arguments:[...Array(c.arguments).fill('-')], maxArguments:c.arguments})
-              buildStream(cc)
-            return cc;
-          })
+          
         }}>{c.name}</button>
       )}
       <span>:</span>

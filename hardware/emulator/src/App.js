@@ -1,25 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
 import ContextScreen from './Minim'
-import { FlowMidi, InjectMidiPanel } from './MidiPrefs';
+import { FlowMidi, InjectMidiPanel } from './Midi';
 import './style/app.css';
 
 function App() {
-  const [draws, setDraws] = useState([0,0,0,0,0,0])
-  const [errorCmds, setErrorCmds] = useState([null,null,null,null,null,null])
+  const [draws, setDraws] = useState([...Array(6).fill({
+    renderCount:0,
+    parseError:null
+  })])
   const [midiStream, setMidiStream] = useState('')
   const [midiInjectPanel, setMidiInjectPanel] = useState(false)
 
   const checkUpdatesAndErrors = ()=>{
     const d = [...window.ControlSurface.showParseUpdates().values()]
     let dr = [...draws]
-    let er = [-1,-1,-1,-1,-1,-1]
+    let error = false
     for(let i=0; i<6; i++){
-      dr[i] += d[i]
+      dr[i].renderCount += d[i].renderCount
       const ee = window.ControlSurface.showParseErrors(i)
-      er[i] = ee >= 0 ? ee : null 
+      dr[i].parseError = ee >= 0 ? ee : null 
+      error |= ee >= 0
     }
     setDraws(dr)
-    setErrorCmds(er)
+    return error
   }
 
   return (
@@ -39,12 +42,12 @@ function App() {
       />}
       
       <div className='MinimScreenArray'>
-        <ContextScreen draws={draws[1]} errorAt={errorCmds[1]} contextNumber={1} horizontal={false}/>
-        <ContextScreen draws={draws[2]} errorAt={errorCmds[2]} contextNumber={2} horizontal={false}/>
-        <ContextScreen draws={draws[3]} errorAt={errorCmds[3]} contextNumber={3} horizontal={false}/>
-        <ContextScreen draws={draws[4]} errorAt={errorCmds[4]} contextNumber={4} horizontal={false}/>
-        <ContextScreen draws={draws[5]} errorAt={errorCmds[5]} contextNumber={5} horizontal={false}/>
-        <ContextScreen draws={draws[0]} errorAt={errorCmds[0]} contextNumber={0} horizontal={true}/>
+        <ContextScreen draws={draws[1]} contextNumber={1} horizontal={false}/>
+        <ContextScreen draws={draws[2]} contextNumber={2} horizontal={false}/>
+        <ContextScreen draws={draws[3]} contextNumber={3} horizontal={false}/>
+        <ContextScreen draws={draws[4]} contextNumber={4} horizontal={false}/>
+        <ContextScreen draws={draws[5]} contextNumber={5} horizontal={false}/>
+        <ContextScreen draws={draws[0]} contextNumber={0} horizontal={true}/>
       </div>
 
     </div>

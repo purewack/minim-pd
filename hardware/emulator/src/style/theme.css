@@ -15,6 +15,7 @@
     --c-hover-alt: rgb(0, 0, 0);
     --c-error: red;
     --c-error-alt: pink;
+    --c-shadow: rgb(4, 19, 27);
 }
 
 
@@ -32,5 +33,6 @@
         --c-hover-alt: white;
         --c-error: red;
         --c-error-alt: pink;
+        --c-shadow: rgb(141, 118, 240);
     }
 }
