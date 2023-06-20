@@ -1,6 +1,5 @@
 #include "surface.h"
 #include "api.h"
-#include <cstring>
 
 bool API::ControlSurfaceAPI5::_isArgsValid(const unsigned char* midiBytes, unsigned int count){
     for(unsigned int i=0; i<count; i++){
@@ -16,20 +15,19 @@ int API::ControlSurfaceAPI5::_MidiStreamHasSysex(const unsigned char* midiStream
     return 0;
 }
 
-int API::ControlSurfaceAPI5::_commitContextStream(unsigned int context, const unsigned char* midiBytes, const int midiBytesCount, API::ParseArgs& check){
-    if(context > 5) return 0;
-    
-    auto list = &this->cmdList[context];
+int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsigned char* midiBytes, const int midiBytesCount, API::ParseArgs& check){
+
+    auto list = &this->cmdList[this->context];
     list->clear();
     int i;
     for(i=0; i<midiBytesCount; i++){
         if( midiBytes[i] & 0x80 ) return i;
         if( midiBytes[i] == CMD_SYMBOL_LINK){
             if(!_isArgsValid(& midiBytes[i+1],2)) {
-                if(check.onParseCommand) {check.onParseCommand("link_arg_error",check.onParseData);}
+                if(check.hook) {check.hook(check.env,"link_arg_error",offset+i);}
                 return -i;
             }
-            if(check.onParseCommand) {check.onParseCommand("link",check.onParseData); i+=2; continue;}
+            if(check.hook) {check.hook(check.env,"link",offset+i); i+=2; continue;}
             int atHigh = midiBytes[i+1]; 
             int atLow  = midiBytes[i+2];
             int listByte = atLow | (atHigh<<7); 
@@ -39,10 +37,10 @@ int API::ControlSurfaceAPI5::_commitContextStream(unsigned int context, const un
         }
         else if( midiBytes[i] == CMD_SYMBOL_LINE){
             if(!_isArgsValid(& midiBytes[i+1],4)) {
-                if(check.onParseCommand) {check.onParseCommand("line_arg_error",check.onParseData);}
+                if(check.hook) {check.hook(check.env,"line_arg_error",offset+i);}
                 return -i;
             }
-            if(check.onParseCommand) {check.onParseCommand("line",check.onParseData); i+=4; continue;}
+            if(check.hook) {check.hook(check.env,"line",offset+i); i+=4; continue;}
             list->add(midiBytes[i]);   //line
             list->add(midiBytes[i+1]); //x
             list->add(midiBytes[i+2]); //y
@@ -53,10 +51,10 @@ int API::ControlSurfaceAPI5::_commitContextStream(unsigned int context, const un
         }
         else if( midiBytes[i] == CMD_SYMBOL_RECT){
             if(!_isArgsValid(& midiBytes[i+1],5)) {
-                if(check.onParseCommand) {check.onParseCommand("rect_arg_error",check.onParseData);}
+                if(check.hook) {check.hook(check.env,"rect_arg_error",offset+i);}
                 return -i;
             }
-            if(check.onParseCommand) {check.onParseCommand("rect",check.onParseData); i+=4; continue;}
+            if(check.hook) {check.hook(check.env,"rect",offset+i); i+=4; continue;}
             list->add(midiBytes[i]);   //rect
             list->add(midiBytes[i+1]); //x
             list->add(midiBytes[i+2]); //y
@@ -82,23 +80,27 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
     for(int i=0; i<midiStreamBytesLength; i++){
         if(midiStreamBytes[i] == CMD_SYSEX_START){
             this->sysex = true;
-            if(memcmp(&midiStreamBytes[i],CMD_SYSEX_ID,4) == 0){
+            if(midiStreamBytes[i] == CMD_SYSEX_ID[0]
+            && midiStreamBytes[i+1] == CMD_SYSEX_ID[1]
+            && midiStreamBytes[i+2] == CMD_SYSEX_ID[2]
+            && midiStreamBytes[i+3] == CMD_SYSEX_ID[3] ){
                 
                 //mode: write display list to context
                 i+=4;
                 auto context = midiStreamBytes[i++];
-                if(context > 5) context = 5;
-                
+                if(context > CONTEXT_MAX-1) context = CONTEXT_MAX-1;
+                this->context = context;
+    
                 if(midiStreamBytes[i+1] & 0x80){
-                    if(check.onParseCommand) check.onParseCommand("end_partial",check.onParseData);
+                    if(check.hook) check.hook(check.env,"end_partial",i);
                     this->sysex = false;
                     i+=1;
                     this->updateContextsFlag |= (1<<context);
                     continue;
                 }
 
-                if(check.onParseCommand) check.onParseCommand("start",check.onParseData);
-                auto parsed = this->_commitContextStream(context, &midiStreamBytes[i], midiStreamBytesLength-i, check);
+                if(check.hook) check.hook(check.env,"start",i);
+                auto parsed = this->parseMidiCommands(context, &midiStreamBytes[i], midiStreamBytesLength-i, check);
                 
                 if(parsed < 0){
                     //error parsing, close to byte -parsed
@@ -113,18 +115,18 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
                     this->errorLocation[context] = -1;
                 }
         
-                this->context = context;
                 draws += 1;
             }
         }
         if(midiStreamBytes[i] & 0x80){
             this->sysex = false;
-            if(check.onParseCommand) check.onParseCommand("end",check.onParseData);
+            if(check.hook) check.hook(check.env,"end",i);
         }
         if(((midiStreamBytes[i]>>4) == 0x9) && !this->sysex){
             unsigned char context = (midiStreamBytes[i] & 0x0F) % 6;
             unsigned char note    = midiStreamBytes[i+1];
             unsigned char vel     = midiStreamBytes[i+2];
+            if(check.hook) check.hook(check.env,"var",i);
             i += 2;
             //modify variable
             this->cmdList[context].modifyAt(note,vel);
@@ -132,7 +134,6 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
             this->updateContextsFlag |= (1<<context); 
             this->context = context;
             draws += 1;
-            if(check.onParseCommand) check.onParseCommand("var",check.onParseData);
         }
     }
 
@@ -153,7 +154,7 @@ int API::ControlSurfaceAPI5::parseDisplayList(unsigned int context){
     int commandCount = 0;
     this->gfx.clear();
     this->gfx.resetScaleRotate();
-    this->gfx.rotated = (context == 0) ? 0 : 1;
+    // this->gfx.rotated = (context == 0) ? 0 : 1;
     auto list = &this->cmdList[context];
     auto count = list->getCount();
     this->updateContextsFlag &= ~(1<<context);

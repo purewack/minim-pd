@@ -201,10 +201,11 @@ Napi::Value MINIM::ControlSurface::parseDisplayListAtContext(const Napi::Callbac
 }
 
 
-void onParseElement(const char* element,void* data){
+void onParseElement(void* data, const char* element, int where){
     auto parsedata = reinterpret_cast<MINIM::ParseData*>(data);
     auto args = std::vector<Napi::Value>();
     args.push_back(Napi::String::New(*(parsedata->env),element));
+    args.push_back(Napi::Number::New(*(parsedata->env),where));
     parsedata->callback->Call(args);
 }
 

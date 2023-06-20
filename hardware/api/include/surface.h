@@ -6,8 +6,8 @@
 namespace API{
 
 struct ParseArgs {
-    void(*onParseCommand)(const char* command, void* data);
-    void* onParseData;
+    void(*hook)(void* env, const char* command, int where);
+    void* env;
 };
 class ControlSurfaceAPI5 {
     friend class MINIM::ControlSurface;
@@ -21,15 +21,16 @@ private:
     API::BufferPainter gfx;
     bool _isArgsValid(const unsigned char* midiBytes, unsigned int count);
     int _MidiStreamHasSysex(const unsigned char* midiStreamBytes, int midiStreamBytesLength);
-    int _commitContextStream(
-        unsigned int context, 
+   
+    
+public:
+    int parseDisplayList(unsigned int forContext);
+    int parseMidiCommands(
+        unsigned int offset, 
         const unsigned char* midiBytes, 
         const int midiBytesCount, 
         ParseArgs& parseArgs
     );
-    
-public:
-    int parseDisplayList(unsigned int forContext);
     int parseMidiStream(
         const unsigned char* midiStreamBytes, 
         int midiStreamBytesLength
