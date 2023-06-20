@@ -19,7 +19,7 @@ h1, h2, h3 {
   box-sizing: border-box;
 }
 
-button, input[type=submit] {
+button, input[type=submit], input[type=button] {
   background-color: var(--c-high);
   color: var(--c-high-alt);
   border: none;
@@ -27,11 +27,25 @@ button, input[type=submit] {
   /* margin-block: 2px; */
   border-bottom:2px solid var(--c-sel);
 }
-button:hover, input[type=submit]:hover {
+button:hover, input[type=submit]:hover, input[type=button]:hover  {
   background-color: var(--c-hover);
   color: var(--c-hover-alt);
 }
-
+input[type=text]{
+  color: var(--c-main);
+  background-color: var(--c-back);
+  border: none;
+  font: inherit;
+  flex-grow: 1;
+}
+input[type=text]:hover {
+  background-color: var(--c-hover);
+}
+input[type=text]:focus {
+  outline: none !important;
+  background-color: var(--c-sel);
+  color: var(--c-sel-alt);
+}
 
 .App{
   position: relative;

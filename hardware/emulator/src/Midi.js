@@ -57,16 +57,30 @@ export function FlowMidi({...restProps}){
 
 const cleanStreamWhitespace = (stream)=> stream.replace(/\s+/g, ' ').trim().split(' ')
 
-export function textStreamToBlock(textStream){
-  let blocks = []
-  const textArray = cleanStreamWhitespace(textStream)
-  const numArray = textArray.map(v => parseInt(v))
-  window.ControlSurface.parseMIDIStream(new Uint8Array(numArray),(str,where)=>{
-    console.log(where, str)
-    blocks.push(symbolToBlock())
+// export function textStreamToBlock(textStream){
+//   let blocks = []
+//   const textArray = cleanStreamWhitespace(textStream)
+//   const numArray = textArray.map(v => parseInt(v))
+//   window.ControlSurface.parseMIDICommands(new Uint8Array(numArray),(str,where)=>{
+//     console.log(str,where)
+//     if(!str.contains('err'))
+//       blocks.push(symbolToBlock(str))
+//   })
+//   window.ControlSurface.parseMIDIStream(new Uint8Array(numArray))
+//   return blocks
+// }
+
+export function blocksToTextStream(blocks){
+  if(!blocks) return ''
+  let st = ''
+  blocks.forEach(c => {
+    st += window.ControlSurface.getSymbol(c.name) + ' '
+    c.arguments.forEach(a => {
+      st += a
+      st += ' '
+    })
   })
-  window.ControlSurface.parseMIDIStream(new Uint8Array(numArray))
-  return blocks
+  return st
 }
 
 export function symbolToBlock(symbol, args){
@@ -83,48 +97,82 @@ export function symbolToBlock(symbol, args){
 
 
 
-export function StreamCodeBlocks({blockArray}){
+export function StreamCodeBlocks({blockArray, onNewArgument, onRemove}){
+  
   return <div className='codeblocks'>
-    {blockArray.map((c,i) => 
+    {blockArray && blockArray.map((c,i) => 
       <span 
         key={i + c.name} 
-        className={'codeblock ' + c?.type}
+        className={'codeblock ' + c.type}
       >
-        {c?.name}{c.arguments.length ? '(' + c.arguments + ')' : null}
+        <p><span>{c.name}</span><span className='remove' onClick={()=>{onRemove(i)}}>X</span></p>
+        <p><span>{'(' }</span>
+        {c.arguments.map((a,j) => 
+          <input className={'argument'} key={`arg_${i}_${j}`} value={a} type='text' onChange={(e)=>{
+            onNewArgument(i,j,e.target.value);
+          }}></input>
+        )}
+        <span>{')'}</span></p>
       </span>)}
   </div>
 }
 
 export function InjectMidiPanel({stream, ...restProps}){
   const inputRef = useRef()
-  const [showOriginalStream, setShowOriginalStream] = useState(false)
   const [code, setCode] = useState([])
+  const [insertHead, setInsertHead] = useState(0)
 
   return <div className='InjectMidiPanel' {...restProps} >
 
     <form onSubmit={(e)=>{
       e.preventDefault()
-      const textStream = e.target.inputStream.value
-      
+      // const textStream = e.target.inputStream.value
     }}>
-      <input type="submit" name="inject" value="Inject"/>
-      <input ref={inputRef} type='text' name="inputStream" placeholder='numeric stream' className='inputStream'/>
-      <input type="submit" name="clear" value="CLEAR" onClick={(e)=>{
+      <input type="submit" name="inject" value="Inject" className='btnInject'/>
+      <input ref={inputRef} type='text' name="inputStream" className='inputStream' placeholder='numeric stream' />
+      <input type="button" name="make" value="Make" className='btnMake' onClick={(e)=>{
+        e.preventDefault()
+        inputRef.current.value = blocksToTextStream(code)
+      }}/>
+      <input type="button" name="clear" value="CLEAR" className='btnClear' onClick={(e)=>{
         e.preventDefault()
         setCode([])
         inputRef.current.value = ''
       }}/>
     </form>
 
-    <StreamCodeBlocks blockArray={stream}/>
+    <StreamCodeBlocks blockArray={code} 
+      newAt={insertHead}
+      onNewArgument={(i,j,v)=>{
+        setCode(c => {
+          let cc = [...c]
+          cc[i].arguments[j] = v
+          inputRef.current.value = blocksToTextStream(cc)
+          return cc
+        })
+      }}
+      onRemove={(i)=>{
+        setCode(c => [...c.filter((v,ii) => ii !== i)])
+        setCode(c => {
+          inputRef.current.value = blocksToTextStream(c)
+          return c
+        })
+      }}
+    />
     
     <div className='inputCommands'>
       {window.ControlSurface.getAPICommands().map(c => 
         <button key={'btn_'+c.name} onClick={()=>{
-          
+          setCode(cd => {
+            let ccc = [...cd]
+            ccc.splice(insertHead, 0, symbolToBlock(c.symbol))
+            inputRef.current.value = blocksToTextStream(ccc)
+            return ccc
+          })
+          setInsertHead(h => h+1)
         }}>{c.name}</button>
       )}
-      <span>:</span>
+      {/* <span>:</span>
       <button onClick={()=>{
         let str = ''
         str += window.ControlSurface.getSymbol('start') + ' '
@@ -133,7 +181,7 @@ export function InjectMidiPanel({stream, ...restProps}){
         str += '0 0 30 30 1 '
         str += window.ControlSurface.getSymbol('end')
         inputRef.current.value = str;
-      }}>Insert Test Stream</button>
+      }}>Insert Test Stream</button> */}
       </div>
   </div>
 }

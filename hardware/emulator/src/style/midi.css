@@ -24,21 +24,7 @@
 .InjectMidiPanel form {
   display: flex;
 }
-.InjectMidiPanel .inputStream{
-  color: var(--c-main);
-  background-color: var(--c-back);
-  border: none;
-  font: inherit;
-  flex-grow: 1;
-}
-.InjectMidiPanel .inputStream:hover {
-  background-color: var(--c-hover);
-}
-.InjectMidiPanel .inputStream:focus {
-  outline: none !important;
-  background-color: var(--c-sel);
-  color: var(--c-sel-alt);
-}
+
 
 .InjectMidiPanel .inputCommands{
   display: flex;
@@ -57,6 +43,7 @@
   margin-right: 0.5rem;
   border-right: solid black 2px;
   color:darkblue;
+  position: relative;
 }
 .InjectMidiPanel .codeblock.function{
   background-color: lightblue;
@@ -71,7 +58,25 @@
   background-color:plum;
 }
 
-
+.InjectMidiPanel .codeblock * {
+  margin: 1px;
+}
+.InjectMidiPanel .codeblock .argument{
+  width:4ch;
+  border: dotted var(--c-high) 2px;
+}
+.InjectMidiPanel .codeblock .remove {
+  background-color: none;
+  color: red;
+  position: absolute;
+  right: 0;
+  top: 0;
+  user-select: none;
+}
+.InjectMidiPanel .codeblock .remove:hover {
+  background: red;
+  color: white;
+}
 
 
 
