@@ -49,7 +49,7 @@ const unsigned char CMD_SYSEX_ID[4] = {CMD_SYSEX_START,0x00,0x7f,0x7f};
 #define CMD_SYMBOL_RECT_ARG 5
 #define CMD_SYMBOL_RECT_TYPE "function"
 
-#define CMD_SYMBOL_STRING 'S'
+#define CMD_SYMBOL_STRING 'T'
 #define CMD_SYMBOL_STRING_ABR "string"
 #define CMD_SYMBOL_STRING_ARG 3
 #define CMD_SYMBOL_STRING_TYPE "function"

@@ -17,7 +17,7 @@ contextBridge.exposeInMainWorld('ControlSurface', {
     getAPICommands: (name)=> {
         if(name === undefined)
             return [...ControlSurface.commands]
-        return ControlSurface.commands[ControlSurface.indexes[name]]
+        return ControlSurface.commands[ControlSurface.nameToIdx[name]]
     },
     getSymbol: (name)=>{
         return ControlSurface.nameToSymbol[name]

@@ -19,6 +19,7 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
 
     InstanceMethod("parseMIDIStream", &MINIM::ControlSurface::parseMidiStream),
     InstanceMethod("parseMIDIStreamUpdate", &MINIM::ControlSurface::parseMidiStreamUpdate),
+    InstanceMethod("parseMIDICommands", &MINIM::ControlSurface::parseMidiCommands),
     InstanceMethod("showParseUpdates", &MINIM::ControlSurface::showParseUpdates),
     InstanceMethod("showParseErrors", &MINIM::ControlSurface::showParseErrors),
   });
@@ -209,6 +210,7 @@ void onParseElement(void* data, const char* element, int where){
     parsedata->callback->Call(args);
 }
 
+
 Napi::Value MINIM::ControlSurface::parseMidiStream(const Napi::CallbackInfo& info){
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
@@ -249,6 +251,44 @@ Napi::Value MINIM::ControlSurface::parseMidiStreamUpdate(const Napi::CallbackInf
     auto draws = this->parseMidiStream(info);
     this->cs->updateRequiredContexts();
     return draws;
+}
+
+Napi::Value MINIM::ControlSurface::parseMidiCommands(const Napi::CallbackInfo& info){
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    if( info.Length() < 1){
+        Napi::Error::New(info.Env(), "Expected 1 argument: (Uint8Array midiStream), or (Uint8Array midiStream, (string onElement)=>{})")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    }
+    if( !info[0].IsBuffer() ){
+        Napi::Error::New(info.Env(), "Expected Uint8Array")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    }
+    
+    Napi::Uint8Array buf = info[0].As<Napi::Uint8Array>();
+    auto data = reinterpret_cast<uint8_t*>(buf.Data());
+    auto len = buf.ByteLength() / sizeof(uint8_t);
+
+    int draws = 0;
+    if( info.Length() == 3 && !info[1].IsUndefined()){
+        if( !info[1].IsFunction() ){
+            Napi::Error::New(info.Env(), "Expected parseHook function")
+                .ThrowAsJavaScriptException();
+            return info.Env().Undefined();
+        }
+        auto fn = info[1].As<Napi::Function>();
+
+        auto offset = !info[2].IsNumber() ? 0 : info[2].As<Napi::Number>().Uint32Value();
+        
+        ParseData pdata;
+        pdata.env = &env;
+        pdata.callback = &fn;
+        API::ParseArgs args = {onParseElement,reinterpret_cast<void*>(&pdata)};
+        draws = this->cs->parseMidiCommands(offset, data,len,args);
+    }
+    return Napi::Number::New(info.Env(), draws);
 }
 
 Napi::Value MINIM::ControlSurface::showLinksAtContext(const Napi::CallbackInfo& info){

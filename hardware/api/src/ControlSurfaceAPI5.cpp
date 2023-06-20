@@ -18,10 +18,24 @@ int API::ControlSurfaceAPI5::_MidiStreamHasSysex(const unsigned char* midiStream
 int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsigned char* midiBytes, const int midiBytesCount, API::ParseArgs& check){
 
     auto list = &this->cmdList[this->context];
-    list->clear();
+    if(!check.hook) list->clear();
     int i;
     for(i=0; i<midiBytesCount; i++){
-        if( midiBytes[i] & 0x80 ) return i;
+        if( midiBytes[i] & 0x80 ) {
+            if(check.hook) {
+                if(midiBytes[i] == CMD_SYSEX_ID[0]
+                && midiBytes[i+1] == CMD_SYSEX_ID[1]
+                && midiBytes[i+2] == CMD_SYSEX_ID[2]
+                && midiBytes[i+3] == CMD_SYSEX_ID[3] ){
+                    check.hook(check.env,"start",offset+i); i+=4; continue;
+                }
+                else if(midiBytes[i] == CMD_SYSEX_END){
+                    check.hook(check.env,"end",offset+i); continue;
+                }
+            }
+            else 
+                return i;
+        }
         if( midiBytes[i] == CMD_SYMBOL_LINK){
             if(!_isArgsValid(& midiBytes[i+1],2)) {
                 if(check.hook) {check.hook(check.env,"link_arg_error",offset+i);}
@@ -54,7 +68,7 @@ int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsign
                 if(check.hook) {check.hook(check.env,"rect_arg_error",offset+i);}
                 return -i;
             }
-            if(check.hook) {check.hook(check.env,"rect",offset+i); i+=4; continue;}
+            if(check.hook) {check.hook(check.env,"rect",offset+i); i+=5; continue;}
             list->add(midiBytes[i]);   //rect
             list->add(midiBytes[i+1]); //x
             list->add(midiBytes[i+2]); //y
