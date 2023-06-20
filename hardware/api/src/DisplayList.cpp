@@ -2,15 +2,10 @@
 #include "api.h"
 
 API::DisplayList::DisplayList(uint8_t* buffer){
-    this->commands.buf = buffer ? buffer : (uint8_t*)malloc(CMD_BYTE_COUNT_MAX * sizeof(uint8_t));
+    this->commands.buf = this->_buf;
     this->commands.count = 0;
     this->commands.lim = CMD_BYTE_COUNT_MAX;
     this->unlinkAll();
-}
-
-API::DisplayList::~DisplayList(){
-    if(this->commands.buf)
-    free(this->commands.buf);
 }
 
 void API::DisplayList::unlinkAll(){
@@ -57,15 +52,15 @@ unsigned int API::DisplayList::getCommandAt(unsigned int i){
     return this->commands.buf[i];
 }
 
-std::vector<uint8_t> API::DisplayList::getBufferCopy(){
-    auto list = std::vector<uint8_t>();
-    for(unsigned int i=0; i<this->commands.count; i++)
-        list.push_back(this->commands.buf[i]);
-    return list;
+int API::DisplayList::accessBuffer(uint8_t* buf){
+    unsigned int i=0;
+    for(i=0; i<this->commands.count; i++)
+        buf[i] = (this->commands.buf[i]);
+    return i;
 }
-std::vector<uint8_t> API::DisplayList::getLinkBufferCopy(){
-    auto list = std::vector<uint8_t>();
-    for(int i=0; i<128; i++)
-        list.push_back(this->links[i]);
-    return list;
+int API::DisplayList::accessLinkBuffer(uint8_t* buf){
+    unsigned int i = 0;
+    for(unsigned int i=0; i<128; i++)
+        buf[i] = (this->links[i]);
+    return i;
 }

@@ -1,16 +1,16 @@
 #include "gfx.h"
 #include "fonttiny.h"
 
-std::vector<uint8_t> API::BufferPainter::getBufferCopy(){
-  std::vector<uint8_t> pixels;
+int API::BufferPainter::accessBuffer(uint8_t* buf){
+  int pixels = 0;
   for(int yy=0; yy<32; yy++){
     for(int xx=0; xx<128; xx++){
-      pixels.push_back((this->fbuf_top[xx] & (1<<yy)) ? 1 : 0);
+      buf[pixels++] = ((this->fbuf_top[xx] & (1<<yy)) ? 1 : 0);
     }
   }
   for(int yy=0; yy<32; yy++){
     for(int xx=0; xx<128; xx++){
-      pixels.push_back((this->fbuf_bot[xx] & (1<<yy)) ? 1 : 0);
+      buf[pixels++] = ((this->fbuf_bot[xx] & (1<<yy)) ? 1 : 0);
     }
   }
   return pixels;

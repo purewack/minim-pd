@@ -2,7 +2,11 @@
 
 #define MINIM_API_VER 5
 
+#define CONTEXT_MAX 6
+
 #define CMD_BYTE_COUNT_MAX 1024
+#define CMD_MAP_COUNT_MAX  128
+#define CMD_LINK_COUNT_MAX 128
 
 //sysex manID = 00 7f 7f
 #define CMD_SYSEX_START 0xF0

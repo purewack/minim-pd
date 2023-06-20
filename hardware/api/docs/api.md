@@ -64,10 +64,11 @@ Upon recieving a `0xF0 0x00 0x7F 0x7F` string, the parser switches to sysex mode
 * `128*4*2 = 1kb` for shared screen buffer
 * `1kb ` command buffer per context ` * 5 = 5kb`
 * `128b ` variable pool per context ` * 5 = 620b` 
+* `128b ` command link per context ` * 5 = 620b` 
 * `8kb ` shared image buffer pool 
 
 Estimated minim memory usage (without system):
-`1kb + 5kb + 620b + 8kb =` *14956 bytes*
+`1kb + 5kb + 620b + 620b + 8kb =` *15576 bytes*
 
 ## Transfer Limits
 https://www.lim.di.unimi.it/IEEE/LYON/NETWD.HTM

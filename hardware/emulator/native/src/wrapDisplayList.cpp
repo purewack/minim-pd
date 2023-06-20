@@ -1,4 +1,5 @@
 #include "wrapMINIM.h"
+#include "api.h"
 
 Napi::FunctionReference MINIM::DisplayList::constructor;
 
@@ -39,7 +40,12 @@ Napi::Value MINIM::DisplayList::clear(const Napi::CallbackInfo& info){
 Napi::Value MINIM::DisplayList::asArray(const Napi::CallbackInfo& info){
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
-  auto commands = this->list->getBufferCopy();
+
+  uint8_t buf[CMD_BYTE_COUNT_MAX];
+  auto count = this->list->accessBuffer(buf);
+  auto commands = std::vector<uint8_t>();
+  for(int i=0; i<count; i++)
+    commands.push_back(buf[i]);
   return Napi::Buffer<uint8_t>::Copy(env,commands.data(),commands.size());
 }
 Napi::Value MINIM::DisplayList::getCommandAt(const Napi::CallbackInfo& info){
@@ -128,9 +134,11 @@ Napi::Value MINIM::DisplayList::showLinks(const Napi::CallbackInfo& info){
     if(info.Length() == 2){
         auto at    = (info[0].As<Napi::Number>().Int32Value());
         auto count = (info[1].As<Napi::Number>().Int32Value());
+        uint8_t buf[CMD_LINK_COUNT_MAX];
+        auto cc = this->list->accessLinkBuffer(buf);
         auto values = std::vector<char>();
         for(int i=at; i<(at+count); i++)
-            values.push_back(this->list->links[i]);
+            values.push_back(buf[i]);
         return Napi::Buffer<char>::Copy(info.Env(),values.data(),values.size());
     }
     return info.Env().Undefined();

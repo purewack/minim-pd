@@ -1,9 +1,8 @@
 #pragma once
 
-#include <vector>
-
 #include <stdint.h>
 #include "libdarray.h"
+#include "api.h"
 
 #include "friend.h"
 namespace API{
@@ -17,7 +16,7 @@ public:
   int rotated = 0;
   int scale = 1;
   int modexor = 0;
-  std::vector<uint8_t> getBufferCopy();
+  int accessBuffer(uint8_t* buf);
   void clear();
   void resetScaleRotate();
   uint8_t getPixel(unsigned char x, unsigned char y);
@@ -36,13 +35,14 @@ class DisplayList {
   friend class MINIM::DisplayList;
 
 private:
+    uint8_t _buf[CMD_BYTE_COUNT_MAX];
     sarray_t<uint8_t> commands;
-    int8_t links[128];    
+    int8_t links[CMD_LINK_COUNT_MAX];  
     int lastLink = 0;
     void unlinkAll();
 public:
     DisplayList(uint8_t* buffer = nullptr);
-    ~DisplayList();
+    ~DisplayList(){};
     void clear();
     void add(unsigned char byte);
     void link(uint32_t listAt, uint8_t linkAt);
@@ -50,10 +50,10 @@ public:
     int autoLink(uint32_t linkAt);
     void modifyAt(uint8_t slot, uint8_t value);
  
-    std::vector<uint8_t> getBufferCopy();
-    std::vector<uint8_t> getLinkBufferCopy();
     unsigned int getCommandAt(unsigned int i);
     unsigned int getLinkCount();
     unsigned int getCount();
+    int accessBuffer(uint8_t* buf);
+    int accessLinkBuffer(uint8_t* buf);
 };
 }
