@@ -19,7 +19,7 @@ function plotCSContext(canvas, contextNumber, horizontal){
     }
 }
 
-export default function ContextScreen({contextNumber, draws, error, horizontal = true, detail = false}){
+export default function ContextScreen({contextNumber, draws, error, horizontal = true, detail = false, ...restProps}){
     const canvasRef = useRef()
 
     useEffect(() => {
@@ -27,7 +27,9 @@ export default function ContextScreen({contextNumber, draws, error, horizontal =
     }, [contextNumber, draws, horizontal])
 
     return (
-        <div className={(error ? 'ContextScreen Error ' : 'ContextScreen ') + 'C' + contextNumber }>
+        <div className={(error ? 'ContextScreen Error ' : 'ContextScreen ') + 'C' + contextNumber }
+            {...restProps}
+        >
             <canvas 
                 width={horizontal ? 128 : 64}
                 height={horizontal ? 64 : 128}
@@ -35,15 +37,6 @@ export default function ContextScreen({contextNumber, draws, error, horizontal =
             />
             <span className='ContextScreenInfo'>{draws}</span>
             {error ? <span className='ContextScreenError'>Parse error at displayList byte:{error}</span> : null}
-            {detail ? <div className='ContextDetail'>
-                <h1>Context[{contextNumber}] Inspect</h1>
-                <StreamCodeBlocks blockArray={
-                    window.ControlSurface.getDisplayListAtContext(contextNumber).values().map(v => symbolToBlock(v))
-                }/>
-                <button onClick={()=>{
-                    plotCSContext(canvasRef.current, contextNumber, horizontal)
-                }}>Manual Redraw</button>
-            </div> : null}
         </div>
     )
 }
