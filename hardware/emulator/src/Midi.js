@@ -131,10 +131,6 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
     }}>
       <input type="submit" name="inject" value="Inject" className='btnInject'/>
       <input ref={inputRef} type='text' name="inputStream" className='inputStream' placeholder='numeric stream' />
-      <input type="button" name="make" value="Make" className='btnMake' onClick={(e)=>{
-        e.preventDefault()
-        inputRef.current.value = blocksToTextStream(code)
-      }}/>
       <input type="button" name="clear" value="CLEAR" className='btnClear' onClick={(e)=>{
         e.preventDefault()
         setCode([])

@@ -19,7 +19,7 @@ function plotCSContext(canvas, contextNumber, horizontal){
     }
 }
 
-export default function ContextScreen({contextNumber, draws, error, horizontal = true, detail = false, ...restProps}){
+export default function ContextScreen({contextNumber, draws, error, horizontal = true, ...restProps}){
     const canvasRef = useRef()
 
     useEffect(() => {

@@ -3,6 +3,10 @@
     justify-content: space-around;
     align-items: center;
     margin-block: 1rem;
+    flex-grow: 1;
+    position: relative;
+    padding: 0;
+    margin: 0;
 }
 
 .ContextScreen{
@@ -50,12 +54,23 @@
 }
 
 .MinimScreenInspect {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    position: absolute;
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 1;
 }
 .ContextDetail {
     background-color: var(--c-back);
     color: var(--c-main);
-    height:100%;
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 1rem;
+    border: solid var(--c-high) 2px;
+}
+.MinimScreenInspect .ContextScreen canvas{
+    height: 50vh;
 }
