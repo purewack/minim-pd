@@ -55,7 +55,7 @@ export function FlowMidi({...restProps}){
 
 
 
-const cleanStreamWhitespace = (stream)=> stream.replace(/\s+/g, ' ').trim().split(' ')
+const textToSymbolArray = (text)=> text.replace(/\s+/g, ' ').trim().split(' ').map(v => parseInt(v))
 
 // export function textStreamToBlock(textStream){
 //   let blocks = []
@@ -88,7 +88,7 @@ export function symbolToBlock(symbol, args){
   const c = window.ControlSurface.getAPICommands(name)
   return { 
     ...c,
-    arguments: (args ? args : [...Array(c.arguments).fill('-')]),
+    arguments: (args ? args : [...Array(c.arguments).fill('0')]),
     maxArguments: c.arguments
   }
 }
@@ -117,7 +117,7 @@ export function StreamCodeBlocks({blockArray, onNewArgument, onRemove}){
   </div>
 }
 
-export function InjectMidiPanel({stream, ...restProps}){
+export function InjectMidiPanel({stream, onInject, ...restProps}){
   const inputRef = useRef()
   const [code, setCode] = useState([])
   const [insertHead, setInsertHead] = useState(0)
@@ -127,6 +127,7 @@ export function InjectMidiPanel({stream, ...restProps}){
     <form onSubmit={(e)=>{
       e.preventDefault()
       // const textStream = e.target.inputStream.value
+      onInject(textToSymbolArray(e.target.inputStream.value),code)
     }}>
       <input type="submit" name="inject" value="Inject" className='btnInject'/>
       <input ref={inputRef} type='text' name="inputStream" className='inputStream' placeholder='numeric stream' />

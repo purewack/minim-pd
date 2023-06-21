@@ -73,6 +73,7 @@ namespace MINIM{
         
         Napi::Value showParseUpdates(const Napi::CallbackInfo& info);
         Napi::Value showParseErrors(const Napi::CallbackInfo& info);
+        Napi::Value showParseErrorLocation(const Napi::CallbackInfo& info);
     };
 
     struct ParseData{

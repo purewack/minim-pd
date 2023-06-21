@@ -7,7 +7,8 @@ contextBridge.exposeInMainWorld('ControlSurface', {
     parseMIDIStream: (streamUint8Array, parseHook = undefined) => _cs.parseMIDIStream(streamUint8Array, parseHook),
     parseMIDIStreamUpdate: (streamUint8Array) => _cs.parseMIDIStreamUpdate(streamUint8Array),
     showParseUpdates: ()=> _cs.showParseUpdates(),
-    showParseErrors: (context = undefined)=> _cs.showParseErrors(context),
+    showParseErrors: ()=> _cs.showParseErrors(),
+    showParseErrorLocation: (context)=>_cs.showParseErrorLocation(context),
 
     getPixelAtContext: (context, x,y)=> _cs.getPixelAtContext(context,x,y),
     getDisplayListAtContext:(context)=> _cs.getDisplayListAtContext(context),

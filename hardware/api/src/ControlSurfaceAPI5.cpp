@@ -104,7 +104,7 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
                 auto context = midiStreamBytes[i++];
                 if(context > CONTEXT_MAX-1) context = CONTEXT_MAX-1;
                 this->context = context;
-    
+                
                 if(midiStreamBytes[i+1] & 0x80){
                     if(check.hook) check.hook(check.env,"end_partial",i);
                     this->sysex = false;
@@ -119,7 +119,7 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
                 if(parsed < 0){
                     //error parsing, close to byte -parsed
                     this->errorContextsFlag |= (1<<context);
-                    this->errorLocation[context] = -parsed;
+                    this->errorLocation[context] = (-parsed);
                     this->cmdList[context].clear();
                 }
                 else {
@@ -168,7 +168,7 @@ int API::ControlSurfaceAPI5::parseDisplayList(unsigned int context){
     int commandCount = 0;
     this->gfx.clear();
     this->gfx.resetScaleRotate();
-    // this->gfx.rotated = (context == 0) ? 0 : 1;
+    this->gfx.rotated = (context == 0) ? 0 : 1;
     auto list = &this->cmdList[context];
     auto count = list->getCount();
     this->updateContextsFlag &= ~(1<<context);
