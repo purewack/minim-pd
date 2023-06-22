@@ -15,6 +15,7 @@ int API::ControlSurfaceAPI5::_MidiStreamHasSysex(const unsigned char* midiStream
     return 0;
 }
 
+#include <iostream>
 int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsigned char* midiBytes, const int midiBytesCount, API::ParseArgs& check){
 
     auto list = &this->cmdList[this->context];

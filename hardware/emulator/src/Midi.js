@@ -102,19 +102,20 @@ export function ContextDisplayList({stream, className, ...restProps}){
   useEffect(()=>{
     let l = []
     window.ControlSurface.parseMIDICommandsA(stream,(type,where)=>{
-      console.log(type,where)
-      l.push(type)
+      const c = window.ControlSurface.getAPICommands(type)
+      const args = [...Array(c.arguments)].map((v,i)=> stream[where+1+i])
+      console.log(args)
+      l.push({...c, arguments:args})
     })
     setList(l)
   },[stream])
 
   return <ul className={'ContextDisplayList ' + className} {...restProps}>
-    {/* {list.map(c => <li className={'commandblock' + c.type}>
+    {list.map(c => <li className={'commandblock' + c.type}>
       <span>{c.name}{'('}
-        {c.arguments}
+        {c.arguments.map(v => <span>{v},</span>)}
       {')'}</span>  
-    </li>)} */}
-    {list.map(l => <li>{l}</li>)}
+    </li>)}
   </ul>
 }
 
@@ -192,7 +193,7 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
           setInsertHead(h => h+1)
         }}>{c.name}</button>
       )}
-      {/* <span>:</span>
+      <span>:</span>
       <button onClick={()=>{
         let str = ''
         str += window.ControlSurface.getSymbol('start') + ' '
@@ -201,7 +202,7 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
         str += '0 0 30 30 1 '
         str += window.ControlSurface.getSymbol('end')
         inputRef.current.value = str;
-      }}>Insert Test Stream</button> */}
+      }}>Insert Test Stream</button>
       </div>
   </div>
 }

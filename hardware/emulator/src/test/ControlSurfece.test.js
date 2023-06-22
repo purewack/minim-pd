@@ -244,4 +244,15 @@ describe('ControlSurface', ()=>{
             0,0,1,0,0,0
         ]))
     })
+
+    test('command parse, context independant', ()=>{
+        const cs = new ControlSurface();
+        let names = []
+        cs.parseMIDICommands(new Uint8Array([
+            CMD('rect'), 0, 0, 2, 2, 1
+        ]), (n)=>{
+            names.push(n)
+        });
+        expect(names).toEqual(expect.arrayContaining(['rect']))
+    })
 })

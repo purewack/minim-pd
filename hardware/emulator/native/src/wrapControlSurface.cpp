@@ -203,8 +203,8 @@ Napi::Value MINIM::ControlSurface::parseDisplayListAtContext(const Napi::Callbac
 }
 
 
-void onParseElement(void* data, const char* element, int where){
-    auto parsedata = reinterpret_cast<MINIM::ParseData*>(data);
+void onParseElement(void* env, const char* element, int where){
+    auto parsedata = reinterpret_cast<MINIM::ParseData*>(env);
     auto args = std::vector<Napi::Value>();
     args.push_back(Napi::String::New(*(parsedata->env),element));
     args.push_back(Napi::Number::New(*(parsedata->env),where));
@@ -272,24 +272,27 @@ Napi::Value MINIM::ControlSurface::parseMidiCommands(const Napi::CallbackInfo& i
     auto data = reinterpret_cast<uint8_t*>(buf.Data());
     auto len = buf.ByteLength() / sizeof(uint8_t);
 
-    int draws = 0;
-    if( info.Length() == 3 && !info[1].IsUndefined()){
+    int consumend = 0;
+    if( info.Length() >= 2 && !info[1].IsUndefined()){
         if( !info[1].IsFunction() ){
             Napi::Error::New(info.Env(), "Expected parseHook function")
                 .ThrowAsJavaScriptException();
             return info.Env().Undefined();
         }
-        auto fn = info[1].As<Napi::Function>();
 
-        auto offset = !info[2].IsNumber() ? 0 : info[2].As<Napi::Number>().Uint32Value();
+        auto fn = info[1].As<Napi::Function>();
+        auto offset = 0;
+        if( info.Length() >= 2 && !info[2].IsUndefined()){
+            offset = info[2].As<Napi::Number>().Uint32Value();
+        }
         
         ParseData pdata;
         pdata.env = &env;
         pdata.callback = &fn;
         API::ParseArgs args = {onParseElement,reinterpret_cast<void*>(&pdata)};
-        draws = this->cs->parseMidiCommands(offset, data,len,args);
+        consumend = this->cs->parseMidiCommands(offset, data,len,args);
     }
-    return Napi::Number::New(info.Env(), draws);
+    return Napi::Number::New(info.Env(), consumend);
 }
 
 Napi::Value MINIM::ControlSurface::showLinksAtContext(const Napi::CallbackInfo& info){
