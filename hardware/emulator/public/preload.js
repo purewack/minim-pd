@@ -1,19 +1,27 @@
-const {contextBridge} = require('electron')
-const {BufferPainter, ControlSurface} = require('../native/build/Release/minim.node')
+const {contextBridge, ipcRenderer} = require('electron')
+const {ControlSurface} = require('../native/build/Release/minim.node')
 const _cs = new ControlSurface()
-// const sharedPainter = new BufferPainter()
 
+
+contextBridge.exposeInMainWorld('app', {
+    end: ()=>{ipcRenderer.send('end')}
+})
+
+// const sharedPainter = new BufferPainter()
 contextBridge.exposeInMainWorld('ControlSurface', {
     parseMIDIStream: (streamUint8Array, parseHook = undefined) => _cs.parseMIDIStream(streamUint8Array, parseHook),
-    parseMIDIStreamUpdate: (streamUint8Array) => _cs.parseMIDIStreamUpdate(streamUint8Array),
-    showParseUpdates: ()=> _cs.showParseUpdates(),
-    showParseErrors: ()=> _cs.showParseErrors(),
+    parseMIDIStreamA: (array, parseHook = undefined) => _cs.parseMIDIStream(new Uint8Array(array), parseHook),
+    parseMIDICommands: (streamUint8Array, parseHook = undefined) => _cs.parseMIDICommands(streamUint8Array, parseHook),
+    parseMIDICommandsA: (array, parseHook = undefined) => _cs.parseMIDICommands(new Uint8Array(array), parseHook),
+    
+    showParseUpdates: ()=> [..._cs.showParseUpdates().values()],
+    showParseErrors: ()=> [..._cs.showParseErrors().values()],
     showParseErrorLocation: (context)=>_cs.showParseErrorLocation(context),
 
     getPixelAtContext: (context, x,y)=> _cs.getPixelAtContext(context,x,y),
-    getDisplayListAtContext:(context)=> _cs.getDisplayListAtContext(context),
-    parseDisplayListAtContext: (context)=> _cs.parseDisplayListAtContext(context),
-    showLinksAtContext: (context,count)=> _cs.showLinksAtContext(context,count),
+    getDisplayListAtContext:(context)=> [..._cs.getDisplayListAtContext(context).values()],
+    showLinksAtContext: (context,count)=> [..._cs.showLinksAtContext(context,count).values()],
+    parseDisplayListAtContext: (context)=> _cs.parseDisplayListAtContext(context).values(),
     
     getAPICommands: (name)=> {
         if(name === undefined)

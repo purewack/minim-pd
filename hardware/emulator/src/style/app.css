@@ -48,23 +48,32 @@ input[type=text]:focus {
 }
 
 .App{
-  position: relative;
   height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 .MenuTitle {
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
   text-transform:uppercase;
   background-color: var(--c-high);
-  color: var(--c-main);
+  color: var(--c-high-alt);
   display: flex;
   justify-content: space-between;
   border-bottom:2px solid var(--c-sel);
+  padding-top:0.25rem;
 }
-.CurrentMenu {
-  overflow-y: scroll;
+.MenuTitle button {
+  -webkit-app-region: no-drag;
+  border: none;
+}
+.AppContent {
+  /* overflow-y: scroll; */
   flex-grow: 1;
-  background-color: var(--c-back);
+  background-color: var(--c-back-alt);
   color:var(--c-main);
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }

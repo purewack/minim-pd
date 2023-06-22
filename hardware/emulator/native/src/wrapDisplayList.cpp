@@ -135,7 +135,7 @@ Napi::Value MINIM::DisplayList::showLinks(const Napi::CallbackInfo& info){
         auto at    = (info[0].As<Napi::Number>().Int32Value());
         auto count = (info[1].As<Napi::Number>().Int32Value());
         uint8_t buf[CMD_LINK_COUNT_MAX];
-        auto cc = this->list->accessLinkBuffer(buf);
+        this->list->accessLinkBuffer(buf);
         auto values = std::vector<char>();
         for(int i=at; i<(at+count); i++)
             values.push_back(buf[i]);

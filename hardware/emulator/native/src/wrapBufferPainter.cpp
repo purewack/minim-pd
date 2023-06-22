@@ -42,7 +42,7 @@ Napi::Value MINIM::BufferPainter::getPixel(const Napi::CallbackInfo& info){
 
 std::vector<uint8_t> MINIM::BufferPainter::asArrayFromBufferPainter(API::BufferPainter* gfx, int x, int y,int w,int h){
   uint8_t buf[128*64];
-  auto count = gfx->accessBuffer(buf);
+  gfx->accessBuffer(buf);
   auto section = std::vector<uint8_t>();
   for(int yy=y; yy<h+y; yy++){
     for(int xx=x; xx<w+x; xx++){

@@ -25,8 +25,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test --verbose",
     "eject": "react-scripts eject",
-    "install": "node-gyp rebuild -C ./native",
-    "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
+    "install": "node-gyp rebuild -C ./native --runtime=electron --target=25.0.0 --arch=x64 --dist-url=https://electronjs.org/headers",
+    "dev": "concurrently -k \"BROWSER=none yarn start\" \"yarn:electron\"",
     "electron": "wait-on tcp:127.0.0.1:3000 && electron ."
   },
   "eslintConfig": {

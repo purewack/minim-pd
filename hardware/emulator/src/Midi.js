@@ -42,13 +42,13 @@ export default function SettingsMidi({className, ...restProps}){
   }
   
 export function FlowMidi({...restProps}){
-  return <div className='MidiFlow' {...restProps}>
+  return <button className='MidiFlow' {...restProps}>
     <span className='In'/>
     <span className='Out'/>
     <span>
     MIDI
     </span>
-  </div>
+  </button>
 }
 
 
@@ -95,7 +95,28 @@ export function symbolToBlock(symbol, args){
 
 
 
+export function ContextDisplayList({stream, className, ...restProps}){
 
+  const [list,setList] = useState([])
+  
+  useEffect(()=>{
+    let l = []
+    window.ControlSurface.parseMIDICommandsA(stream,(type,where)=>{
+      console.log(type,where)
+      l.push(type)
+    })
+    setList(l)
+  },[stream])
+
+  return <ul className={'ContextDisplayList ' + className} {...restProps}>
+    {/* {list.map(c => <li className={'commandblock' + c.type}>
+      <span>{c.name}{'('}
+        {c.arguments}
+      {')'}</span>  
+    </li>)} */}
+    {list.map(l => <li>{l}</li>)}
+  </ul>
+}
 
 export function StreamCodeBlocks({blockArray, onNewArgument, onRemove}){
   
@@ -105,14 +126,16 @@ export function StreamCodeBlocks({blockArray, onNewArgument, onRemove}){
         key={i + c.name} 
         className={'codeblock ' + c.type}
       >
+        
         <p><span>{c.name}</span><span className='remove' onClick={()=>{onRemove(i)}}>X</span></p>
         <p><span>{'(' }</span>
         {c.arguments.map((a,j) => 
-          <input className={'argument'} key={`arg_${i}_${j}`} value={a} type='text' onChange={(e)=>{
-            onNewArgument(i,j,e.target.value);
-          }}></input>
+            <input className={'argument'} key={`arg_${i}_${j}`} value={a} type='text' onChange={(e)=>{
+              onNewArgument(i,j,e.target.value);
+            }}></input>
         )}
-        <span>{')'}</span></p>
+        <span>{')'}</span></p> 
+        
       </span>)}
   </div>
 }
@@ -127,7 +150,7 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
     <form onSubmit={(e)=>{
       e.preventDefault()
       // const textStream = e.target.inputStream.value
-      onInject(textToSymbolArray(e.target.inputStream.value),code)
+      onInject(textToSymbolArray(e.target.inputStream.value),code,e.target.inputStream.value)
     }}>
       <input type="submit" name="inject" value="Inject" className='btnInject'/>
       <input ref={inputRef} type='text' name="inputStream" className='inputStream' placeholder='numeric stream' />

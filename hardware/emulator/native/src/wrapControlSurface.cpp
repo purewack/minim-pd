@@ -310,7 +310,7 @@ Napi::Value MINIM::ControlSurface::showLinksAtContext(const Napi::CallbackInfo& 
 
     auto count = (info[1].As<Napi::Number>().Uint32Value());
     unsigned char buf[CMD_LINK_COUNT_MAX];
-    auto cc = this->cs->cmdList[context].accessLinkBuffer(buf);
+    this->cs->cmdList[context].accessLinkBuffer(buf);
     auto values = std::vector<unsigned char>();
     return Napi::Buffer<unsigned char>::Copy(info.Env(),values.data(),count);
 }

@@ -4,11 +4,6 @@
   align-items: center;
   width: min-content;
   user-select: none;
-  z-index: 10;
-  color: var(--c-high-alt);
-}
-.MidiFlow:hover {
-  background-color: var(--c-hover);
 }
 .MidiFlow .In, .MidiFlow .Out {
   border:solid var(--c-high-alt) 1px;
@@ -39,33 +34,37 @@
   height: fit-content;
 }
 
-.InjectMidiPanel .codeblock {
+
+
+
+.codeblock {
   margin-right: 0.5rem;
   border-right: solid black 2px;
   color:darkblue;
   position: relative;
 }
-.InjectMidiPanel .codeblock.function{
+
+.codeblock.function{
   background-color: lightblue;
 }
-.InjectMidiPanel .codeblock.constant{
+.codeblock.constant{
   background-color: lightgoldenrodyellow;
 }
-.InjectMidiPanel .codeblock.status{
+.codeblock.status{
   background-color: greenyellow;
 }
-.InjectMidiPanel .codeblock.variable{
+.codeblock.variable{
   background-color:plum;
 }
 
-.InjectMidiPanel .codeblock * {
+.codeblock * {
   margin: 1px;
 }
-.InjectMidiPanel .codeblock .argument{
+.codeblock .argument{
   width:4ch;
   border: dotted var(--c-high) 2px;
 }
-.InjectMidiPanel .codeblock .remove {
+.codeblock .remove {
   background-color: none;
   color: red;
   position: absolute;
@@ -73,11 +72,25 @@
   top: 0;
   user-select: none;
 }
-.InjectMidiPanel .codeblock .remove:hover {
+.codeblock .remove:hover {
   background: red;
   color: white;
 }
 
+
+
+
+.InjectMidiPanel::before {
+  /* content: ''; */
+  /* background-color: red; */
+  height: 0.8rem;
+  margin: 4px;
+  margin-inline: 1rem;
+  display: block;
+  border: dotted black 2px;
+  border-bottom: none;
+  border-radius: 1rem 1rem 0 0 ;
+}
 
 
 .MidiIO::before{

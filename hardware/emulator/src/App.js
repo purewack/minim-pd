@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import ContextScreen from './Minim'
-import { FlowMidi, InjectMidiPanel, StreamCodeBlocks, symbolToBlock } from './Midi';
+import { ContextDisplayList, FlowMidi, InjectMidiPanel } from './Midi';
 import './style/app.css';
 
 function App() {
@@ -11,8 +11,8 @@ function App() {
   const screenOrder = [1,2,3,4,5,0]
 
   const checkUpdatesAndErrors = ()=>{
-    const d = [...window.ControlSurface.showParseUpdates().values()]
-    const e = [...window.ControlSurface.showParseErrors().values()]
+    const d = window.ControlSurface.showParseUpdates()
+    const e = window.ControlSurface.showParseErrors()
     let dr = [...draws]
     let er = [...errors]
     let error = false
@@ -31,52 +31,58 @@ function App() {
       <div className='MenuTitle'>
         <span>MINIM</span>
         <FlowMidi />
-        <span>Quit</span>
+        <button onClick={()=>{
+          window.app.end()
+        }}>Quit</button>
       </div>
-
-      {<InjectMidiPanel 
-        onInject={(symbols,code)=>{
-          // console.log(symbols)
-          window.ControlSurface.parseMIDIStream(new Uint8Array(symbols))
-          checkUpdatesAndErrors()
-        }} 
-        stream={midiStream}
-      />}
       
-      {/* {inspectContext === null ?  */}
-      <div className='MinimScreenArray'>
-        {screenOrder.map(v => 
+      <div className='AppContent'>
+        {<InjectMidiPanel 
+          onInject={(symbols,code,stream)=>{
+            // console.log(symbols)
+            setMidiStream(stream)
+            window.ControlSurface.parseMIDIStream(new Uint8Array(symbols),(c)=>{
+              console.log(c)
+            })
+            window.ControlSurface.parseMIDIStream(new Uint8Array(symbols))
+            checkUpdatesAndErrors()
+          }} 
+          stream={midiStream}
+        />}
         
-        inspectContext === v ?
+        <div className='MinimScreenArray'>
+          {screenOrder.map(v => 
+            <ContextScreen 
+              key={`screen_context_${v}`}
+              contextNumber={v} 
+              draws={draws[v]}
+              error={errors[v]}
+              horizontal={v === 0}
+              onClick={()=>{setInspectContext(v)}}
+            />
+          )}
+          {inspectContext !== null ?
 
-        <div className='MinimScreenInspect'>
-          <ContextScreen 
-            key={`screen_context_${v}`}
-            contextNumber={v} 
-            draws={draws[v]}
-            error={errors[v]}
-            horizontal={v === 0}
-            onClick={()=>{setInspectContext(null)}}
-          />
-          <div className='ContextDetail'>
-              <h1>Context[{inspectContext}] Inspect</h1>
-              <StreamCodeBlocks blockArray={[...window.ControlSurface.getDisplayListAtContext(inspectContext).values()].map(v => symbolToBlock(v))}/>
-              <button onClick={()=>{setInspectContext(null)}}>Back</button>
+          <div className='MinimScreenInspect' 
+          onClick={()=>{setInspectContext(null)}}>
+            <ContextScreen 
+              className={inspectContext === 0 ? 'Hor' : ''}
+              key={`screen_context_${inspectContext}`}
+              contextNumber={inspectContext} 
+              draws={draws[inspectContext]}
+              error={errors[inspectContext]}
+              horizontal={inspectContext === 0}
+              onClick={()=>{setInspectContext(null)}}
+            />
+            <div className={'ContextDetail'}>
+                <h1>Context[{inspectContext}] Inspect</h1>
+                <ContextDisplayList stream={window.ControlSurface.getDisplayListAtContext(inspectContext)}/>
+            </div>
           </div>
+          : null}
+
         </div>
-
-        : 
-        
-        <ContextScreen 
-          key={`screen_context_${v}`}
-          contextNumber={v} 
-          draws={draws[v]}
-          error={errors[v]}
-          horizontal={v === 0}
-          onClick={()=>{setInspectContext(v)}}
-        />)}
       </div>
-
     </div>
   );
 }

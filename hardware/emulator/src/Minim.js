@@ -19,7 +19,7 @@ function plotCSContext(canvas, contextNumber, horizontal){
     }
 }
 
-export default function ContextScreen({contextNumber, draws, error, horizontal = true, ...restProps}){
+export default function ContextScreen({contextNumber, draws, error, horizontal = true, className,...restProps}){
     const canvasRef = useRef()
 
     useEffect(() => {
@@ -27,7 +27,7 @@ export default function ContextScreen({contextNumber, draws, error, horizontal =
     }, [contextNumber, draws, horizontal])
 
     return (
-        <div className={(error ? 'ContextScreen Error ' : 'ContextScreen ') + 'C' + contextNumber }
+        <div className={(error ? 'ContextScreen Error ' : 'ContextScreen ') + 'C' + contextNumber + ' ' + className }
             {...restProps}
         >
             <canvas 

@@ -8,11 +8,11 @@ function createWindow() {
     title:'MINIM Emulator App',
     width: 750,
     height: 460,
+    frame: false,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: true,
-      nodeIntegrationInWorker: true,
-      preload: path.join(__dirname, "preload.js") 
+      preload: path.join(__dirname, "preload.js"),
    },
   });
   win.loadURL(
@@ -20,6 +20,7 @@ function createWindow() {
       ? 'http://localhost:3000'
       : `file://${path.join(__dirname, '../build/index.html')}`
   );
+
   // Open the DevTools.
   if (isDev) {
     win.webContents.openDevTools({ mode: 'detach' });
@@ -40,6 +41,10 @@ function createWindow() {
   //   }
 }
 
+
+ipcMain.on('end',()=>{
+  app.quit();
+})
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -59,3 +64,7 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+app.on('uncaughtException', function (err) {
+  console.log('uncaughtException',err);
+})
