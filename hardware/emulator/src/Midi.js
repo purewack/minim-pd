@@ -130,10 +130,10 @@ export function ContextDisplayLinks({displayListArray, linksArray, onNewLinkValu
 
   return <ol className={'ContextDisplayLinks ' + className}>
     {linksArray.map((l,i) => 
-      <input type='range' defaultValue={displayListArray[l]} min={0} max={127} step={1} onChange={(e)=>{
+      <li><input type='range' defaultValue={displayListArray[l]} min={0} max={127} step={1} onChange={(e)=>{
         e.preventDefault()
         onNewLinkValue?.(l,i,parseInt(e.target.value))
-      }}></input>  
+      }}></input></li>
     )}
   </ol>
 }
@@ -151,9 +151,18 @@ export function StreamCodeBlocks({blockArray, onNewArgument, onRemove}){
         <p><span>{c.name}</span><span className='remove' onClick={()=>{onRemove(i)}}>X</span></p>
         <p><span>{'(' }</span>
         {c.arguments.map((a,j) => 
-            <input className={'argument'} key={`arg_${i}_${j}`} value={a} type='text' onChange={(e)=>{
-              onNewArgument(i,j,e.target.value);
-            }}></input>
+            <div className='tooltipped' 
+            data-tooltip={window.ControlSurface.getAPICommands(c.name)[`arg_${j}`]}>
+            <input 
+              key={`arg_${i}_${j}`} 
+              type='text'
+              className={'argument'} 
+              value={a}  
+              onChange={(e)=>{
+                onNewArgument(i,j,e.target.value);
+              }} 
+            />
+            </div>
         )}
         <span>{')'}</span></p> 
         
@@ -201,9 +210,13 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
       }}
     />
     
-    <div className='inputCommands'>
+    <div className='
+    '>
       {window.ControlSurface.getAPICommands().map(c => 
-        <button key={'btn_'+c.name} onClick={()=>{
+        <button key={'btn_'+c.name} 
+        className='tooltipped'
+        data-tooltip={window.ControlSurface.getAPICommands(c.name).tooltip}
+        onClick={()=>{
           setCode(cd => {
             let ccc = [...cd]
             ccc.splice(insertHead, 0, symbolToBlock(c.symbol))

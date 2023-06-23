@@ -38,19 +38,6 @@ ul li::marker{
   content: ">>";
 }
 
-button, input[type=submit], input[type=button] {
-  background-color: var(--c-high);
-  color: var(--c-high-alt);
-  border: none;
-  /* margin-right: 0.25rem; */
-  /* margin-block: 2px; */
-  border-bottom:2px solid var(--c-sel);
-  padding: 0.25rem;
-}
-button:hover, input[type=submit]:hover, input[type=button]:hover  {
-  background-color: var(--c-hover);
-  color: var(--c-hover-alt);
-}
 input[type=text]{
   color: var(--c-main);
   background-color: var(--c-back);
@@ -65,6 +52,46 @@ input[type=text]:focus {
   outline: none !important;
   background-color: var(--c-sel);
   color: var(--c-sel-alt);
+}
+
+button, 
+input[type=submit], 
+input[type=button] {
+  background-color: var(--c-high);
+  color: var(--c-high-alt);
+  border: none;
+  /* margin-right: 0.25rem; */
+  /* margin-block: 2px; */
+  border-bottom:2px solid var(--c-sel);
+  padding: 0.25rem;
+}
+button:hover, 
+input[type=submit]:hover, 
+input[type=button]:hover  {
+  background-color: var(--c-hover);
+  color: var(--c-hover-alt);
+}
+
+.tooltipped{
+  position: relative;
+}
+
+.tooltipped::before
+{
+  position: absolute;
+  top: 100%;
+  left:0;
+  background-color: var(--c-sel);
+  color: var(--c-sel-alt);
+  z-index: 100;
+  margin: 0;
+  padding-inline: 1rem;
+  min-width: 30vw;
+}
+
+.tooltipped:hover::before
+{
+  content: attr(data-tooltip);
 }
 
 .App{

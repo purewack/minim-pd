@@ -3,6 +3,23 @@
 #include "util.h"
 #include <iostream>
 
+
+#define BIND_DESC(X) for(auto i:X){\
+    auto cmd = Napi::Object::New(env);\
+    auto args = std::stoi(i["arguments"]);\
+    cmd["name"] = i["name"];\
+    cmd["symbol"] = i["symbol"];\
+    cmd["arguments"] = args;\
+    cmd["type"] = i["type"];\
+    cmd["tooltip"] = i["tooltip"];\
+    for(int k=0; k<args; k++){\
+        auto id = "arg_" + std::to_string(k);\
+        cmd[id] = i[id];\
+    }\
+    listArray[j++] = cmd;\
+}\
+
+
 Napi::FunctionReference MINIM::ControlSurface::constructor;
 
 
@@ -33,24 +50,10 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
   unsigned int j=0;
 
   auto contextList = API::generateContextDescriptors();
-  for(auto i:contextList){
-    auto cmd = Napi::Object::New(env);
-    cmd["name"] = i["name"];
-    cmd["symbol"] = i["symbol"];
-    cmd["arguments"] = std::stoi(i["arguments"]);
-    cmd["type"] = i["type"];
-    listArray[j++] = cmd;
-  }
 
-  for(auto i:cmdList){
-    auto cmd = Napi::Object::New(env);
-    cmd["name"] = i["name"];
-    cmd["symbol"] = i["symbol"];
-    cmd["arguments"] = std::stoi(i["arguments"]);
-    cmd["type"] = i["type"];
-    listArray[j++] = cmd;
-  }
-  
+  BIND_DESC(contextList);
+  BIND_DESC(cmdList);
+
   buf["commands"] = listArray;
 
   auto nameArray = Napi::Object::New(env);

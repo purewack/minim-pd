@@ -91,7 +91,13 @@
         "hashtable": "cpp",
         "csignal": "cpp",
         "list": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "memory_resource": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp"
     },
     "cmake.configureOnOpen": false,
     "C_Cpp.dimInactiveRegions": false,
