@@ -29,9 +29,10 @@
 
 .InjectMidiPanel .codeblocks {
   display: flex;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   margin-block: 0.25rem;
   height: fit-content;
+  overflow-x: scroll;
 }
 
 
@@ -39,6 +40,7 @@
 
 .codeblock {
   margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
   border-right: solid black 2px;
   color:darkblue;
   position: relative;
@@ -60,25 +62,82 @@
 .codeblock * {
   margin: 1px;
 }
+.codeblock p {
+  display: flex;
+}
 .codeblock .argument{
   width:4ch;
   border: dotted var(--c-high) 2px;
 }
 .codeblock .remove {
+  margin-left: auto;
+  opacity: 0;
   background-color: none;
   color: red;
-  position: absolute;
-  right: 0;
-  top: 0;
   user-select: none;
+}
+.codeblock:hover .remove {
+  opacity: 1;
 }
 .codeblock .remove:hover {
   background: red;
   color: white;
 }
 
-
-
+.displaylist {
+  counter-reset: display-list-counter;
+  list-style: none;
+  padding: 0;
+}
+.displaylist li{
+  counter-increment: display-list-counter;
+  background-color: var(--c-back-alt); 
+  color: var(--c-main-alt);
+  border-bottom: solid var(--c-high) 2px;
+  margin-bottom: 0.25rem;
+}
+.displaylist li::before{
+  content: counter(display-list-counter);
+  background-color: red;
+  padding-inline: 0.5rem;
+  margin-right: 0.25rem;
+}
+.displaylist li:nth-child(1n)::before{
+  background-color: var(--c-seq1);
+  color: black;
+}
+.displaylist li:nth-child(2n)::before  {
+  background-color: var(--c-seq2);
+  color: black;
+}
+.displaylist li:nth-child(3n)::before {
+  background-color: var(--c-seq3);
+  color: white;
+}
+.displaylist li:nth-child(4n)::before  {
+  background-color: var(--c-seq4);
+  color: white;
+}
+.displaylist li:nth-child(5n)::before {
+  background-color: var(--c-seq5);
+  color: white;
+}
+.displaylist li .linked {
+  background-color: orange;
+  color: rgb(56, 3, 87);
+}
+.displaylist li .linked:nth-child(1n){
+  background-color: var(--c-seq1);
+  color: black;
+}
+.displaylist li .linked:nth-child(2n){
+  background-color: var(--c-seq2);
+  color: black;
+}
+.displaylist li .linked:nth-child(3n){
+  background-color: var(--c-seq3);
+  color: black;
+}
 
 .InjectMidiPanel::before {
   /* content: ''; */

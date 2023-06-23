@@ -37,7 +37,7 @@ class DisplayList {
 private:
     uint8_t _buf[CMD_BYTE_COUNT_MAX];
     sarray_t<uint8_t> commands;
-    int8_t links[CMD_LINK_COUNT_MAX];  
+    int16_t links[CMD_LINK_COUNT_MAX];  
     int lastLink = 0;
     void unlinkAll();
 public:
@@ -54,6 +54,6 @@ public:
     unsigned int getLinkCount();
     unsigned int getCount();
     int accessBuffer(uint8_t* buf);
-    int accessLinkBuffer(uint8_t* buf);
+    int accessLinkBuffer(int16_t* buf);
 };
 }

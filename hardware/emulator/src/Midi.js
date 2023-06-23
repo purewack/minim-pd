@@ -57,24 +57,13 @@ export function FlowMidi({...restProps}){
 
 const textToSymbolArray = (text)=> text.replace(/\s+/g, ' ').trim().split(' ').map(v => parseInt(v))
 
-// export function textStreamToBlock(textStream){
-//   let blocks = []
-//   const textArray = cleanStreamWhitespace(textStream)
-//   const numArray = textArray.map(v => parseInt(v))
-//   window.ControlSurface.parseMIDICommands(new Uint8Array(numArray),(str,where)=>{
-//     console.log(str,where)
-//     if(!str.contains('err'))
-//       blocks.push(symbolToBlock(str))
-//   })
-//   window.ControlSurface.parseMIDIStream(new Uint8Array(numArray))
-//   return blocks
-// }
-
 export function blocksToTextStream(blocks){
   if(!blocks) return ''
   let st = ''
   blocks.forEach(c => {
     st += window.ControlSurface.getSymbol(c.name) + ' '
+    if(!(c.name === 'start' || c.name === 'end'))
+      st += c.maxArguments + ' '
     c.arguments.forEach(a => {
       st += a
       st += ' '
@@ -95,29 +84,60 @@ export function symbolToBlock(symbol, args){
 
 
 
-export function ContextDisplayList({stream, className, ...restProps}){
+export function ContextDisplayList({displayListArray, linksArray, className, ...restProps}){
 
   const [list,setList] = useState([])
   
   useEffect(()=>{
     let l = []
-    window.ControlSurface.parseMIDICommandsA(stream,(type,where)=>{
+    window.ControlSurface.parseMIDICommandsA(displayListArray,(type,where)=>{
       const c = window.ControlSurface.getAPICommands(type)
-      const args = [...Array(c.arguments)].map((v,i)=> stream[where+1+i])
-      console.log(args)
+      const args = [...Array(c.arguments)].map((v,i)=> {
+        const ii = where+2+i
+        let link = false
+        linksArray.forEach(v => {
+          if(v===ii){
+            link = true
+            return
+          }
+        })
+        return {
+          value: displayListArray[ii],
+          isLinked: link 
+        }})
       l.push({...c, arguments:args})
     })
     setList(l)
-  },[stream])
+  },[displayListArray])
 
-  return <ul className={'ContextDisplayList ' + className} {...restProps}>
-    {list.map(c => <li className={'commandblock' + c.type}>
-      <span>{c.name}{'('}
-        {c.arguments.map(v => <span>{v},</span>)}
-      {')'}</span>  
+  return <ol className={'ContextDisplayList displaylist ' + className} {...restProps}>
+    {list.map((c,i) => <li className={' ' + c.type}>
+      <span>
+        {c.name}
+        {'( '}
+          {c.arguments.map((v,j) => 
+            <span className={v.isLinked ? 'linked' : null}>
+              {v.value} {' '}
+            </span>
+          )}
+        {')'}
+      </span>  
     </li>)}
-  </ul>
+  </ol>
 }
+
+export function ContextDisplayLinks({displayListArray, linksArray, onNewLinkValue, className, ...restProps}){
+
+  return <ol className={'ContextDisplayLinks ' + className}>
+    {linksArray.map((l,i) => 
+      <input type='range' defaultValue={displayListArray[l]} min={0} max={127} step={1} onChange={(e)=>{
+        e.preventDefault()
+        onNewLinkValue?.(l,i,parseInt(e.target.value))
+      }}></input>  
+    )}
+  </ol>
+}
+
 
 export function StreamCodeBlocks({blockArray, onNewArgument, onRemove}){
   
@@ -199,7 +219,7 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
         str += window.ControlSurface.getSymbol('start') + ' '
         str += '1 '
         str += window.ControlSurface.getSymbol('rect') + ' '
-        str += '0 0 30 30 1 '
+        str += '5 0 0 30 30 1 '
         str += window.ControlSurface.getSymbol('end')
         inputRef.current.value = str;
       }}>Insert Test Stream</button>

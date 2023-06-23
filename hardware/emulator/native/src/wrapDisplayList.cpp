@@ -134,12 +134,12 @@ Napi::Value MINIM::DisplayList::showLinks(const Napi::CallbackInfo& info){
     if(info.Length() == 2){
         auto at    = (info[0].As<Napi::Number>().Int32Value());
         auto count = (info[1].As<Napi::Number>().Int32Value());
-        uint8_t buf[CMD_LINK_COUNT_MAX];
+        int16_t buf[CMD_LINK_COUNT_MAX];
         this->list->accessLinkBuffer(buf);
-        auto values = std::vector<char>();
+        auto values = std::vector<int16_t>();
         for(int i=at; i<(at+count); i++)
             values.push_back(buf[i]);
-        return Napi::Buffer<char>::Copy(info.Env(),values.data(),values.size());
+        return Napi::Buffer<int16_t>::Copy(info.Env(),values.data(),values.size());
     }
     return info.Env().Undefined();
 }

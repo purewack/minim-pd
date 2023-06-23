@@ -15,7 +15,7 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
     InstanceMethod("getPixelAtContext", &MINIM::ControlSurface::getPixelAtContext),
     InstanceMethod("getDisplayListAtContext", &MINIM::ControlSurface::getDisplayListAtContext),
     InstanceMethod("parseDisplayListAtContext", &MINIM::ControlSurface::parseDisplayListAtContext),
-    InstanceMethod("showLinksAtContext", &MINIM::ControlSurface::showLinksAtContext),
+    InstanceMethod("getLinksAtContext", &MINIM::ControlSurface::getLinksAtContext),
 
     InstanceMethod("parseMIDIStream", &MINIM::ControlSurface::parseMidiStream),
     InstanceMethod("parseMIDIStreamUpdate", &MINIM::ControlSurface::parseMidiStreamUpdate),
@@ -295,27 +295,29 @@ Napi::Value MINIM::ControlSurface::parseMidiCommands(const Napi::CallbackInfo& i
     return Napi::Number::New(info.Env(), consumend);
 }
 
-Napi::Value MINIM::ControlSurface::showLinksAtContext(const Napi::CallbackInfo& info){
+Napi::Value MINIM::ControlSurface::getLinksAtContext(const Napi::CallbackInfo& info){
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
-    if( info.Length() != 2){
-        Napi::Error::New(info.Env(), "Expected 3 arguments: context number, count")
+    if( info.Length() < 1){
+        Napi::Error::New(info.Env(), "Expected min 1 argument: context number, optional count argument")
             .ThrowAsJavaScriptException();
         return info.Env().Undefined();
     }
 
-    auto context = (info[0].As<Napi::Number>().Uint32Value());
-    if(context > 5) {
-        Napi::Error::New(info.Env(), "Invalid context number")
-            .ThrowAsJavaScriptException();
-        return info.Env().Undefined();
-    } 
+    auto context = (info[0].As<Napi::Number>().Uint32Value()) % CONTEXT_MAX;
 
-    auto count = (info[1].As<Napi::Number>().Uint32Value());
-    unsigned char buf[CMD_LINK_COUNT_MAX];
+    auto count = this->cs->cmdList[context].getLinkCount();
+    if( info.Length() == 2 && !info[1].IsUndefined())
+        count = (info[1].As<Napi::Number>().Uint32Value()) % CMD_LINK_COUNT_MAX;
+        
+    int16_t buf[CMD_LINK_COUNT_MAX];
     this->cs->cmdList[context].accessLinkBuffer(buf);
-    auto values = std::vector<unsigned char>();
-    return Napi::Buffer<unsigned char>::Copy(info.Env(),values.data(),count);
+    auto links = std::vector<int16_t>();
+
+    for(int i=0; i<count; i++)
+        links.push_back(buf[i]);
+
+    return Napi::Buffer<int16_t>::Copy(info.Env(),links.data(),links.size());
 }
 
 

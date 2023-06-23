@@ -1,5 +1,5 @@
 * {
-    transition: color 0.25s, background-color 0.25s, outline 0.25s;
+    transition: color 0.25s, background-color 0.25s, outline 0.25s, opacity 0.25s;
 }
 
 :root{
@@ -16,10 +16,16 @@
     --c-error: red;
     --c-error-alt: pink;
     --c-shadow: rgb(4, 19, 27);
+
+    --c-seq1: #dad7cdff;
+    --c-seq2: #a3b18aff;
+    --c-seq3: #588157ff;
+    --c-seq4: #3a5a40ff;
+    --c-seq5: #344e41ff;
 }
 
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) { */
     :root{
         --c-main: #eee;
         --c-main-alt: ivory;
@@ -35,4 +41,4 @@
         --c-error-alt: pink;
         --c-shadow: rgb(141, 118, 240);
     }
-}
+/* } */

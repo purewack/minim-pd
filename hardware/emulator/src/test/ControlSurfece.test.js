@@ -6,10 +6,10 @@ describe('ControlSurface', ()=>{
     test('parse stream single context', ()=>{
         const stream = [
             0xF0,0x00,0x7F,0x7F,0,
-            CMD('line'), 0, 0, 20, 21,
+            CMD('line'),4, 0, 0, 20, 21,
             0xF7
         ];
-        const result = [CMD('line'), 0, 0, 20, 21];
+        const result = [CMD('line'),4, 0, 0, 20, 21];
         
         const cs = new ControlSurface();
         const draws = cs.parseMIDIStream(new Uint8Array(stream));
@@ -24,13 +24,13 @@ describe('ControlSurface', ()=>{
     test('parse stream 2 contexts', ()=>{
         const stream = [
             0xF0,0x00,0x7F,0x7F,0,
-            CMD('line'), 0, 0, 20, 21,
+            CMD('line'),4, 0, 0, 20, 21,
             0xF0,0x00,0x7F,0x7F,1,
-            CMD('rect'), 2, 3, 4, 5, 0,
+            CMD('rect'),5, 2, 3, 4, 5, 0,
             0xF7
         ];
-        const result0 = [CMD('line'), 0, 0, 20, 21,];
-        const result1 = [CMD('rect'), 2, 3, 4, 5, 0,];
+        const result0 = [CMD('line'),4, 0, 0, 20, 21,];
+        const result1 = [CMD('rect'),5, 2, 3, 4, 5, 0,];
 
         const cs = new ControlSurface();
         const draws = cs.parseMIDIStream(new Uint8Array(stream));
@@ -45,23 +45,23 @@ describe('ControlSurface', ()=>{
     test('parse stream multi-context', ()=>{
         const stream = [
             0xF0,0x00,0x7F,0x7F,0,
-            CMD('line'), 0, 0, 20, 21,
+            CMD('line'),4, 0, 0, 20, 21,
             
             0xF0,0x00,0x7F,0x7F,1,
-            CMD('line'), 2, 3, 4, 5,
+            CMD('line'),4, 2, 3, 4, 5,
             
             0xF0,0x00,0x7F,0x7F,3,
-            CMD('line'), 20, 30, 40, 50,
+            CMD('line'),4, 20, 30, 40, 50,
 
             0xF0,0x00,0x7F,0x7F,2,
-            CMD('line'), 9, 8, 7, 6,
+            CMD('line'),4, 9, 8, 7, 6,
 
             0xF7
         ];
-        const result0 = [CMD('line'), 0, 0, 20, 21,];
-        const result1 = [CMD('line'), 2, 3, 4, 5];
-        const result2 = [CMD('line'), 9, 8, 7, 6];
-        const result3 = [CMD('line'), 20, 30, 40, 50,];
+        const result0 = [CMD('line'),4, 0, 0, 20, 21,];
+        const result1 = [CMD('line'),4, 2, 3, 4, 5];
+        const result2 = [CMD('line'),4, 9, 8, 7, 6];
+        const result3 = [CMD('line'),4, 20, 30, 40, 50,];
 
         const cs = new ControlSurface();
         const draws = cs.parseMIDIStream(new Uint8Array(stream));
@@ -81,13 +81,13 @@ describe('ControlSurface', ()=>{
         const stream = [
             0x90,5,10,
             0xF0,0x00,0x7F,0x7F,0,
-            CMD('line'), 0, 0, 20, 21,
+            CMD('line'),4, 0, 0, 20, 21,
             0xF0,0x00,0x7F,0x7F,1,
-            CMD('line'), 2, 3, 4, 5,
+            CMD('line'),4, 2, 3, 4, 5,
             0x90,10,15
         ];
-        const result0 = [CMD('line'), 0, 0, 20, 21];
-        const result1 = [CMD('line'), 2, 3, 4, 5];
+        const result0 = [CMD('line'),4, 0, 0, 20, 21];
+        const result1 = [CMD('line'),4, 2, 3, 4, 5];
 
         const cs = new ControlSurface();
         const draws = cs.parseMIDIStream(new Uint8Array(stream));
@@ -103,13 +103,13 @@ describe('ControlSurface', ()=>{
         const stream = [
             0x90,5,10,
             0xF0,0x00,0x7F,0x7F,0,
-            CMD('rect'), 0, 0, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 5,
+            CMD('rect'),5, 0, 0, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 5,
             0x90,10,15
         ];
         const commands = [
-            CMD('rect'), 0, 0, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 5,
+            CMD('rect'),5, 0, 0, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 5,
         ]
         const buf = [
             1,1,0,0,0,
@@ -133,23 +133,23 @@ describe('ControlSurface', ()=>{
 
         let draws = cs.parseMIDIStreamUpdate(new Uint8Array([
             0xF0,0x00,0x7F,0x7F,2,
-            CMD('rect'), 0, 0, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 5,
-            CMD('link'),0,2,
+            CMD('rect'),5,0, 0, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 5,
+            CMD('link'),2,0,1,
             0xF7
         ]));
         expect(draws).toBe(1);
         expect([...cs.getDisplayListAtContext(2).values()]).toEqual(expect.arrayContaining([
-            CMD('rect'), 0, 0, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 5,
+            CMD('rect'),5, 0, 0, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 5,
         ]))
         draws = cs.parseMIDIStream(new Uint8Array([
             0x92,0,69
         ]))
         expect(draws).toBe(1);
         expect([...cs.getDisplayListAtContext(2).values()]).toEqual(expect.arrayContaining([
-            CMD('rect'), 0, 69, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 5,
+            CMD('rect'),5, 0, 69, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 5,
         ]))
         
     })
@@ -159,16 +159,16 @@ describe('ControlSurface', ()=>{
 
         let draws = cs.parseMIDIStreamUpdate(new Uint8Array([
             0xF0,0x00,0x7F,0x7F,2,
-            CMD('rect'), 0, 0, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 5,
-            CMD('link'),0,2,
-            CMD('link'),0,10,
+            CMD('rect'),5, 0, 0, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 5,
+            CMD('link'),2,0,1,
+            CMD('link'),2,0,8,
             0xF7
         ]));
         expect(draws).toBe(1);
         expect([...cs.getDisplayListAtContext(2).values()]).toEqual(expect.arrayContaining([
-            CMD('rect'), 0, 0, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 5,
+            CMD('rect'),5, 0, 0, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 5,
         ]))
         draws = cs.parseMIDIStream(new Uint8Array([
             0x92,0,69,
@@ -176,8 +176,8 @@ describe('ControlSurface', ()=>{
         ]))
         expect(draws).toBe(2);
         expect([...cs.getDisplayListAtContext(2).values()]).toEqual(expect.arrayContaining([
-            CMD('rect'), 0, 69, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 120,
+            CMD('rect'),5, 0, 69, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 120,
         ]))
     })
 
@@ -186,22 +186,22 @@ describe('ControlSurface', ()=>{
 
         let draws = cs.parseMIDIStreamUpdate(new Uint8Array([
             0xF0,0x00,0x7F,0x7F,2,
-            CMD('rect'), 0, 0, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 5,
-            86,0,2,
-            86,0,10,
+            CMD('rect'),5, 0, 0, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 5,
+            CMD('link'),2,0,1,
+            CMD('link'),2,0,8,
             0xF0,0x00,0x7F,0x7F,1,
-            CMD('rect'), 1, 2, 3, 4, 5,
-            86,0,5,
+            CMD('rect'),5, 1, 2, 3, 4, 5,
+            CMD('link'),2,0,4,
             0xF7
         ]));
         expect(draws).toBe(2);
         expect([...cs.getDisplayListAtContext(2).values()]).toEqual(expect.arrayContaining([
-            CMD('rect'), 0, 0, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 5,
+            CMD('rect'),5, 0, 0, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 5,
         ]))
         expect([...cs.getDisplayListAtContext(1).values()]).toEqual(expect.arrayContaining([
-            CMD('rect'), 1, 2, 3, 4, 5,
+            CMD('rect'),5, 1, 2, 3, 4, 5,
         ]))
         draws = cs.parseMIDIStream(new Uint8Array([
             0x92,0,69,
@@ -210,11 +210,11 @@ describe('ControlSurface', ()=>{
         ]))
         expect(draws).toBe(3);
         expect([...cs.getDisplayListAtContext(2).values()]).toEqual(expect.arrayContaining([
-            CMD('rect'), 0, 69, 2, 2, 1,
-            CMD('line'), 2, 2, 5, 120,
+            CMD('rect'),5, 0, 69, 2, 2, 1,
+            CMD('line'),4, 2, 2, 5, 120,
         ]))
         expect([...cs.getDisplayListAtContext(1).values()]).toEqual(expect.arrayContaining([
-            CMD('rect'), 1, 2, 3, 4, 42,
+            CMD('rect'),5, 1, 2, 3, 4, 42,
         ]))
         expect([...cs.showParseUpdates().values()]).toEqual(expect.arrayContaining([
             0,1,1,0,0,0
@@ -226,7 +226,7 @@ describe('ControlSurface', ()=>{
 
         cs.parseMIDIStreamUpdate(new Uint8Array([
             0xF0,0x00,0x7F,0x7F,2,
-            CMD('rect'), 0, 0, 2, 2, 1,
+            CMD('rect'),5, 0, 0, 2, 2, 1,
             20, 2, 2, 5, 5,
             0xF7
         ]));
@@ -236,8 +236,8 @@ describe('ControlSurface', ()=>{
 
         cs.parseMIDIStreamUpdate(new Uint8Array([
             0xF0,0x00,0x7F,0x7F,2,
-            CMD('rect'), 0, 0, 2, 2, 1,
-            CMD('rect'), 2, 2, 5, 5,
+            CMD('rect'),5, 0, 0, 2, 2, 1,
+            CMD('rect'),5, 2, 2, 5, 5,
             0xF7
         ]));
         expect([...cs.showParseErrors().values()]).toEqual(expect.arrayContaining([
@@ -245,11 +245,11 @@ describe('ControlSurface', ()=>{
         ]))
     })
 
-    test('command parse, context independant', ()=>{
+    test('command parse, context independent', ()=>{
         const cs = new ControlSurface();
         let names = []
         cs.parseMIDICommands(new Uint8Array([
-            CMD('rect'), 0, 0, 2, 2, 1
+            CMD('rect'),5, 0, 0, 2, 2, 1
         ]), (n)=>{
             names.push(n)
         });

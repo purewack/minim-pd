@@ -11,12 +11,31 @@ code, h1, h2, h3, p, span {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
-h1, h2, h3 {
+h1{
+  font-weight: bold;
+  font-size: medium;
+}
+h2,h3{
   font-weight: normal;
+  font-size: small;
+}
+h1 {
+  text-decoration: underline;
 }
 
 *, *::after, *::before{
   box-sizing: border-box;
+}
+
+ul{
+  padding: 0;
+  padding-left: 0.5rem;
+}
+ul li{
+  list-style: none;
+}
+ul li::marker{
+  content: ">>";
 }
 
 button, input[type=submit], input[type=button] {
@@ -26,6 +45,7 @@ button, input[type=submit], input[type=button] {
   /* margin-right: 0.25rem; */
   /* margin-block: 2px; */
   border-bottom:2px solid var(--c-sel);
+  padding: 0.25rem;
 }
 button:hover, input[type=submit]:hover, input[type=button]:hover  {
   background-color: var(--c-hover);
@@ -62,7 +82,9 @@ input[type=text]:focus {
   display: flex;
   justify-content: space-between;
   border-bottom:2px solid var(--c-sel);
-  padding-top:0.25rem;
+  position: sticky;
+  top:0;
+  z-index: 10;
 }
 .MenuTitle button {
   -webkit-app-region: no-drag;

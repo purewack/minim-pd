@@ -20,6 +20,7 @@
     border:solid var(--c-high) 1px;
     background-color: var(--c-back);
     color: var(--c-main);
+    height:calc(100vw/6);
 }
 
 .ContextScreen.Error {
@@ -48,9 +49,6 @@
     opacity: 1.0;
 }
 
-.ContextScreen.C0 canvas {
-    height:7rem;
-}
 
 .MinimScreenInspect {
     background-color: rgba(0, 0, 0, 0.6);
@@ -72,11 +70,11 @@
     border-radius: 1rem;
     border: solid var(--c-high) 2px;
     overflow-y: scroll;
-    height: 90%;
+    height: 90vh;
 }
 .ContextDetail h1 {
     font-size: medium;
-    color: var(--c-high);
+    color: var(--c-high-alt);
 }
 .MinimScreenInspect .ContextScreen canvas{
     height: 80vh;
@@ -84,3 +82,4 @@
 .MinimScreenInspect .ContextScreen.Hor canvas{
     height: 50vh;
 }
+

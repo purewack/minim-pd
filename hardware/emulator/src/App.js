@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import ContextScreen from './Minim'
-import { ContextDisplayList, FlowMidi, InjectMidiPanel } from './Midi';
+import { ContextDisplayLinks, ContextDisplayList, FlowMidi, InjectMidiPanel } from './Midi';
 import './style/app.css';
 
 function App() {
@@ -29,7 +29,9 @@ function App() {
   return (
     <div className="App">
       <div className='MenuTitle'>
-        <span>MINIM</span>
+        <button onClick={()=>{
+          window.app.dev()
+        }}>MINIM</button>
         <FlowMidi />
         <button onClick={()=>{
           window.app.end()
@@ -63,8 +65,7 @@ function App() {
           )}
           {inspectContext !== null ?
 
-          <div className='MinimScreenInspect' 
-          onClick={()=>{setInspectContext(null)}}>
+          <div className='MinimScreenInspect' >
             <ContextScreen 
               className={inspectContext === 0 ? 'Hor' : ''}
               key={`screen_context_${inspectContext}`}
@@ -76,7 +77,20 @@ function App() {
             />
             <div className={'ContextDetail'}>
                 <h1>Context[{inspectContext}] Inspect</h1>
-                <ContextDisplayList stream={window.ControlSurface.getDisplayListAtContext(inspectContext)}/>
+                <h2>DisplayList:</h2>
+                <ContextDisplayList 
+                  displayListArray={window.ControlSurface.getDisplayListAtContext(inspectContext)}
+                  linksArray={window.ControlSurface.getLinksAtContext(inspectContext)}
+                />
+                <h2>Links:</h2>
+                <ContextDisplayLinks
+                  displayListArray={window.ControlSurface.getDisplayListAtContext(inspectContext)}
+                  linksArray={window.ControlSurface.getLinksAtContext(inspectContext)}
+                  onNewLinkValue={(link,idx,value)=>{
+                    window.ControlSurface.parseMIDIStreamA([(0x90 | inspectContext),idx,value])
+                    checkUpdatesAndErrors()
+                  }}
+                />
             </div>
           </div>
           : null}

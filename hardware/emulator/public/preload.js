@@ -4,7 +4,8 @@ const _cs = new ControlSurface()
 
 
 contextBridge.exposeInMainWorld('app', {
-    end: ()=>{ipcRenderer.send('end')}
+    end: ()=>{ipcRenderer.send('end')},
+    dev: ()=>{ipcRenderer.send('dev')}
 })
 
 // const sharedPainter = new BufferPainter()
@@ -20,7 +21,13 @@ contextBridge.exposeInMainWorld('ControlSurface', {
 
     getPixelAtContext: (context, x,y)=> _cs.getPixelAtContext(context,x,y),
     getDisplayListAtContext:(context)=> [..._cs.getDisplayListAtContext(context).values()],
-    showLinksAtContext: (context,count)=> [..._cs.showLinksAtContext(context,count).values()],
+    getLinksAtContext: (context,count = undefined)=> {
+        let links = []
+        let b = _cs.getLinksAtContext(context,count)
+        for(let i=0; i<b.length/2; i++)
+            links.push(b.readInt16LE(i*2));
+        return links
+    },
     parseDisplayListAtContext: (context)=> _cs.parseDisplayListAtContext(context).values(),
     
     getAPICommands: (name)=> {

@@ -58,9 +58,9 @@ int API::DisplayList::accessBuffer(uint8_t* buf){
         buf[i] = (this->commands.buf[i]);
     return i;
 }
-int API::DisplayList::accessLinkBuffer(uint8_t* buf){
+int API::DisplayList::accessLinkBuffer(int16_t* buf){
     unsigned int i = 0;
-    for(unsigned int i=0; i<128; i++)
+    for(unsigned int i=0; i<CMD_LINK_COUNT_MAX; i++)
         buf[i] = (this->links[i]);
     return i;
 }

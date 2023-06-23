@@ -65,7 +65,7 @@ namespace MINIM{
         
         Napi::Value parseDisplayListAtContext(const Napi::CallbackInfo& info);
         Napi::Value getDisplayListAtContext(const Napi::CallbackInfo& info);
-        Napi::Value showLinksAtContext(const Napi::CallbackInfo& info);
+        Napi::Value getLinksAtContext(const Napi::CallbackInfo& info);
         
         Napi::Value parseMidiStream(const Napi::CallbackInfo& info);
         Napi::Value parseMidiStreamUpdate(const Napi::CallbackInfo& info);
