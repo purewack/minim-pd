@@ -24,21 +24,18 @@
     --c-seq5: #344e41ff;
 }
 
-
-/* @media (prefers-color-scheme: dark) { */
-    :root{
-        --c-main: #eee;
-        --c-main-alt: ivory;
-        --c-back: #222;
-        --c-back-alt: rgb(26, 1, 42);
-        --c-sel: rgb(101, 219, 255);
-        --c-sel-alt: rgb(41, 46, 62);
-        --c-high: rgb(82, 59, 183);
-        --c-high-alt: hsl(318, 80%, 94%);
-        --c-hover: rgb(174, 170, 250);
-        --c-hover-alt: white;
-        --c-error: red;
-        --c-error-alt: pink;
-        --c-shadow: rgb(141, 118, 240);
-    }
-/* } */
+.ThemeDark {
+    --c-main: #eee;
+    --c-main-alt: ivory;
+    --c-back: #222;
+    --c-back-alt: rgb(26, 1, 42);
+    --c-sel: rgb(101, 219, 255);
+    --c-sel-alt: rgb(41, 46, 62);
+    --c-high: rgb(82, 59, 183);
+    --c-high-alt: hsl(318, 80%, 94%);
+    --c-hover: rgb(174, 170, 250);
+    --c-hover-alt: white;
+    --c-error: red;
+    --c-error-alt: pink;
+    --c-shadow: rgb(141, 118, 240);
+}

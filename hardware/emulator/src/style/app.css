@@ -34,9 +34,9 @@ ul{
 ul li{
   list-style: none;
 }
-ul li::marker{
+/* ul li::marker{
   content: ">>";
-}
+} */
 
 input[type=text]{
   color: var(--c-main);
@@ -71,33 +71,50 @@ input[type=button]:hover  {
   background-color: var(--c-hover);
   color: var(--c-hover-alt);
 }
-
+/* 
 .tooltipped{
   position: relative;
-}
+} */
 
 .tooltipped::before
-{
-  position: absolute;
-  top: 100%;
-  left:0;
+{ 
+  position: relative;
+  grid-area: tooltips;
   background-color: var(--c-sel);
   color: var(--c-sel-alt);
-  z-index: 100;
-  margin: 0;
-  padding-inline: 1rem;
-  min-width: 30vw;
 }
-
 .tooltipped:hover::before
 {
-  content: attr(data-tooltip);
+  /* content: attr(data-tooltip); */
 }
 
 .App{
   height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+.MinimButton{
+  position: relative;
+}
+.OptionPanel {
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  background-color: var(--c-back);
+  color: var(--c-back);
+  top:90%;
+  left:0;;
+  z-index: 20;
+  filter: drop-shadow(0 0 5px var(--c-high));
+}
+.MinimButton:hover .OptionPanel { 
+  opacity: 1;
+  pointer-events: unset;
+}
+.OptionPanel button{
+  background-color: var(--c-high);
 }
 
 .MenuTitle {
@@ -109,8 +126,7 @@ input[type=button]:hover  {
   display: flex;
   justify-content: space-between;
   border-bottom:2px solid var(--c-sel);
-  position: sticky;
-  top:0;
+  position: relative;
   z-index: 10;
 }
 .MenuTitle button {
@@ -122,7 +138,32 @@ input[type=button]:hover  {
   flex-grow: 1;
   background-color: var(--c-back-alt);
   color:var(--c-main);
+  overflow-y: scroll;
   position: relative;
-  display: flex;
-  flex-direction: column;
+
+  display: grid;
+  grid-template-areas:
+    "stream stream"
+    "cmd tools"
+    "cmd screens"
+    "cmd tooltips";
+  grid-template-columns: max(4rem, min-content) 1fr;
+  grid-template-rows: 2rem 2rem 1fr 2rem;
+}
+
+.StreamView {
+  grid-area: stream;
+}
+
+.CommandButtons{
+  grid-area: tools;
+}
+
+.StreamCodeBlocks {
+  grid-area: cmd;
+  background-color: var(--c-back);
+}
+
+.MinimScreenArray {
+  grid-area: screens;
 }

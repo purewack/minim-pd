@@ -1,11 +1,11 @@
 .MinimScreenArray{
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-around;
     align-items: center;
-    margin-block: 1rem;
-    flex-grow: 1;
+
+    margin-block: 2rem;
     padding: 0;
-    margin: 0;
 }
 
 .ContextScreen{
@@ -74,7 +74,7 @@
 }
 .ContextDetail h1 {
     font-size: medium;
-    color: var(--c-high-alt);
+    /* color: var(--c-high-alt); */
 }
 .MinimScreenInspect .ContextScreen canvas{
     height: 80vh;
@@ -82,4 +82,3 @@
 .MinimScreenInspect .ContextScreen.Hor canvas{
     height: 50vh;
 }
-

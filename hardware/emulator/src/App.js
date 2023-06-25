@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ContextScreen from './Minim'
-import { ContextDisplayLinks, ContextDisplayList, FlowMidi, InjectMidiPanel } from './Midi';
+import SettingsMidi, { ContextDisplayLinks, ContextDisplayList, MidiFlowIndicator, InjectMidiPanel } from './Midi';
 import './style/app.css';
 
 function App() {
@@ -9,6 +9,31 @@ function App() {
   const [midiStream, setMidiStream] = useState('')
   const [inspectContext, setInspectContext] = useState(null)
   const screenOrder = [1,2,3,4,5,0]
+
+  const [optPanel, setOptPanel] = useState(false)
+
+  const [ioPanel, setIoPanel] = useState(false)
+  const [inDevice, setInDevice] = useState(null)
+  const [outDevice, setOutDevice] = useState(null)
+
+  const [darkMode, setDark] = useState(false)
+  const setDarkMode = (v)=>{
+    setDark(v)
+    setTimeout(()=>{setDraws(d => d.map(v => v+1))},300)
+  }
+  useEffect(()=>{
+    const darklisten = event => {
+      setDarkMode(event.matches)
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setDarkMode(true)
+    }
+  
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', darklisten);
+    return ()=>{
+      window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', darklisten);
+    }
+  },[])
 
   const checkUpdatesAndErrors = ()=>{
     const d = window.ControlSurface.showParseUpdates()
@@ -27,15 +52,33 @@ function App() {
   }
 
   return (
-    <div className="App">
+    <div className={darkMode ? "App ThemeDark" : "App"}>
       <div className='MenuTitle'>
-        <button onClick={()=>{
-          window.app.dev()
-        }}>MINIM</button>
-        <FlowMidi />
+        <button className='MinimButton'>
+          MINIM
+          <div className='OptionPanel'>
+            <button onClick={()=>{window.app.dev()}}>Dev tools</button>
+            <button onClick={()=>{setDarkMode(t=>!t)}}>Theme</button>
+          </div>
+        </button>
+        <MidiFlowIndicator onClick={()=>{
+          setIoPanel(i => !i)
+        }}>
+          <SettingsMidi inputCallback={(ev)=>{
+            console.log(ev.data)
+            let s = ''
+            for(let i=0; i<ev.data.length; i++){
+              s += ev.data[i] + ' '
+            }
+            window.ControlSurface.parseMIDIStream(ev.data)
+            checkUpdatesAndErrors()
+            setMidiStream(s)
+          }}/>
+        </MidiFlowIndicator>
         <button onClick={()=>{
           window.app.end()
         }}>Quit</button>
+
       </div>
       
       <div className='AppContent'>

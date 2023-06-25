@@ -1,21 +1,27 @@
-import { useEffect, useRef, useState } from 'react';
+import { Children, useEffect, useRef, useState } from 'react';
 import './style/midi.css'
 
-export default function SettingsMidi({className, ...restProps}){
+export default function SettingsMidi({className, inputCallback, outputDispatchArray, ...restProps}){
     const [midiAccess, setMidiAccess] = useState(null)
     const [portList, setPortsList] = useState(null)
     const [inPort, setInPort] = useState(null)
     const [outPort, setOutPort] = useState(null)
-    const [fold, setFold] = useState(true)
   
     useEffect(()=>{
-      navigator.requestMIDIAccess().then((midiAccess)=>{
+      navigator.requestMIDIAccess({sysex:true}).then((midiAccess)=>{
         console.log("MIDI ready!", midiAccess);
         setMidiAccess(midiAccess); 
         let ins = []
         let outs = []
-        for (const entry of midiAccess.inputs) 
+        for (const entry of midiAccess.inputs) {
           ins.push(entry[1].name);
+          if(inPort === entry[1].name){
+            entry[1].onmidimessage = inputCallback
+            console.log('set ', inPort, entry)
+          }
+          else 
+            entry.onmidimessage = null
+        }
         
         for (const entry of midiAccess.outputs) 
           outs.push(entry[1].name);
@@ -25,29 +31,57 @@ export default function SettingsMidi({className, ...restProps}){
         console.error(`Failed to get MIDI access - ${msg}`);
       });    
   
-    },[])
+    },[inPort,outPort,inputCallback])
   
-    return <div className={className + ' MidiSettings'}>
-       {portList && <div className='MidiIO'>
-        <div className='InputList'>
-          <h1>-{'>'} To DSP</h1> 
-          {portList?.input.map((p,i) => <p className={'Option'} key={p + `_${i}`}>{`${i}: ${p}`}</p>)}
-        </div>
-        <div className='OutputList'>
-          <h1>From DSP -{'>'}</h1> 
-          {portList?.output.map((p,i) => <p className={'Option'} key={p + `_${i}`}>{`${i}: ${p}`}</p>)}
-        </div>
-      </div>}
+    return <div className={className + ' SettingsMidi'}>
+       {portList && <>
+        <ul className='InputList'>
+          {portList?.input?.length ? <>
+            <p>Inputs</p>
+            {portList.input.map((p,i) => <li 
+              key={p + `_${i}`} 
+              className={inPort === p ? 'Option Selected' :'Option'} 
+              onClick={()=>{
+                setInPort(p)
+              }}
+            >
+              {p}
+            </li>)}
+          </>
+          : 
+          <p>-No inputs available-</p>
+          }
+        </ul>
+        <p>{'>'}Emu{'>'}</p>
+        <ul className='OutputList'>
+          {portList?.output?.length ? <>
+            <p>Outputs</p>
+            {portList.output.map((p,i) => <li 
+              key={p + `_${i}`} 
+              className={outPort === p ? 'Option Selected' :'Option'} 
+              onClick={()=>{
+                setOutPort(p)
+              }}
+            >
+              {p}
+            </li>)}
+          </>
+          : 
+          <p>-No outputs available-</p>
+          }
+        </ul>
+      </>}
     </div>
   }
   
-export function FlowMidi({...restProps}){
-  return <button className='MidiFlow' {...restProps}>
-    <span className='In'/>
-    <span className='Out'/>
+export function MidiFlowIndicator({inDevice, outDevice, children, ...restProps}){
+  return <button className='MidiFlowIndicator' {...restProps}>
+    <span className={'In '  + inDevice}/>
+    <span className={'Out ' + outDevice}/>
     <span>
     MIDI
     </span>
+    {children}
   </button>
 }
 
@@ -108,7 +142,7 @@ export function ContextDisplayList({displayListArray, linksArray, className, ...
       l.push({...c, arguments:args})
     })
     setList(l)
-  },[displayListArray])
+  },[displayListArray,linksArray])
 
   return <ol className={'ContextDisplayList displaylist ' + className} {...restProps}>
     {list.map((c,i) => <li className={' ' + c.type}>
@@ -141,7 +175,7 @@ export function ContextDisplayLinks({displayListArray, linksArray, onNewLinkValu
 
 export function StreamCodeBlocks({blockArray, onNewArgument, onRemove}){
   
-  return <div className='codeblocks'>
+  return <div className='StreamCodeBlocks'>
     {blockArray && blockArray.map((c,i) => 
       <span 
         key={i + c.name} 
@@ -151,8 +185,8 @@ export function StreamCodeBlocks({blockArray, onNewArgument, onRemove}){
         <p><span>{c.name}</span><span className='remove' onClick={()=>{onRemove(i)}}>X</span></p>
         <p><span>{'(' }</span>
         {c.arguments.map((a,j) => 
-            <div className='tooltipped' 
-            data-tooltip={window.ControlSurface.getAPICommands(c.name)[`arg_${j}`]}>
+            <div className='help' 
+            data-help={window.ControlSurface.getAPICommands(c.name)[`arg_${j}`]}>
             <input 
               key={`arg_${i}_${j}`} 
               type='text'
@@ -175,9 +209,13 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
   const [code, setCode] = useState([])
   const [insertHead, setInsertHead] = useState(0)
 
-  return <div className='InjectMidiPanel' {...restProps} >
+  useEffect(()=>{
+    if(inputRef.current)inputRef.current.value = stream
+  }, [stream])
 
-    <form onSubmit={(e)=>{
+  return <>
+
+    <form className='StreamView' onSubmit={(e)=>{
       e.preventDefault()
       // const textStream = e.target.inputStream.value
       onInject(textToSymbolArray(e.target.inputStream.value),code,e.target.inputStream.value)
@@ -210,11 +248,10 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
       }}
     />
     
-    <div className='
-    '>
+    <div className='CommandButtons'>
       {window.ControlSurface.getAPICommands().map(c => 
         <button key={'btn_'+c.name} 
-        className='tooltipped'
+        className='CommandButton tooltipped'
         data-tooltip={window.ControlSurface.getAPICommands(c.name).tooltip}
         onClick={()=>{
           setCode(cd => {
@@ -227,7 +264,7 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
         }}>{c.name}</button>
       )}
       <span>:</span>
-      <button onClick={()=>{
+      <button className='CommandButton' onClick={()=>{
         let str = ''
         str += window.ControlSurface.getSymbol('start') + ' '
         str += '1 '
@@ -237,5 +274,5 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
         inputRef.current.value = str;
       }}>Insert Test Stream</button>
       </div>
-  </div>
+  </>
 }

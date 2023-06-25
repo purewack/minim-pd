@@ -1,41 +1,106 @@
 
-.MidiFlow {
+.MidiFlowIndicator {
   display: flex;
   align-items: center;
   width: min-content;
   user-select: none;
 }
-.MidiFlow .In, .MidiFlow .Out {
+.MidiFlowIndicator .In, .MidiFlowIndicator .Out {
   border:solid var(--c-high-alt) 1px;
   width: 1rem;
   height: 1rem;
   margin:1px;
 }
-
-
-.InjectMidiPanel {
-  background-color: var(--c-back);
+.MidiFlowIndicator .undefined,
+.MidiFlowIndicator .null{
+  border:dotted var(--c-high-alt) 1px;
 }
-.InjectMidiPanel form {
+
+.MidiFlowIndicator:hover .SettingsMidi {
+  opacity: 1;
+  pointer-events: initial;
+}
+.MidiFlowIndicator .SettingsMidi {
+  opacity: 0;
+  pointer-events: none;
+}
+.SettingsMidi {
+  position: absolute;
+  top:150%;
+  left:50%;
+  transform: translateX(-50%);
+  width:80vw;
+  border-radius: 1rem;
+  padding: 1rem;
+  background: var(--c-sel);
+  color: var(--c-back);
+
+  filter: drop-shadow(0 0 5px var(--c-high));
+  display: grid;
+  grid-template-columns: [start] 1fr [icons] 2rem [end] 1fr;
+  align-items: center;
+  gap:1rem;
+}
+.SettingsMidi::before {
+  position: absolute;
+  bottom:100%;
+  left:50%;
+  transform: translateX(-50%);
+
+  content: '';
+  background-color: inherit;
+  width:1rem;
+  height: 1rem;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  z-index: 10;
+}
+
+.SettingsMidi::after {
+  position: absolute;
+  content: '';
+  background-color: none;
+  left: 0;
+  bottom:100%;
+  width: 100%;
+  height: 3rem;
+}
+.SettingsMidi ul::before{
+  content: attr(aria-label);
+  background-color: red;
+  width: 1rem;
+  height: 1rem;
+}
+.SettingsMidi .Option {
+  background-color: var(--c-main);
+}
+.SettingsMidi .Option.Selected {
+  background-color: var(--c-high);
+}
+.SettingsMidi .InputList {
+  grid-column: start;
+}
+.SettingsMidi .OutputList {
+  grid-column: end;
+}
+
+
+
+.StreamView {
   display: flex;
 }
 
-
-.InjectMidiPanel .inputCommands{
+.CommandButtons{
   display: flex;
   flex-wrap: wrap;
   gap:0.25rem;
 }
 
-.InjectMidiPanel .codeblocks {
+.StreamCodeBlocks {
   display: flex;
-  /* flex-wrap: wrap; */
-  margin-block: 0.25rem;
-  height: fit-content;
-  overflow-x: scroll;
-  overflow-y: auto;
+  flex-direction: column;
+  align-items: start;
+  overflow-y: scroll;
 }
-
 
 
 .codeblock {
@@ -43,7 +108,6 @@
   margin-bottom: 0.5rem;
   border-right: solid black 2px;
   color:darkblue;
-  position: relative;
 }
 
 .codeblock.function{
@@ -151,21 +215,3 @@
   border-radius: 1rem 1rem 0 0 ;
 }
 
-
-.MidiIO::before{
-  display: block;
-}
-.MidiIO{
-  height: 100%;
-  padding: 1rem;
-}
-.MidiIO .Option {
-  background-color: var(--c-high);
-  color: var(--c-main);
-  width: fit-content;
-  padding-inline: 1rem;
-  border-radius: 1rem 0;
-}
-.MidiIO .Option.Active {
-  background-color: gold;
-}
