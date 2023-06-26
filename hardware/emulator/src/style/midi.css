@@ -16,7 +16,7 @@
   border:dotted var(--c-high-alt) 1px;
 }
 
-.MidiFlowIndicator:hover .SettingsMidi {
+.MidiFlowIndicator:focus .SettingsMidi {
   opacity: 1;
   pointer-events: initial;
 }

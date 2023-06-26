@@ -40,6 +40,6 @@ public:
         int midiStreamBytesLength, 
         ParseArgs& parseArgs
     );
-    void updateRequiredContexts();
+    int updateContext(int context);
 };
 }

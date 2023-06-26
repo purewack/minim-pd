@@ -75,6 +75,9 @@ input[type=button]:hover  {
 .tooltipped{
   position: relative;
 } */
+.Tooltips::after{
+  content: 'Hello';
+}
 
 .tooltipped::before
 { 

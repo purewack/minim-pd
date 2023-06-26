@@ -18,8 +18,10 @@ contextBridge.exposeInMainWorld('ControlSurface', {
     showParseUpdates: ()=> [..._cs.showParseUpdates().values()],
     showParseErrors: ()=> [..._cs.showParseErrors().values()],
     showParseErrorLocation: (context)=>_cs.showParseErrorLocation(context),
+    hasError: (context)=>_cs.hasError(context),
 
-    getPixelAtContext: (context, x,y)=> _cs.getPixelAtContext(context,x,y),
+    asArray: (context)=> _cs.asArray(context),
+    shouldUpdate: (context)=> _cs.shouldUpdate(context),
     getDisplayListAtContext:(context)=> [..._cs.getDisplayListAtContext(context).values()],
     getLinksAtContext: (context,count = undefined)=> {
         let links = []
@@ -29,7 +31,7 @@ contextBridge.exposeInMainWorld('ControlSurface', {
         return links
     },
     parseDisplayListAtContext: (context)=> _cs.parseDisplayListAtContext(context).values(),
-    
+  
     getAPICommands: (name)=> {
         if(name === undefined)
             return [...ControlSurface.commands]

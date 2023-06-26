@@ -6,32 +6,38 @@ export default function SettingsMidi({className, inputCallback, outputDispatchAr
     const [portList, setPortsList] = useState(null)
     const [inPort, setInPort] = useState(null)
     const [outPort, setOutPort] = useState(null)
-  
     useEffect(()=>{
-      navigator.requestMIDIAccess({sysex:true}).then((midiAccess)=>{
-        console.log("MIDI ready!", midiAccess);
-        setMidiAccess(midiAccess); 
-        let ins = []
-        let outs = []
-        for (const entry of midiAccess.inputs) {
-          ins.push(entry[1].name);
-          if(inPort === entry[1].name){
-            entry[1].onmidimessage = inputCallback
-            console.log('set ', inPort, entry)
-          }
-          else 
-            entry.onmidimessage = null
-        }
-        
-        for (const entry of midiAccess.outputs) 
-          outs.push(entry[1].name);
-        
-        setPortsList({input: [...ins], output: [...outs]})
+      if(midiAccess) return
+      navigator.requestMIDIAccess({sysex:true}).then((midi)=>{
+        setMidiAccess(midi); 
+        midi.onstatechange = (event) => {
+          // Print information about the (dis)connected MIDI controller
+          console.log(event.port.name, event.port.manufacturer, event.port.state);
+        };
       }, (msg)=>{
         console.error(`Failed to get MIDI access - ${msg}`);
       });    
-  
-    },[inPort,outPort,inputCallback])
+    },[])
+
+    useEffect(()=>{
+      if(!midiAccess) return
+      let ins = []
+      let outs = []
+      for (const entry of midiAccess.inputs) {
+        ins.push(entry[1].name);
+        if(inPort === entry[1].name){
+          entry[1].onmidimessage = inputCallback
+          console.log('set ', inPort, entry)
+        }
+        else 
+          entry.onmidimessage = null
+      }
+      
+      for (const entry of midiAccess.outputs) 
+        outs.push(entry[1].name);
+      
+      setPortsList({input: [...ins], output: [...outs]})
+    },[inPort,outPort,midiAccess])
   
     return <div className={className + ' SettingsMidi'}>
        {portList && <>
@@ -267,9 +273,17 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
       <button className='CommandButton' onClick={()=>{
         let str = ''
         str += window.ControlSurface.getSymbol('start') + ' '
+        str += '0 '
+        str += window.ControlSurface.getSymbol('rect') + ' '
+        str += '5 0 0 15 15 0 '
+        str += window.ControlSurface.getSymbol('rect') + ' '
+        str += '5 15 15 15 15 1 '
+        str += window.ControlSurface.getSymbol('start') + ' '
         str += '1 '
         str += window.ControlSurface.getSymbol('rect') + ' '
-        str += '5 0 0 30 30 1 '
+        str += '5 0 0 15 15 0 '
+        str += window.ControlSurface.getSymbol('rect') + ' '
+        str += '5 15 15 15 15 1 '
         str += window.ControlSurface.getSymbol('end')
         inputRef.current.value = str;
       }}>Insert Test Stream</button>

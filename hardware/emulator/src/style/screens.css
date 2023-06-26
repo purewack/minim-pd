@@ -36,8 +36,8 @@
     color: var(--c-main);
 } 
 .ContextScreenInfo {
-    opacity: 0.3;
-    color: var(--c-high);
+    opacity: 0.5;
+    color: var(--c-main);
     position:absolute;
     bottom:0;
     left:0;

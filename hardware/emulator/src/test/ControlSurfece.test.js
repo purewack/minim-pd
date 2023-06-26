@@ -120,9 +120,9 @@ describe('ControlSurface', ()=>{
         ]
 
         const cs = new ControlSurface();
-        const draws = cs.parseMIDIStreamUpdate(new Uint8Array(stream));
+        const draws = cs.parseMIDIStream(new Uint8Array(stream));
         const cmds = [...cs.getDisplayListAtContext(0).values()];
-        const pixels = [...cs.asArrayAtContext(0,5).values()]
+        const pixels = [...cs.asArray(0,5).values()]
         expect(draws).toBe(3);
         expect(cmds).toEqual(expect.arrayContaining(commands))
         expect(pixels).toEqual(expect.arrayContaining(buf))
@@ -131,7 +131,7 @@ describe('ControlSurface', ()=>{
     test('variable map',()=>{
         const cs = new ControlSurface();
 
-        let draws = cs.parseMIDIStreamUpdate(new Uint8Array([
+        let draws = cs.parseMIDIStream(new Uint8Array([
             0xF0,0x00,0x7F,0x7F,2,
             CMD('rect'),5,0, 0, 2, 2, 1,
             CMD('line'),4, 2, 2, 5, 5,
@@ -157,7 +157,7 @@ describe('ControlSurface', ()=>{
     test('multi-variable map single context',()=>{
         const cs = new ControlSurface();
 
-        let draws = cs.parseMIDIStreamUpdate(new Uint8Array([
+        let draws = cs.parseMIDIStream(new Uint8Array([
             0xF0,0x00,0x7F,0x7F,2,
             CMD('rect'),5, 0, 0, 2, 2, 1,
             CMD('line'),4, 2, 2, 5, 5,
@@ -184,7 +184,7 @@ describe('ControlSurface', ()=>{
     test('multi-variable map multi-context',()=>{
         const cs = new ControlSurface();
 
-        let draws = cs.parseMIDIStreamUpdate(new Uint8Array([
+        let draws = cs.parseMIDIStream(new Uint8Array([
             0xF0,0x00,0x7F,0x7F,2,
             CMD('rect'),5, 0, 0, 2, 2, 1,
             CMD('line'),4, 2, 2, 5, 5,
@@ -224,7 +224,7 @@ describe('ControlSurface', ()=>{
     test('invalid command stream',()=>{
         const cs = new ControlSurface();
 
-        cs.parseMIDIStreamUpdate(new Uint8Array([
+        cs.parseMIDIStream(new Uint8Array([
             0xF0,0x00,0x7F,0x7F,2,
             CMD('rect'),5, 0, 0, 2, 2, 1,
             20, 2, 2, 5, 5,
@@ -234,7 +234,7 @@ describe('ControlSurface', ()=>{
             0,0,1,0,0,0
         ]))
 
-        cs.parseMIDIStreamUpdate(new Uint8Array([
+        cs.parseMIDIStream(new Uint8Array([
             0xF0,0x00,0x7F,0x7F,2,
             CMD('rect'),5, 0, 0, 2, 2, 1,
             CMD('rect'),5, 2, 2, 5, 5,

@@ -28,18 +28,21 @@ Napi::Object MINIM::ControlSurface::Init(Napi::Env env, Napi::Object exports)
   Napi::HandleScope scope(env);
 
   Napi::Function buf = DefineClass(env, "ControlSurface", {
-    InstanceMethod("asArrayAtContext", &MINIM::ControlSurface::asArrayAtContext),
+    InstanceMethod("asArray", &MINIM::ControlSurface::asArray),
     InstanceMethod("getPixelAtContext", &MINIM::ControlSurface::getPixelAtContext),
     InstanceMethod("getDisplayListAtContext", &MINIM::ControlSurface::getDisplayListAtContext),
     InstanceMethod("parseDisplayListAtContext", &MINIM::ControlSurface::parseDisplayListAtContext),
+    InstanceMethod("shouldUpdate", &MINIM::ControlSurface::shouldUpdate),
+    InstanceMethod("forceRefreshOne", &MINIM::ControlSurface::forceRefreshOne),
+    InstanceMethod("forceRefreshAll", &MINIM::ControlSurface::forceRefreshAll),
     InstanceMethod("getLinksAtContext", &MINIM::ControlSurface::getLinksAtContext),
 
     InstanceMethod("parseMIDIStream", &MINIM::ControlSurface::parseMidiStream),
-    InstanceMethod("parseMIDIStreamUpdate", &MINIM::ControlSurface::parseMidiStreamUpdate),
     InstanceMethod("parseMIDICommands", &MINIM::ControlSurface::parseMidiCommands),
     InstanceMethod("showParseUpdates", &MINIM::ControlSurface::showParseUpdates),
     InstanceMethod("showParseErrors", &MINIM::ControlSurface::showParseErrors),
     InstanceMethod("showParseErrorLocation", &MINIM::ControlSurface::showParseErrorLocation),
+    InstanceMethod("hasError", &MINIM::ControlSurface::hasError),
   });
 
   constructor = Napi::Persistent(buf);
@@ -106,7 +109,7 @@ MINIM::ControlSurface::ControlSurface(const Napi::CallbackInfo& info) : Napi::Ob
     this->cs = new API::ControlSurfaceAPI5();
 }
 
-Napi::Value MINIM::ControlSurface::asArrayAtContext(const Napi::CallbackInfo& info){
+Napi::Value MINIM::ControlSurface::asArray(const Napi::CallbackInfo& info){
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
     if( info.Length() < 1){
@@ -117,33 +120,13 @@ Napi::Value MINIM::ControlSurface::asArrayAtContext(const Napi::CallbackInfo& in
      
     unsigned int context = info[0].As<Napi::Number>().Uint32Value() % 6;
     this->cs->parseDisplayList(context);
-    
-    unsigned int x = 0;
-    unsigned int y = 0;
-    unsigned int w = 128;
-    unsigned int h = 64;
-
-    if (info.Length() == 5) {
-        x = info[1].As<Napi::Number>().Uint32Value() % 128;
-        y = info[2].As<Napi::Number>().Uint32Value() % 64;
-        w = info[3].As<Napi::Number>().Uint32Value() % 128;
-        h = info[4].As<Napi::Number>().Uint32Value() % 64;
-    }
-    else if (info.Length() == 3) {
-        w = info[1].As<Napi::Number>().Uint32Value() % 128;
-        h = info[2].As<Napi::Number>().Uint32Value() % 64;
-    }
-    else if (info.Length() == 2) {
-        w = h = (info[1].As<Napi::Number>().Uint32Value() % 64);
-    }
-    
 
     // for(unsigned int y=0; y<8; y++){
     //     for(unsigned int x=0; x<8; x++)
     //         std::cout << (this->cs->gfx.getPixel(x,y) ? "1" : "0");
     //     std::cout << std::endl;
     // }
-    auto pixels = MINIM::BufferPainter::asArrayFromBufferPainter(&this->cs->gfx, x,y,w,h);
+    auto pixels = MINIM::BufferPainter::asArrayFromBufferPainter(&this->cs->gfx);
     return Napi::Buffer<uint8_t>::Copy(info.Env(),pixels.data(),pixels.size());
 }
 Napi::Value MINIM::ControlSurface::getPixelAtContext(const Napi::CallbackInfo& info){
@@ -205,6 +188,46 @@ Napi::Value MINIM::ControlSurface::parseDisplayListAtContext(const Napi::Callbac
     return Napi::Number::New(info.Env(), cmds);
 }
 
+Napi::Value MINIM::ControlSurface::forceRefreshOne(const Napi::CallbackInfo& info){
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    if( info.Length() != 1){
+        Napi::Error::New(info.Env(), "Expected 1 argument, context number")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    }
+    auto context = (info[0].As<Napi::Number>().Uint32Value());
+    if(context > 5) {
+        Napi::Error::New(info.Env(), "Invalid context number")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    } 
+    
+    this->cs->updateContextsFlag |= (1<<context);
+    return env.Undefined();
+}
+Napi::Value MINIM::ControlSurface::forceRefreshAll(const Napi::CallbackInfo& info){
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    this->cs->updateContextsFlag = 0b11111;
+    return env.Undefined();
+}
+Napi::Value MINIM::ControlSurface::shouldUpdate(const Napi::CallbackInfo& info){
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env); 
+    if( info.Length() != 1){
+        Napi::Error::New(info.Env(), "Expected 1 argument, context number")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    }
+    auto context = (info[0].As<Napi::Number>().Uint32Value());
+    if(context > 5) {
+        Napi::Error::New(info.Env(), "Invalid context number")
+            .ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+    } 
+    return Napi::Boolean::New(env, this->cs->updateContextsFlag & (1<<context));
+}
 
 void onParseElement(void* env, const char* element, int where){
     auto parsedata = reinterpret_cast<MINIM::ParseData*>(env);
@@ -251,11 +274,6 @@ Napi::Value MINIM::ControlSurface::parseMidiStream(const Napi::CallbackInfo& inf
 
     return Napi::Number::New(info.Env(), draws);
 }
-Napi::Value MINIM::ControlSurface::parseMidiStreamUpdate(const Napi::CallbackInfo& info){
-    auto draws = this->parseMidiStream(info);
-    this->cs->updateRequiredContexts();
-    return draws;
-}
 
 Napi::Value MINIM::ControlSurface::parseMidiCommands(const Napi::CallbackInfo& info){
     Napi::Env env = info.Env();
@@ -297,6 +315,7 @@ Napi::Value MINIM::ControlSurface::parseMidiCommands(const Napi::CallbackInfo& i
     }
     return Napi::Number::New(info.Env(), consumend);
 }
+
 
 Napi::Value MINIM::ControlSurface::getLinksAtContext(const Napi::CallbackInfo& info){
     Napi::Env env = info.Env();
@@ -386,6 +405,20 @@ Napi::Value MINIM::ControlSurface::showParseErrorLocation(const Napi::CallbackIn
         
         auto er = this->cs->errorLocation[context];
         return Napi::Number::New(info.Env(),er);
+    }
+    return env.Undefined();
+}
+
+
+
+Napi::Value MINIM::ControlSurface::hasError(const Napi::CallbackInfo& info){
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    if( info.Length() == 1 && !info[0].IsUndefined()){
+        auto context = (info[0].As<Napi::Number>().Uint32Value()) % CONTEXT_MAX;
+        
+        auto er = this->cs->errorContextsFlag & (1<<context);
+        return Napi::Boolean::New(info.Env(),er);
     }
     return env.Undefined();
 }

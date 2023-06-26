@@ -2,32 +2,52 @@ import { StreamCodeBlocks, symbolToBlock } from './Midi'
 import './style/screens.css'
 import {useEffect, useRef, useState} from 'react'
 
-function plotCSContext(canvas, contextNumber, horizontal){
-    const context = canvas.getContext('2d')
-    const sty = getComputedStyle(canvas)
-    context.fillStyle = sty.backgroundColor
-    context.fillRect(0, 0, context.canvas.width, context.canvas.height)
-    for(let y=0; y<64; y++){
-        for(let x=0; x<128; x++){
-            if(!window.ControlSurface.getPixelAtContext(contextNumber,x,y)) continue
-            context.fillStyle = sty.color
-            if(horizontal)
-                context.fillRect(x,y,1,1);
-            else 
-                context.fillRect(64-y,x,1,1);
-        }
-    }
-}
 
-export default function ContextScreen({contextNumber, draws, error, horizontal = true, className,...restProps}){
-    const canvasRef = useRef()
+export default function ContextScreen({contextNumber, errorWhere, horizontal = true, className,...restProps}){
+    const canvasRef = useRef()    
+    const animRef = useRef()
+    const pixelRef = useRef(new Uint8Array(128*64))
+    const [draws, setDraws] = useState(0)
 
     useEffect(() => {
-        if(canvasRef.current) plotCSContext(canvasRef.current,contextNumber,horizontal);
-    }, [contextNumber, draws, horizontal])
+        if(contextNumber === null || contextNumber === undefined) return
+        const draw = ()=>{
+            if(draws == 0 || window.ControlSurface.shouldUpdate(contextNumber)){
+                pixelRef.current = window.ControlSurface.asArray(contextNumber)
+                setDraws(d => d+1)
+            }
+
+            if(!canvasRef.current)return
+            const context = canvasRef.current.getContext('2d')
+            const sty = getComputedStyle(canvasRef.current)
+            context.fillStyle = sty.backgroundColor
+            context.fillRect(0, 0, context.canvas.width, context.canvas.height)
+            
+            if(pixelRef.current){
+                for(let y=0; y<64; y++){
+                    for(let x=0; x<128; x++){
+                        if(pixelRef.current[x + y*128]){
+                            context.fillStyle = sty.color
+                            if(horizontal)
+                                context.fillRect(x,y,1,1);
+                            else
+                                context.fillRect(64-y,x,1,1);
+                        }
+                    }
+                }
+            }
+            animRef.current = requestAnimationFrame(draw)
+        }
+        // window.ControlSurface.parseDisplayListAtContext(contextNumber)
+        draw()
+        
+        return ()=>{
+            cancelAnimationFrame(animRef.current)
+        }
+    }, [contextNumber, horizontal, draws])
 
     return (
-        <div className={(error ? 'ContextScreen Error ' : 'ContextScreen ') + 'C' + contextNumber + ' ' + className }
+        <div className={(errorWhere !== null ? 'ContextScreen Error ' : 'ContextScreen ') + 'C' + contextNumber + ' ' + className }
             {...restProps}
         >
             <canvas 
@@ -36,7 +56,7 @@ export default function ContextScreen({contextNumber, draws, error, horizontal =
                 ref={canvasRef}
             />
             <span className='ContextScreenInfo'>{draws}</span>
-            {error ? <span className='ContextScreenError'>Parse error at displayList byte:{error}</span> : null}
+            {errorWhere !== null ? <span className='ContextScreenError'>Parse error at displayList byte:{errorWhere}</span> : null}
         </div>
     )
 }

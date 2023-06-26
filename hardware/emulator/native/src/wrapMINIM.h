@@ -60,20 +60,24 @@ namespace MINIM{
         static Napi::Object Init(Napi::Env env, Napi::Object exports); //Init function for setting the export key to JS
         ControlSurface(const Napi::CallbackInfo& info); //Constructor to initialise
 
-        Napi::Value asArrayAtContext(const Napi::CallbackInfo& info);
+        Napi::Value asArray(const Napi::CallbackInfo& info);
         Napi::Value getPixelAtContext(const Napi::CallbackInfo& info);
         
+        Napi::Value updateContext(const Napi::CallbackInfo& info);
+        Napi::Value forceRefreshOne(const Napi::CallbackInfo& info);
+        Napi::Value forceRefreshAll(const Napi::CallbackInfo& info);
+        Napi::Value shouldUpdate(const Napi::CallbackInfo& info);
         Napi::Value parseDisplayListAtContext(const Napi::CallbackInfo& info);
         Napi::Value getDisplayListAtContext(const Napi::CallbackInfo& info);
         Napi::Value getLinksAtContext(const Napi::CallbackInfo& info);
         
         Napi::Value parseMidiStream(const Napi::CallbackInfo& info);
-        Napi::Value parseMidiStreamUpdate(const Napi::CallbackInfo& info);
         Napi::Value parseMidiCommands(const Napi::CallbackInfo& info);
         
         Napi::Value showParseUpdates(const Napi::CallbackInfo& info);
         Napi::Value showParseErrors(const Napi::CallbackInfo& info);
         Napi::Value showParseErrorLocation(const Napi::CallbackInfo& info);
+        Napi::Value hasError(const Napi::CallbackInfo& info);
     };
 
     struct ParseData{

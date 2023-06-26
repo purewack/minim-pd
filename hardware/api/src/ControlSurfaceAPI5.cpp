@@ -164,12 +164,12 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
 
     return draws;
 }
-void API::ControlSurfaceAPI5::updateRequiredContexts(){
-    for(int i=0; i<6; i++){
-        if(this->updateContextsFlag & (1<<i))
-            this->parseDisplayList(i);
+int API::ControlSurfaceAPI5::updateContext(int context){
+    int d = 0;
+    if(this->updateContextsFlag & (1<<context)){
+        d = this->parseDisplayList(context);
     }
-    this->updateContextsFlag = 0;
+    return d;
 }
 
 
