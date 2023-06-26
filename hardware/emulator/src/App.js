@@ -112,7 +112,10 @@ function App() {
               />
               <div className={'ContextDetail'}>
                   <h1>Context[{inspectContext}] Inspect</h1>
-                  {/* <h2>Draws: {draws[inspectContext]}</h2> */}
+                  <h2>Code:</h2>
+                  <code>{window.ControlSurface.getDisplayListAtContext(inspectContext).map((s,i) => 
+                    <span key={`code_${inspectContext}_${i}`}>{s} </span>  
+                  )}</code>
                   <h2>DisplayList:</h2>
                   <ContextDisplayList 
                     displayListArray={window.ControlSurface.getDisplayListAtContext(inspectContext)}
@@ -143,8 +146,6 @@ function App() {
           )}
 
         </div>
-
-        <p className='Tooltips'></p>
       </div>
     </div>
   );

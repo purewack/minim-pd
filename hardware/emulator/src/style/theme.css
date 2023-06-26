@@ -7,11 +7,11 @@
     --c-main-alt: midnightblue;
     --c-back: #eee;
     --c-back-alt: white;
-    --c-sel: rgb(23, 191, 115);
-    --c-sel-alt: rgb(229, 253, 252);
-    --c-high: rgb(111, 191, 231);
-    --c-high-alt: rgb(247, 248, 214);
-    --c-hover: rgb(184, 233, 248);
+    --c-sel: rgb(112, 219, 238);
+    --c-sel-alt: rgb(30, 12, 41);
+    --c-high: rgb(28, 70, 119);
+    --c-high-alt: rgb(244, 245, 232);
+    --c-hover: rgb(224, 209, 189);
     --c-hover-alt: rgb(0, 0, 0);
     --c-error: red;
     --c-error-alt: pink;
@@ -22,20 +22,31 @@
     --c-seq3: #588157ff;
     --c-seq4: #3a5a40ff;
     --c-seq5: #344e41ff;
+
+
+    --cmd-function: rgb(252, 211, 183);
+    --cmd-constant: rgb(222, 223, 162);
+    --cmd-status: rgb(183, 221, 182);
+    --cmd-variable: rgb(200, 176, 231);
 }
 
 .ThemeDark {
     --c-main: #eee;
     --c-main-alt: ivory;
-    --c-back: #222;
-    --c-back-alt: rgb(26, 1, 42);
-    --c-sel: rgb(101, 219, 255);
-    --c-sel-alt: rgb(41, 46, 62);
-    --c-high: rgb(82, 59, 183);
-    --c-high-alt: hsl(318, 80%, 94%);
-    --c-hover: rgb(174, 170, 250);
-    --c-hover-alt: white;
+    --c-back: #1b1b1b;
+    --c-back-alt: rgb(15, 0, 24);
+    --c-sel: hsl(253, 46%, 52%);
+    --c-sel-alt: rgb(255, 255, 255);
+    --c-high: rgb(28, 59, 126);
+    --c-high-alt: hsl(315, 83%, 95%);
+    --c-hover: rgb(236, 197, 236);
+    --c-hover-alt: rgb(17, 12, 12);
     --c-error: red;
     --c-error-alt: pink;
-    --c-shadow: rgb(141, 118, 240);
+    --c-shadow: rgb(81, 54, 204);
+
+    --cmd-function: rgb(131, 57, 7);
+    --cmd-constant: rgb(90, 102, 20);
+    --cmd-status: rgb(18, 68, 16);
+    --cmd-variable: rgb(40, 18, 68);
 }

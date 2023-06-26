@@ -21,6 +21,7 @@
     background-color: var(--c-back);
     color: var(--c-main);
     height:calc(100vw/6);
+    display: block;
 }
 
 .ContextScreen.Error {

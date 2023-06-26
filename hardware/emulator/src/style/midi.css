@@ -32,8 +32,8 @@
   width:80vw;
   border-radius: 1rem;
   padding: 1rem;
-  background: var(--c-sel);
-  color: var(--c-back);
+  background: var(--c-back);
+  color: var(--c-high);
 
   filter: drop-shadow(0 0 5px var(--c-high));
   display: grid;
@@ -64,14 +64,10 @@
   width: 100%;
   height: 3rem;
 }
-.SettingsMidi ul::before{
-  content: attr(aria-label);
-  background-color: red;
-  width: 1rem;
-  height: 1rem;
-}
 .SettingsMidi .Option {
-  background-color: var(--c-main);
+  background-color: var(--c-back);
+  color: var(--c-main);
+  margin-block: 0.5rem;
 }
 .SettingsMidi .Option.Selected {
   background-color: var(--c-high);
@@ -106,21 +102,20 @@
 .codeblock {
   margin-right: 0.5rem;
   margin-bottom: 0.5rem;
-  border-right: solid black 2px;
-  color:darkblue;
+  border-right: solid var(--c-high) 2px;
+  color:var(--c-main);
 }
-
 .codeblock.function{
-  background-color: lightblue;
+  background-color: var(--cmd-function);
 }
 .codeblock.constant{
-  background-color: lightgoldenrodyellow;
+  background-color: var(--cmd-constant);
 }
 .codeblock.status{
-  background-color: greenyellow;
+  background-color: var(--cmd-status);
 }
 .codeblock.variable{
-  background-color:plum;
+  background-color: var(--cmd-variable);
 }
 
 .codeblock * {
@@ -147,6 +142,16 @@
   background: red;
   color: white;
 }
+.codeblock[data-name=string] > p:nth-child(2){
+  flex-direction: column;
+}
+.codeblock[data-name=string] > p:nth-child(2) div{
+  margin-left: 1rem;
+}
+.codeblock[data-name=string] > p:nth-child(2) div:nth-child(4) input{
+  width: 10rem;
+}
+
 
 .displaylist {
   counter-reset: display-list-counter;

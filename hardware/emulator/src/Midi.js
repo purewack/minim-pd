@@ -102,22 +102,34 @@ export function blocksToTextStream(blocks){
   let st = ''
   blocks.forEach(c => {
     st += window.ControlSurface.getSymbol(c.name) + ' '
-    if(!(c.name === 'start' || c.name === 'end'))
+
+    if(c.name === 'string')
+      st += c.maxArguments + c.arguments[2].length + ' '
+    else if(!(c.name === 'start' || c.name === 'end'))
       st += c.maxArguments + ' '
-    c.arguments.forEach(a => {
-      st += a
-      st += ' '
+    c.arguments.forEach((a,i) => {
+      if(c.name === 'string' && i==c.maxArguments-1){
+        for(let si=0; si<a.length; si++){
+          st += a.charCodeAt(si)
+          st += ' '
+        }
+        st += '0 '
+      }
+      else{
+        st += a
+        st += ' '
+      }
     })
   })
   return st
 }
 
-export function symbolToBlock(symbol, args){
+export function symbolToBlock(symbol){
   const name = window.ControlSurface.getName(symbol)
   const c = window.ControlSurface.getAPICommands(name)
   return { 
     ...c,
-    arguments: (args ? args : [...Array(c.arguments).fill('0')]),
+    arguments: (name === 'scale' ? [1] : [...Array(c.arguments).fill('0')]),
     maxArguments: c.arguments
   }
 }
@@ -151,12 +163,12 @@ export function ContextDisplayList({displayListArray, linksArray, className, ...
   },[displayListArray,linksArray])
 
   return <ol className={'ContextDisplayList displaylist ' + className} {...restProps}>
-    {list.map((c,i) => <li className={' ' + c.type}>
+    {list.map((c,i) => <li className={' ' + c.type} key={`displaylist_cmd_${i}`}>
       <span>
         {c.name}
         {'( '}
           {c.arguments.map((v,j) => 
-            <span className={v.isLinked ? 'linked' : null}>
+            <span key={`displaylist_arg_${j}`} className={v.isLinked ? 'linked' : null}>
               {v.value} {' '}
             </span>
           )}
@@ -170,7 +182,7 @@ export function ContextDisplayLinks({displayListArray, linksArray, onNewLinkValu
 
   return <ol className={'ContextDisplayLinks ' + className}>
     {linksArray.map((l,i) => 
-      <li><input type='range' defaultValue={displayListArray[l]} min={0} max={127} step={1} onChange={(e)=>{
+      <li key={`linkslider_${l}_${i}`}><input type='range' defaultValue={displayListArray[l]} min={0} max={127} step={1} onChange={(e)=>{
         e.preventDefault()
         onNewLinkValue?.(l,i,parseInt(e.target.value))
       }}></input></li>
@@ -180,30 +192,61 @@ export function ContextDisplayLinks({displayListArray, linksArray, onNewLinkValu
 
 
 export function StreamCodeBlocks({blockArray, onNewArgument, onRemove}){
-  
+  const [isLinking, setIsLinking] = useState(false)
+
   return <div className='StreamCodeBlocks'>
     {blockArray && blockArray.map((c,i) => 
       <span 
         key={i + c.name} 
+        data-name={c.name}
         className={'codeblock ' + c.type}
       >
         
         <p><span>{c.name}</span><span className='remove' onClick={()=>{onRemove(i)}}>X</span></p>
         <p><span>{'(' }</span>
-        {c.arguments.map((a,j) => 
-            <div className='help' 
-            data-help={window.ControlSurface.getAPICommands(c.name)[`arg_${j}`]}>
+        {c.name === 'link' ? 
+          
+          <div className='help' data-help="Link to a variable">
             <input 
-              key={`arg_${i}_${j}`} 
-              type='text'
-              className={'argument'} 
-              value={a}  
+              type='number'
+              className={'address'} 
+              value={0}  
               onChange={(e)=>{
-                onNewArgument(i,j,e.target.value);
+
               }} 
             />
-            </div>
-        )}
+          </div>
+          
+          :
+
+          c.name === 'fill' ? 
+                    
+          <div className='help' data-help="Use XOR fill mode">
+            <input 
+              type='checkbox'
+              className={'address'} 
+              onChange={(e)=>{
+                onNewArgument(i,0,e.target.checked ? 1 : 0);
+              }} 
+            />
+          </div>
+          
+          : c.arguments.map((a,j) => 
+              <div className='help' 
+              data-help={window.ControlSurface.getAPICommands(c.name)[`arg_${j}`]}>
+              <input 
+                data-argindex={j}
+                data-name={c.name}
+                key={`arg_${i}_${j}`} 
+                type='text'
+                className={'argument'} 
+                value={a}  
+                onChange={(e)=>{
+                  onNewArgument(i,j,e.target.value);
+                }} 
+              />
+              </div>
+          )}
         <span>{')'}</span></p> 
         
       </span>)}
@@ -257,8 +300,8 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
     <div className='CommandButtons'>
       {window.ControlSurface.getAPICommands().map(c => 
         <button key={'btn_'+c.name} 
-        className='CommandButton tooltipped'
-        data-tooltip={window.ControlSurface.getAPICommands(c.name).tooltip}
+        className='CommandButton help'
+        data-help={window.ControlSurface.getAPICommands(c.name).tooltip}
         onClick={()=>{
           setCode(cd => {
             let ccc = [...cd]
@@ -270,6 +313,7 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
         }}>{c.name}</button>
       )}
       <span>:</span>
+
       <button className='CommandButton' onClick={()=>{
         let str = ''
         str += window.ControlSurface.getSymbol('start') + ' '
@@ -287,6 +331,7 @@ export function InjectMidiPanel({stream, onInject, ...restProps}){
         str += window.ControlSurface.getSymbol('end')
         inputRef.current.value = str;
       }}>Insert Test Stream</button>
+
       </div>
   </>
 }
