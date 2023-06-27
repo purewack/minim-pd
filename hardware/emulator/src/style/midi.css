@@ -207,16 +207,3 @@
   background-color: var(--c-seq3);
   color: black;
 }
-
-.InjectMidiPanel::before {
-  /* content: ''; */
-  /* background-color: red; */
-  height: 0.8rem;
-  margin: 4px;
-  margin-inline: 1rem;
-  display: block;
-  border: dotted black 2px;
-  border-bottom: none;
-  border-radius: 1rem 1rem 0 0 ;
-}
-

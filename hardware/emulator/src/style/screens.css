@@ -68,10 +68,10 @@
     color: var(--c-main);
     padding: 1rem;
     margin: 1rem;
-    border-radius: 1rem;
+    /* border-radius: 1rem; */
     border: solid var(--c-high) 2px;
     overflow-y: scroll;
-    height: 90vh;
+    height: 80vh;
 }
 .ContextDetail h1 {
     font-size: medium;
