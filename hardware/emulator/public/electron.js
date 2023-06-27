@@ -24,22 +24,8 @@ function createWindow() {
 
   // Open the DevTools.
   // if (isDev) {
-  //   win.webContents.openDevTools({ mode: 'detach' });
+    win.webContents.openDevTools({ mode: 'detach' });
   // }
-
-  // ipcMain.on('openMIDIIO', 
-  //   ()=>{
-  //     const win = new BrowserWindow({
-  //       title:'MIDI Prefs',
-  //       width: 400,
-  //       height: 400,
-  //     });
-  //     win.loadURL(
-  //       isDev
-  //         ? 'http://localhost:3000/midi'
-  //         : `file://${path.join(__dirname, '../build/index.html/midi')}`
-  //     );
-  //   }
 }
 
 

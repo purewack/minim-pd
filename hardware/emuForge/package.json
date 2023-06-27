@@ -1,0 +1,47 @@
+{
+  "name": "emuforge",
+  "productName": "emuforge",
+  "version": "1.0.0",
+  "description": "My Electron application description",
+  "main": ".webpack/main",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "echo \"No linting configured\"",
+    "install": "node-gyp rebuild -C ./native --runtime=electron --target=25.0.0 --arch=x64 --dist-url=https://electronjs.org/headers"
+  },
+  "keywords": [],
+  "author": {
+    "name": "purewack",
+    "email": "bobimaster15@gmail.com"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.22.5",
+    "@babel/preset-react": "^7.22.5",
+    "@electron-forge/cli": "^6.2.1",
+    "@electron-forge/maker-deb": "^6.2.1",
+    "@electron-forge/maker-rpm": "^6.2.1",
+    "@electron-forge/maker-squirrel": "^6.2.1",
+    "@electron-forge/maker-zip": "^6.2.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^6.2.1",
+    "@electron-forge/plugin-webpack": "^6.2.1",
+    "@electron/rebuild": "^3.2.13",
+    "@vercel/webpack-asset-relocator-loader": "1.7.3",
+    "babel-loader": "^9.1.2",
+    "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.0.0",
+    "electron": "25.2.0",
+    "node-loader": "^2.0.0",
+    "style-loader": "^3.0.0"
+  },
+  "dependencies": {
+    "bindings": "^1.5.0",
+    "electron-squirrel-startup": "^1.0.0",
+    "node-addon-api": "^7.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

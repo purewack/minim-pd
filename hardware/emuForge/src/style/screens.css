@@ -1,0 +1,85 @@
+.MinimScreenArray{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+
+    margin-block: 2rem;
+    padding: 0;
+}
+
+.ContextScreen{
+    position: relative;
+    display: inline-block;
+    box-sizing: border-box;
+    font-size: x-small;
+}
+
+.ContextScreen canvas {
+    image-rendering: pixelated;
+    border:solid var(--c-high) 1px;
+    background-color: var(--c-back);
+    color: var(--c-main);
+    height:calc(100vw/6);
+    display: block;
+}
+
+.ContextScreen.Error {
+    outline:solid  var(--c-error) 3px;
+}
+.ContextScreenError{
+    color: var(--c-error-alt);
+    position:absolute;
+    top:0;
+    left:0;
+}
+.ContextScreen:hover .ContextScreenError{
+    color: var(--c-main);
+} 
+.ContextScreenInfo {
+    opacity: 0.5;
+    color: var(--c-main);
+    position:absolute;
+    bottom:0;
+    left:0;
+}
+.ContextScreen:hover{
+    outline:solid var(--c-hover) 3px;
+}
+.ContextScreen:hover .ContextScreenInfo {
+    opacity: 1.0;
+}
+
+
+.MinimScreenInspect {
+    background-color: rgba(0, 0, 0, 0.6);
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+}
+.ContextDetail {
+    background-color: var(--c-back);
+    color: var(--c-main);
+    padding: 1rem;
+    margin: 1rem;
+    /* border-radius: 1rem; */
+    border: solid var(--c-high) 2px;
+    overflow-y: scroll;
+    height: 80vh;
+}
+.ContextDetail h1 {
+    font-size: medium;
+    /* color: var(--c-high-alt); */
+}
+.MinimScreenInspect .ContextScreen canvas{
+    height: 80vh;
+}
+.MinimScreenInspect .ContextScreen.Hor canvas{
+    height: 50vh;
+}
