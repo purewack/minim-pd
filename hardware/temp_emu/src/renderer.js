@@ -25,3 +25,9 @@
  *  });
  * ```
  */
+
+import './style/app.css';
+import './style/midi.css';
+import './style/screens.css';
+import './style/theme.css';
+// import './app.jsx';

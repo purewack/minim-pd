@@ -1,13 +1,11 @@
 
-// const addon = require('serialport/package').version
-// console.log(addon)
-// const time = require('microtime')
-// console.log(time)
-// const yoyo = require('pkgtest')
-// console.log(yoyo, yoyo())
-
+const addon = require('serialport/package').version
+console.log(addon)
+const time = require('microtime')
+console.log(time)
 const hello = require('hello-world')
 console.log(hello)
+
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 // const {contextBridge, ipcRenderer, remote} = require('electron')

@@ -9,8 +9,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\"",
-    "install": "node-gyp rebuild -C ./native --runtime=electron --target=25.0.0 --arch=x64 --dist-url=https://electronjs.org/headers"
+    "lint": "echo \"No linting configured\""
   },
   "keywords": [],
   "author": {
@@ -38,10 +37,14 @@
     "style-loader": "^3.0.0"
   },
   "dependencies": {
-    "bindings": "^1.5.0",
+    "@timfish/webpack-asset-relocator-loader": "^0.1.0",
     "electron-squirrel-startup": "^1.0.0",
+    "hello-world": "link:./napitest/",
+    "microtime": "^3.1.1",
     "node-addon-api": "^7.0.0",
+    "pkgtest": "link:./pkgtest/",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "serialport": "^11.0.0"
   }
 }

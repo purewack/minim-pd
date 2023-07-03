@@ -1,5 +1,5 @@
 const rules = require('./webpack.rules');
-const CopyPlugin = require("copy-webpack-plugin");
+// const CopyPlugin = require("copy-webpack-plugin");
 
 rules.push({
   test: /\.css$/,
@@ -16,4 +16,16 @@ module.exports = {
   //     "native/build/Release/minim.node",
   //   ]}),
   // ],
+  // target: "node",
+  // node: {
+  //   __dirname: false,
+  // },
+  // module: {
+  //   rules: [
+  //     {
+  //       test: /\.node$/,
+  //       loader: "node-loader",
+  //     },
+  //   ],
+  // },
 };
