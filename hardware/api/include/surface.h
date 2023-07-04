@@ -18,12 +18,12 @@ private:
     uint8_t errorContextsFlag = 0;
     int32_t errorLocation[6];
     API::DisplayList cmdList[6];
-    API::BufferPainter gfx;
     bool _isArgsValid(const unsigned char* midiBytes, unsigned int count);
     int _MidiStreamHasSysex(const unsigned char* midiStreamBytes, int midiStreamBytesLength);
    
     
 public:
+    API::BufferPainter gfx;
     int parseDisplayList(unsigned int forContext);
     int parseMidiCommands(
         unsigned int offset, 

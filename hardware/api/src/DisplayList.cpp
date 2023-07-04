@@ -1,5 +1,5 @@
-#include "gfx.h"
-#include "api.h"
+#include "../include/gfx.h"
+#include "../include/api.h"
 
 API::DisplayList::DisplayList(uint8_t* buffer){
     this->commands.buf = this->_buf;

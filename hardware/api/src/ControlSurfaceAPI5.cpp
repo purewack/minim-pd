@@ -1,5 +1,5 @@
-#include "surface.h"
-#include "api.h"
+#include "../include/surface.h"
+#include "../include/api.h"
 
 #define CHECK(X) if(!_isArgsValid(& midiBytes[i+1],midiBytesCount-i)) {\
         if(check.hook) {check.hook(check.env, X"_arg_error",offset+i);}\
@@ -24,7 +24,6 @@ int API::ControlSurfaceAPI5::_MidiStreamHasSysex(const unsigned char* midiStream
     return 0;
 }
 
-#include <iostream>
 int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsigned char* midiBytes, const int midiBytesCount, API::ParseArgs& check){
 
     auto list = &this->cmdList[this->context];

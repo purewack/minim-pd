@@ -46,7 +46,7 @@ int endGFXSystem(){
 	free(data_buf);
 	return 0;
 }
-void hookOnGfxContextChange(int ctx){
+void onGfxContextChange(int ctx){
 	context = ctx;
 	if(ctx == 5) gfx.rotated = 0;
 	else gfx.rotated = 1;

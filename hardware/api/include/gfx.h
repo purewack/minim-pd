@@ -9,13 +9,18 @@ namespace API{
 class BufferPainter {
 private:
   int inited = 0;
+  int fontWide;
+  int fontTall;
+  uint8_t* fontData = nullptr;
+  
+public:
   uint32_t fbuf_top[128]; // 128 vertical columns of upper 32 bits
   uint32_t fbuf_bot[128]; // 128 vertical columns of lower 32 bits
 
-public:
   int rotated = 0;
   int scale = 1;
   int modexor = 0;
+  void setFont(int wide, int tall, uint8_t* data);
   int accessBuffer(uint8_t* buf);
   void clear();
   void resetScaleRotate();
