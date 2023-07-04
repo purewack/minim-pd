@@ -19,39 +19,41 @@ void selfTestOnInit(){
 }
 
 void selfTestOnLoop(){
-    // cs.gfx.clear();
+    cs.gfx.clear();
 
-    // for(int i=0; i<5; i++){
-    // cs.gfx.drawRectSize(i*16,0,15,15);
-    // if(io.bstate & (1<<i+5))
-    //     cs.gfx.fillSection(i*16,0,15,15);
-    // }
-
-    // for(int i=0; i<5; i++){
-    // cs.gfx.drawRectSize(i*16,16,15,15);
-    // if(io.bstate & (1<<i))
-    //     cs.gfx.fillSection(i*16,16,15,15);
-    // }
-
-    // cs.gfx.drawRectSize(5*16,8,15,15);
-    // if(io.bstate & (0x400))
-    // cs.gfx.fillSection(5*16,8,15,15);
-    
-
-    // cs.gfx.drawRectSize(6*16,0,15,15);
-    // if(io.turns_left)
-    // cs.gfx.fillSection(6*16,0,15,15);
-
-    // cs.gfx.drawRectSize(6*16,16,15,15);
-    // if(io.turns_right)
-    // cs.gfx.fillSection(6*16,16,15,15);
-
-    // // for(int i=0; i<6; i++)
-    // // cs.forceDrawContext(i);
-    // cs.forceDrawContext(0);
-    if(io.bstate) {
-        SLOG(io.bstate);
-        delay(20);
+    for(int i=0; i<5; i++){
+    cs.gfx.drawRectSize(i*16,0,15,15);
+    if(io.bstate & (1<<i+5))
+        cs.gfx.fillSection(i*16,0,15,15);
     }
-    io_mux_irq();
+
+    for(int i=0; i<5; i++){
+    cs.gfx.drawRectSize(i*16,16,15,15);
+    if(io.bstate & (1<<i))
+        cs.gfx.fillSection(i*16,16,15,15);
+    }
+
+    cs.gfx.drawRectSize(5*16,8,15,15);
+    if(io.bstate & (0x400))
+    cs.gfx.fillSection(5*16,8,15,15);
+    
+    for(int i=0; i<2; i++){
+        cs.gfx.drawRectSize(6*16 + i*8,8,7,7);
+        cs.gfx.drawChar('0'+(1-i),6*16 + i*8,8);
+        if(io.turns_state & (1<<1-i))
+            cs.gfx.fillSection(6*16 + i*8,8,7,7);
+    }
+
+    char str[16];
+    snprintf(str, 16,"T:%d,%d",io.turns_left,io.turns_right);
+
+    cs.gfx.drawString(str,5*16,0);
+    // for(int i=0; i<6; i++)
+    // cs.forceDrawContext(i);
+    cs.forceDrawContext(0);
+
+    // if(io.bstate) {
+    //     SLOG(io.bstate);
+    //     delay(20);
+    // }
 }

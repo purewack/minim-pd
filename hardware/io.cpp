@@ -49,8 +49,6 @@ void io_mux_irq(){
     io.bstate_old = io.bstate;
     io.bstate &= ~(0x1f<<ii);
     io.bstate |= (aa<<ii);
-    io.bscan_down |= (io.bstate & (~io.bstate_old));
-    io.bscan_up |= (io.bstate_old & (~io.bstate));
   }
   else{
     io.turns_state = (io.turns_state << 2) | (aa&0x3);
@@ -58,17 +56,18 @@ void io_mux_irq(){
       io.turns_right++;
       // usbmidi.sendControlChange(0,1,65);
     }
-    if((io.turns_state&0xf) == 0b0111){
+    if((io.turns_state&0xf) == 0b1110){
       io.turns_left++;
       // usbmidi.sendControlChange(0,1,63);
     }
     io.bstate_old = io.bstate;
     io.bstate &= ~(0x400);
     io.bstate |= ((aa&0x4)<<8);
-    io.bscan_down |= (io.bstate & (~io.bstate_old));
-    io.bscan_up |= (io.bstate_old & (~io.bstate));
   }
 
+  io.bscan_down |= (io.bstate & (~io.bstate_old));
+  io.bscan_up |= (io.bstate_old & (~io.bstate));
+ 
   // if(io.bscan_down){
   //   auto n = 36;
   //   for(int i=0; i<11; i++){

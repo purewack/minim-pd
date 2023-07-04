@@ -65,7 +65,7 @@ void setup(){
     //   logger.println("no boot info found");
 
     io_mux_init();
-    timer_pause(TIMER3);
+    timer_resume(TIMER3);
 
     LOG("ready");
 } 
