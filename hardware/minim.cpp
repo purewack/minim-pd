@@ -32,14 +32,14 @@ void MINIM::ControlSurface::initDisplays(){
       1000000
     );
     
-    delay(200);
+    delay(50);
 
     gfx.clear();
 
     for(int i=0; i<CONTEXT_MAX; i++){
       context = i;
       beginOledSingle();
-      delay(100);
+      delay(50);
     }
     context = 0;
 }

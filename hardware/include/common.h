@@ -9,7 +9,6 @@
 extern USBCompositeSerial logger;
 extern USBMIDI usbmidi;
 
-#define LOG(X) logger.println(X)
 
 namespace MINIM {
 

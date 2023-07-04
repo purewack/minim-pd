@@ -54,14 +54,14 @@ void io_mux_irq(){
   }
   else{
     io.turns_state = (io.turns_state << 2) | (aa&0x3);
-    // if((io.turns_state&0xf) == 0b1011){
-    //   io.turns_right++;
-    //   usbmidi.sendControlChange(0,1,65);
-    // }
-    // if((io.turns_state&0xf) == 0b0111){
-    //   io.turns_left++;
-    //   usbmidi.sendControlChange(0,1,63);
-    // }
+    if((io.turns_state&0xf) == 0b1011){
+      io.turns_right++;
+      // usbmidi.sendControlChange(0,1,65);
+    }
+    if((io.turns_state&0xf) == 0b0111){
+      io.turns_left++;
+      // usbmidi.sendControlChange(0,1,63);
+    }
     io.bstate_old = io.bstate;
     io.bstate &= ~(0x400);
     io.bstate |= ((aa&0x4)<<8);

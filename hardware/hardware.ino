@@ -1,11 +1,15 @@
 #include "include/io.h"
 #include "include/common.h"
+#include "include/util.h"
 #include "api/include/api.h"
 #include "api/include/gfx.h"
 #include "api/include/surface.h"
 #include "api/src/ControlSurfaceAPI5.cpp"
 #include "api/src/BufferPainter.cpp"
 #include "api/src/DisplayList.cpp"
+
+#define SELFTEST
+
 
 #include <USBMIDI.h>
 #include <USBComposite.h>
@@ -18,37 +22,22 @@ MINIM::ControlSurface cs;
 
 void setup(){
   
-    // USBComposite.clear();
-    // USBComposite.setProductId(0x0031);
-    // USBComposite.setManufacturerString("M O T I V");
-    // USBComposite.setProductString("MINIM");
-    // usbmidi.registerComponent();
-    // logger.registerComponent();
-    // USBComposite.begin();
+    USBComposite.clear();
+    USBComposite.setProductId(0x0031);
+    USBComposite.setManufacturerString("M O T I V");
+    USBComposite.setProductString("MINIM");
+    usbmidi.registerComponent();
+    logger.registerComponent();
+    USBComposite.begin();
     Serial.begin(9600);
 
     cs.initGPIO();
     cs.initMemory();
     cs.initDisplays();
-
-    // io_mux_init();
-    // timer_pause(TIMER3);
-
-    delay(1000);
-
-    cs.gfx.clear();
-    cs.gfx.drawRectSize(0,0,60,60);
-    cs.gfx.drawLine(0,0,60,60);
-    cs.gfx.drawLine(0,0,60,30);
-    cs.gfx.drawString("hello",64,0);
-    cs.gfx.drawString("world",64,8);
-
-    cs.forceDrawContext(0);
-    cs.forceDrawContext(1);
-    cs.forceDrawContext(2);
-    cs.forceDrawContext(3);
-    cs.forceDrawContext(4);
-    cs.forceDrawContext(5);
+    
+#ifdef SELFTEST
+    selfTestOnInit();
+#endif
 
     // onGfxContextChange(5);
     // gfx.modexor = 1;
@@ -75,29 +64,18 @@ void setup(){
     // else
     //   logger.println("no boot info found");
 
+    io_mux_init();
+    timer_pause(TIMER3);
+
     LOG("ready");
 } 
 
 
 unsigned char cb = 0;
 void loop(){
-  cs.gfx.clear();
-  cs.gfx.drawRectSize(0,0,60,60);
-  cs.gfx.drawLine(0,0,60,60);
-  cs.gfx.drawLine(0,0,60,cb);
-  cs.gfx.drawString("hello",64,0);
-  cs.gfx.drawString("world",64,8);
-
-  cs.forceDrawContext(0);
-  cs.forceDrawContext(1);
-  cs.forceDrawContext(2);
-  cs.forceDrawContext(3);
-  cs.forceDrawContext(4);
-  cs.forceDrawContext(5);
-
-  cb++;
-  cb %= 60;
-
+#ifdef SELFTEST
+  selfTestOnLoop();
+#elif
   // delay(20);
   // // auto tt = millis();
   // if(int a = usbmidi.available()){
@@ -123,4 +101,5 @@ void loop(){
   // io_mux_irq();
   // delay(5);
   // // delay(dt);
+#endif
 }
