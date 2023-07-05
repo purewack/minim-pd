@@ -1,4 +1,4 @@
-#N canvas 132 638 434 310 12;
+#N canvas 370 574 434 310 12;
 #X obj 61 127 midiout;
 #X obj 144 251 noteout;
 #X msg 136 223 0, f 5;
@@ -16,6 +16,8 @@
 #X floatatom 339 186 5 0 127 0 - - - 0;
 #X obj 286 186 t f b;
 #X obj 281 252 pipe 30;
+#X obj 32 235 midiin;
+#X obj 33 261 print;
 #X connect 2 0 1 0;
 #X connect 3 0 2 0;
 #X connect 4 0 1 1;
@@ -32,3 +34,4 @@
 #X connect 15 0 13 0;
 #X connect 15 1 12 0;
 #X connect 16 0 11 0;
+#X connect 17 0 18 0;

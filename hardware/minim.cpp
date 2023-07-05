@@ -39,6 +39,7 @@ void MINIM::ControlSurface::initDisplays(){
     for(int i=0; i<CONTEXT_MAX; i++){
       context = i;
       beginOledSingle();
+      populateContextBuffer();
       delay(50);
     }
     context = 0;
@@ -254,5 +255,50 @@ void MINIM::ControlSurface::collectMidi(uint8_t* b, int offset){
     }
     else
       sarray_push(sysexString,b[1+i]);
+  }
+}
+
+void MINIM::ControlSurface::pollControls(hw_t & ctrls){
+  if(ctrls.bscan_down){
+    auto n = midiBase;
+    for(int i=0; i<11; i++){
+      if((1<<i)&ctrls.bscan_down){
+        n+=i;
+        usbmidi.sendNoteOn(0,n,127);
+          Serial.write(0x90);
+          Serial.write(n);
+          Serial.write(127);
+        break;
+      }
+    }
+    ctrls.bscan_down = 0;
+  }
+  if(ctrls.bscan_up){
+    auto n = midiBase;
+    for(int i=0; i<11; i++){
+      if((1<<i)&ctrls.bscan_up){
+        n+=i;
+        usbmidi.sendNoteOff(0,n,0);
+          Serial.write(0x80);
+          Serial.write(n);
+          Serial.write(0);
+        break;
+      }
+    }
+    ctrls.bscan_up = 0;
+  }
+  if(io.turns_right){
+    io.turns_right = 0;
+    usbmidi.sendControlChange(0,1,65);
+      Serial.write(0xB0);
+      Serial.write(1);
+      Serial.write(65);
+  }
+  if(io.turns_left){
+    io.turns_left = 0;
+    usbmidi.sendControlChange(0,1,63);
+      Serial.write(0xB0);
+      Serial.write(1);
+      Serial.write(63);
   }
 }

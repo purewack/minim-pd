@@ -5,6 +5,7 @@
 #include <libmaple/i2c.h>
 #include "../api/include/surface.h"
 #include "../api/include/libdarray.h"
+#include "../include/io.h"
 
 extern USBCompositeSerial logger;
 extern USBMIDI usbmidi;
@@ -32,6 +33,7 @@ class ControlSurface: public API::ControlSurfaceAPI5{
         void initDisplays();
         void collectMidi(uint8_t* buffer, int bufferOffset);
         void forceDrawContext(int ctx);
+        void pollControls(hw_t & io);
 };
 
 }

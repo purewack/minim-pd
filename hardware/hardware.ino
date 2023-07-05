@@ -8,7 +8,7 @@
 #include "api/src/BufferPainter.cpp"
 #include "api/src/DisplayList.cpp"
 
-#define SELFTEST
+// #define SELFTEST
 
 
 #include <USBMIDI.h>
@@ -29,7 +29,7 @@ void setup(){
     usbmidi.registerComponent();
     logger.registerComponent();
     USBComposite.begin();
-    Serial.begin(9600);
+    Serial.begin(31250);
 
     cs.initGPIO();
     cs.initMemory();
@@ -37,8 +37,11 @@ void setup(){
     
 #ifdef SELFTEST
     selfTestOnInit();
-#endif
+#else
 
+
+    cs.gfx.drawString("MIDI Test",0,0);
+    cs.forceDrawContext(0);
     // onGfxContextChange(5);
     // gfx.modexor = 1;
     // gfx.scale = 1;
@@ -63,7 +66,7 @@ void setup(){
     // }
     // else
     //   logger.println("no boot info found");
-
+#endif
     io_mux_init();
     timer_resume(TIMER3);
 
@@ -75,7 +78,9 @@ unsigned char cb = 0;
 void loop(){
 #ifdef SELFTEST
   selfTestOnLoop();
-#elif
+#else
+  cs.pollControls(io);
+  
   // delay(20);
   // // auto tt = millis();
   // if(int a = usbmidi.available()){

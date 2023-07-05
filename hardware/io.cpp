@@ -68,27 +68,5 @@ void io_mux_irq(){
   io.bscan_down |= (io.bstate & (~io.bstate_old));
   io.bscan_up |= (io.bstate_old & (~io.bstate));
  
-  // if(io.bscan_down){
-  //   auto n = 36;
-  //   for(int i=0; i<11; i++){
-  //     if((1<<i)&io.bscan_down){
-  //       n+=i;
-  //       usbmidi.sendNoteOn(0,n,127);
-  //       break;
-  //     }
-  //   }
-  //   io.bscan_down = 0;
-  // }
-  // if(io.bscan_up){
-  //   auto n = 36;
-  //   for(int i=0; i<11; i++){
-  //     if((1<<i)&io.bscan_up){
-  //       n+=i;
-  //       usbmidi.sendNoteOff(0,n,0);
-  //       break;
-  //     }
-  //   }
-  //   io.bscan_up = 0;
-  // }
   io.row = (io.row+1) % 3;
 }
