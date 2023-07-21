@@ -5,6 +5,7 @@
         if(check.hook) {check.hook(check.env, X"_arg_error",offset+i);}\
         return -i;\
     }\
+    if(check.logger) {check.logger(X);} \
     if(check.hook) {check.hook(check.env,X,offset+i); i+=midiBytes[i+1]+1; continue;}
             
 
@@ -31,15 +32,16 @@ int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsign
     int i;
     for(i=0; i<midiBytesCount; i++){
         if( midiBytes[i] & 0x80 ) {
+            if(check.logger) check.logger("status");
             if(check.hook) {
                 if(midiBytes[i] == CMD_SYSEX_ID[0]
                 && midiBytes[i+1] == CMD_SYSEX_ID[1]
                 && midiBytes[i+2] == CMD_SYSEX_ID[2]
                 && midiBytes[i+3] == CMD_SYSEX_ID[3] ){
-                    check.hook(check.env,"start",offset+i); i+=4; continue;
+                    check.hook(check.env,"start_i",offset+i); i+=4; continue;
                 }
                 else if(midiBytes[i] == CMD_SYSEX_END){
-                    check.hook(check.env,"end",offset+i); continue;
+                    check.hook(check.env,"end_i",offset+i); continue;
                 }
             }
             else 
@@ -96,10 +98,11 @@ int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsign
 }
 
 int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamBytes, int midiStreamBytesLength){
-    ParseArgs args = {0,0};
+    ParseArgs args = {0,0,0};
     return parseMidiStream(midiStreamBytes,midiStreamBytesLength,args);
 }
 int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamBytes, int midiStreamBytesLength, API::ParseArgs& check){
+    
     int draws = 0;
     for(int i=0; i<midiStreamBytesLength; i++){
         if(midiStreamBytes[i] == CMD_SYSEX_START){
@@ -108,7 +111,6 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
             && midiStreamBytes[i+1] == CMD_SYSEX_ID[1]
             && midiStreamBytes[i+2] == CMD_SYSEX_ID[2]
             && midiStreamBytes[i+3] == CMD_SYSEX_ID[3] ){
-                
                 //mode: write display list to context
                 i+=4;
                 auto context = midiStreamBytes[i++];
@@ -116,6 +118,7 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
                 this->context = context;
                 
                 if(midiStreamBytes[i+1] & 0x80){
+                    if(check.logger) check.logger("end partial");
                     if(check.hook) check.hook(check.env,"end_partial",i);
                     this->sysex = false;
                     i+=1;
@@ -123,10 +126,12 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
                     continue;
                 }
 
-                if(check.hook) check.hook(check.env,"start",i);
+                if(check.hook) check.hook(check.env,"start_main",i);
                 auto parsed = this->parseMidiCommands(context, &midiStreamBytes[i], midiStreamBytesLength-i, check);
-                
+
                 if(parsed < 0){
+                    if(check.logger) check.logger("parse error");
+                    if(check.hook) check.hook(check.env,"parse_error",i);
                     //error parsing, close to byte -parsed
                     this->errorContextsFlag |= (1<<context);
                     this->errorLocation[context] = (-parsed);
@@ -134,6 +139,8 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
                 }
                 else {
                     i += parsed-1;
+                    if(check.logger) check.logger("parse ok");
+                    if(check.hook) check.hook(check.env,"parse_ok",i);
                     this->updateContextsFlag |= (1<<context);
                     this->errorContextsFlag &= ~(1<<context);
                     this->errorLocation[context] = -1;
@@ -143,8 +150,9 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
             }
         }
         if(midiStreamBytes[i] & 0x80){
+                if(check.logger) check.logger("have end");
             this->sysex = false;
-            if(check.hook) check.hook(check.env,"end",i);
+            if(check.hook) check.hook(check.env,"end_full",i);
         }
         if(((midiStreamBytes[i]>>4) == 0x9) && !this->sysex){
             unsigned char context = (midiStreamBytes[i] & 0x0F) % CONTEXT_MAX;
@@ -164,16 +172,15 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
     return draws;
 }
 int API::ControlSurfaceAPI5::updateContext(int context){
-    int d = 0;
     if(this->updateContextsFlag & (1<<context)){
-        d = this->parseDisplayList(context);
+        return this->parseDisplayList(context);
     }
-    return d;
+    return 0;
 }
 
 
 int API::ControlSurfaceAPI5::parseDisplayList(unsigned int context){
-    if(context > 5) context = 5;
+    if(context > CONTEXT_MAX) context = CONTEXT_MAX;
     
     int commandCount = 0;
     this->gfx.clear();

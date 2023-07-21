@@ -9,6 +9,7 @@
 #define CMD_LINK_COUNT_MAX 128
 
 //sysex manID = 00 7f 7f
+#define CMD_ANY_STATUS_BYTE 0x80
 #define CMD_SYSEX_START 0xF0
 #define CMD_SYSEX_END   0xF7
 #define CMD_SYSEX_DEBUG 0x7E

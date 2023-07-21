@@ -9,6 +9,7 @@
 #include "api/src/DisplayList.cpp"
 
 // #define SELFTEST
+#define INTERNAL_TESTS
 
 
 #include <USBMIDI.h>
@@ -29,7 +30,12 @@ void setup(){
     usbmidi.registerComponent();
     logger.registerComponent();
     USBComposite.begin();
+
+#ifdef INTERNAL_TESTS
+    Serial.begin(19200);
+#else
     Serial.begin(31250);
+#endif
 
     cs.initGPIO();
     cs.initMemory();
@@ -60,9 +66,9 @@ void setup(){
     // int boot_cmd = EEPROM.read(0) ;
     // if(boot_cmd != 0xffff && boot_cmd){
     //   for(int i=0; i<boot_cmd; i++)
-    //     sarray_push(sysexString,(char)EEPROM.read(i+1));
-    //   parseCommand((unsigned char*)sysexString.buf,sysexString.count);
-    //   sarray_clear(sysexString);
+    //     sarray_push(midiString,(char)EEPROM.read(i+1));
+    //   parseCommand((unsigned char*)midiString.buf,midiString.count);
+    //   sarray_clear(midiString);
     // }
     // else
     //   logger.println("no boot info found");
@@ -83,22 +89,31 @@ void loop(){
   
   // delay(20);
   // // auto tt = millis();
-  // if(int a = usbmidi.available()){
-  //   uint32_t aa = usbmidi.readPacket();
-  //   uint8_t *b = (uint8_t*)&aa;
-  //   // if(!sysex){
-  //   //   // if(b[1] == 0xB1){
-  //   //   //   cb = b[2];
-  //   //   // }
-  //   //   // else if(b[1] == 0xB0){
-  //   //   //   auto a = setCByte(cb,b[2],b[3]_Midi(b, 1);
-  //   //   // }
-  //   // }
-  //   // else 
-  //   if(cs.isSysex()){
-  //     cs.collectMidi(b, 0);
-  //   }
-  // }
+  if(int a = usbmidi.available()){
+    uint32_t aa = usbmidi.readPacket();
+    uint8_t *b = (uint8_t*)&aa;
+    cs.collectMidi(b,4,1);
+  }
+
+
+  if(Serial.available()){
+    auto cc = Serial.read();
+    if(cc == 'T'){
+      LOG("send test midi string");
+      unsigned char testMidi[] = {
+        240,0,127,127,0,
+          76,4,0,0,20,20,
+          86,2,0,0,
+        247
+      };
+      cs.collectMidi(testMidi, 16, 0); 
+    }
+    else if(cc == 'L'){
+      cs.logDisplayList(0);
+    }
+  }
+
+  cs.pollDisplays();
 
   // // auto dt = millis() - tt;
   // // dt /= 1000;

@@ -50,9 +50,9 @@ void MINIM::ControlSurface::initMemory(){
 
   // data_buf = (uint8_t*)malloc(sizeof(uint8_t)*512);
 
-  sysexString.buf = (uint8_t*)malloc(sizeof(uint8_t)*CMD_BYTE_COUNT_MAX);
-  sysexString.lim = CMD_BYTE_COUNT_MAX;
-  sarray_clear(sysexString);
+  midiString.buf = (uint8_t*)malloc(sizeof(uint8_t)*CMD_BYTE_COUNT_MAX);
+  midiString.lim = CMD_BYTE_COUNT_MAX;
+  sarray_clear(midiString);
 
   displayCommands.buf = (uint8_t*)malloc(sizeof(uint8_t)*(130));
   displayCommands.lim = 130;
@@ -240,21 +240,69 @@ void MINIM::ControlSurface::forceDrawContext(int ctx){
   populateContextBuffer();
 }
 
+void parseHook(void* env, const char *command, int where){
+  LOG("onParse @");
+  LOG(where);
+  LOG(command);
+  LOG(" ");
+}
+void parseLogger(const char* message){
+  LOG(message);
+}
 
-void MINIM::ControlSurface::collectMidi(uint8_t* b, int offset){
-  // LOG("[");
-  // LOG(b[0],DEC);
-  //   LOG(b[1],DEC);
-  //   LOG(b[2],DEC);
-  //   LOG(b[3],DEC);
-  // LOG("]");
-  for(int i = offset; i<3; i++){
-    if(b[1+i] == 0xF7 && sysex){
-      sysex = false;
-      cs.parseMidiStream((uint8_t*)sysexString.buf,sysexString.count);
+void MINIM::ControlSurface::collectMidi(uint8_t* b, int blen, int offset){
+  // LOG("VVVVV");
+  // LOG(b[0]);
+  // LOG(b[1]);
+  // LOG(b[2]);
+  // LOG(b[3]);
+  
+  for(int i = offset; i<blen; i++){
+    unsigned char cbyte = b[i];
+
+    //auto begin sysex collect
+    if(cbyte == CMD_SYSEX_START){
+      sysex = true;
+      altering = 0;
+      sarray_clear(midiString);
+      sarray_push(midiString, cbyte);
+      continue;
     }
-    else
-      sarray_push(sysexString,b[1+i]);
+    
+    //auto cancel sysex collect and parse string
+    if((cbyte & CMD_ANY_STATUS_BYTE) && sysex){
+      sysex = false;
+      altering = 0;
+      if(cbyte == CMD_SYSEX_END){
+        sarray_push(midiString, cbyte);
+      }
+      cs.parseMidiStream((uint8_t*)midiString.buf,midiString.count);
+      continue;
+    }
+
+    if(cbyte == CMD_SYMBOL_ALTER && !altering && !sysex){
+      altering = 1;
+      sarray_clear(midiString);
+      sarray_push(midiString, cbyte);
+    }
+    else if(altering == 3){
+      cs.parseMidiStream((uint8_t*)midiString.buf,midiString.count);
+      altering = 0;
+    }
+    else if(sysex || (altering > 0 && altering < 3)){
+      sarray_push(midiString, cbyte);
+      if(altering)
+        altering++;
+    }
+    
+  }
+}
+
+void MINIM::ControlSurface::pollDisplays() {
+  for(int i=0; i<CONTEXT_MAX; i++){
+    if(cs.updateContext(i)){
+      forceDrawContext(i);
+    }
   }
 }
 
@@ -301,4 +349,12 @@ void MINIM::ControlSurface::pollControls(hw_t & ctrls){
       Serial.write(1);
       Serial.write(63);
   }
+}
+
+void MINIM::ControlSurface::logDisplayList(int ctx){
+  LOG("---");
+  for(int i=0; i<cs.cmdList[ctx].getCount(); i++){
+    LOG(cs.cmdList[ctx].getCommandAt(i));
+  }
+  LOG("---");
 }

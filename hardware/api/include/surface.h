@@ -8,6 +8,7 @@ namespace API{
 struct ParseArgs {
     void(*hook)(void* env, const char* command, int where);
     void* env;
+    void(*logger)(const char* message);
 };
 class ControlSurfaceAPI5 {
     friend class MINIM::ControlSurface;
