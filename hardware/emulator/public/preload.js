@@ -44,9 +44,3 @@ contextBridge.exposeInMainWorld('ControlSurface', {
         return ControlSurface.symbolToName[symbol]
     }
 })
-// contextBridge.exposeInMainWorld('BufferPainter', {
-//     clear: ()=> {sharedPainter.clear()},
-//     getPixel:(x,y) => sharedPainter.getPixel(x,y),
-//     drawLine:(x,y,x2,y2,xo = false) => {sharedPainter.drawLine(x,y,x2,y2,xo)},
-//     drawRect:(x,y,w,h,fill = false, xo = false) => {sharedPainter.drawRect(x,y,w,h,fill,xo)},
-// })

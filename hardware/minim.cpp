@@ -251,20 +251,17 @@ void parseLogger(const char* message){
 }
 
 void MINIM::ControlSurface::collectMidi(uint8_t* b, int blen, int offset){
-  // LOG("VVVVV");
-  // LOG(b[0]);
-  // LOG(b[1]);
-  // LOG(b[2]);
-  // LOG(b[3]);
   
+  // LOG("Stream");
   for(int i = offset; i<blen; i++){
+    // LOG(">");
+    // LOG(b[i]);
     unsigned char cbyte = b[i];
 
     //auto begin sysex collect
     if(cbyte == CMD_SYSEX_START){
       sysex = true;
       altering = 0;
-      sarray_clear(midiString);
       sarray_push(midiString, cbyte);
       continue;
     }
@@ -276,9 +273,21 @@ void MINIM::ControlSurface::collectMidi(uint8_t* b, int blen, int offset){
       if(cbyte == CMD_SYSEX_END){
         sarray_push(midiString, cbyte);
       }
-      cs.parseMidiStream((uint8_t*)midiString.buf,midiString.count);
+      LOG("display list");
+      for(int jj=0; jj<midiString.count; jj++){
+        LOG(midiString.buf[jj]);
+      }
+
+      API::ParseArgs parseargs = {0};
+      parseargs.logger = parseLogger;
+      int a = cs.parseMidiStream((uint8_t*)midiString.buf,midiString.count,parseargs);
+      LOG("list done");
+      LOG(a);
+      sarray_clear(midiString);
       continue;
     }
+
+
 
     if(cbyte == CMD_SYMBOL_ALTER && !altering && !sysex){
       altering = 1;

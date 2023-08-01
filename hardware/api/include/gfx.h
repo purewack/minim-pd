@@ -21,7 +21,7 @@ public:
   int scale = 1;
   int modexor = 0;
   void setFont(int wide, int tall, uint8_t* data);
-  int accessBuffer(uint8_t* buf);
+  int copyBuffer(uint8_t* buf);
   void clear();
   void resetScaleRotate();
   uint8_t getPixel(unsigned char x, unsigned char y);
@@ -58,7 +58,7 @@ public:
     unsigned int getCommandAt(unsigned int i);
     unsigned int getLinkCount();
     unsigned int getCount();
-    int accessBuffer(uint8_t* buf);
-    int accessLinkBuffer(int16_t* buf);
+    int copyBuffer(uint8_t* buf);
+    int copyLinkBuffer(int16_t* buf);
 };
 }

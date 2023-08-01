@@ -1,7 +1,7 @@
 #include "../include/gfx.h"
 #include "../gfx/fonttiny.h"
 
-int API::BufferPainter::accessBuffer(uint8_t* buf){
+int API::BufferPainter::copyBuffer(uint8_t* buf){
   int pixels = 0;
   for(int yy=0; yy<32; yy++){
     for(int xx=0; xx<128; xx++){

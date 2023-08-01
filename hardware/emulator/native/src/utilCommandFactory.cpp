@@ -4,6 +4,7 @@
 #include <sstream>
 #include "api.h"
 #include "util.h"
+#include "describe.h"
 
 #define AUTO_BIND(SYM) {\
     auto cmd = std::map<std::string, std::string>();\

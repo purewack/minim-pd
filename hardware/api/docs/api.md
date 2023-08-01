@@ -50,25 +50,40 @@ Upon recieving a `0xF0 0x00 0x7F 0x7F` string, the parser switches to sysex mode
 
 `s{x,y,text}` - Draw a string of lower chars of {size} at x,y. Fill flag 0 for filled in, otherwise draw outline of px wide based of {fill} number
 
+## Shared image pool
+
+Onboard is a 4KB memory pool for storing (monochrome) bitmaps. Each context can access the same buffer and draw images using appropriate offsets.
+
+Data should be sent in a long string of 4bit nibbles in Little Endian format, prefaced with a starting address to start uploading.
+
+*Warning* any bytes uploaded past the memory limit will be automatically dropped and ignored.
+
+`0xF0 0x00 0x7F 0x7E {startLSB, startMSB ,countLSB, countMSB, data...}` - {0xF0 0x00 0x7F 0x7E} is the sysex string which should be used to enter upload mode.
+{startLSB, startMSB} is the offset within the shared buffer from which data placement should start.
+{countLSB, countMSB} is the number of data nibbles which follow
+*LSB + MSB bytes from a 14bit number used in internal calculations.*
+
+
 # Display List Manipulation
 
 `V{addressMSB, addressLSB}` - register memory location defined by addressMSB + addressLSB bits (14bit). the link is auto increased per context in the order of registration, e.g. link Display List @ address 4 -link-> slot 0, link Display List @ address 2 -link-> slot 1 etc ...
 
 `0x90 {slot, value}` - noteOn message can alter memory if memory location was previously linked/bound, channel = context (LSB nibble of 0x9<span style="color:limegreen">0</span>)
 
+
 # Technical 
 
 ## Memory Limits
-`20kb` RAM:
-* `minimum 4kb ` for system variables, USB stack, io etc...
-* `128*4*2 = 1kb` for shared screen buffer
-* `1kb ` command buffer per context ` * 5 = 5kb`
+`20KB` RAM:
+* `minimum 4KB ` for system variables, USB stack, io etc...
+* `128*4*2 = 1KB` for shared screen buffer
+* `1kb ` command buffer per context ` * 5 = 5KB`
 * `128b ` variable pool per context ` * 5 = 620b` 
 * `128b ` command link per context ` * 5 = 620b` 
-* `8kb ` shared image buffer pool 
+* `8KB ` shared image buffer pool 
 
 Estimated minim memory usage (without system):
-`1kb + 5kb + 620b + 620b + 8kb =` *15576 bytes*
+`1KB + 5KB + 620b + 620b + 8KB =` *15576 bytes*
 
 ## Transfer Limits
 https://www.lim.di.unimi.it/IEEE/LYON/NETWD.HTM

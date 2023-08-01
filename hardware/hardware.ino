@@ -46,7 +46,7 @@ void setup(){
 #else
 
 
-    cs.gfx.drawString("MIDI Test",0,0);
+    cs.gfx.drawString("API Test",0,0);
     cs.forceDrawContext(0);
     // onGfxContextChange(5);
     // gfx.modexor = 1;
@@ -104,9 +104,51 @@ void loop(){
         240,0,127,127,0,
           76,4,0,0,20,20,
           86,2,0,0,
+        240,0,127,127,1,
+          76,4,0,0,20,20,
+          86,2,0,0,
         247
       };
-      cs.collectMidi(testMidi, 16, 0); 
+      cs.collectMidi(testMidi, sizeof(testMidi), 0); 
+    }
+    else if(cc == 'S'){
+      LOG("send test midi string");
+      unsigned char testMidi[] = {
+        240,0,127,127,1,
+          82,5,0,0,120,20,0,
+          'S',1,2,
+          84,8,5,5,'h','e','l','l','o',0,
+        240,0,127,127,0,
+          82,5,0,0,120,20,0,
+          84,8,5,5,'h','e','l','l','#',0,
+        247
+      };
+      cs.collectMidi(testMidi, sizeof(testMidi), 0); 
+    }
+    else if(cc == 'B'){
+      LOG("send test bitmap string");
+      unsigned char testMidi[] = {
+        240,0,127,CMD_GFX,
+          0,0,
+          8*2,0,
+          0xF,0xF,
+          0x5,0x5,
+          0xA,0xA,
+          0x5,0x5,
+          0xA,0xA,
+          0x5,0x5,
+          0xA,0xA,
+          0x5,0x5,
+        240,0,127,127,0,
+          'R',5,0,0,40,40,0,
+          'B',8,
+          2,2,36,36, //x,y,w,h
+          0,0,//sstart
+          8,//sh
+          16,//sw
+        247
+      };
+      cs.collectMidi(testMidi, sizeof(testMidi), 0); 
     }
     else if(cc == 'L'){
       cs.logDisplayList(0);
