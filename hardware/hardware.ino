@@ -8,6 +8,9 @@
 #include "api/src/BufferPainter.cpp"
 #include "api/src/DisplayList.cpp"
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 // #define SELFTEST
 #define INTERNAL_TESTS
 
@@ -46,8 +49,24 @@ void setup(){
 #else
 
 
-    cs.gfx.drawString("API Test",0,0);
-    cs.forceDrawContext(0);
+    cs.gfx.drawString("MINIM - API " STR(MINIM_API_VER),0,64-8);
+
+    cs.forceDrawContext(0);   
+
+    const char logo[5] = {'M','O','T','I','V'};
+    for(int i=0; i<5; i++){
+      cs.gfx.clear();
+      cs.gfx.scale = 10; 
+      cs.gfx.rotated = 1;  
+      cs.gfx.drawChar(logo[i],-6,20);
+      cs.forceDrawContext(1+i);
+    }
+  
+    // delay(1000);
+    // for(int i=0; i<5; i++){
+    //   cs.gfx.clear();
+    //   cs.forceDrawContext(i);
+    // }
     // onGfxContextChange(5);
     // gfx.modexor = 1;
     // gfx.scale = 1;
