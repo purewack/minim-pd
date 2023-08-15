@@ -252,10 +252,17 @@ void parseLogger(const char* message){
 
 void MINIM::ControlSurface::collectMidi(uint8_t* b, int blen, int offset){
   
-  // LOG("Stream");
+  LOG(">");
   for(int i = offset; i<blen; i++){
-    // LOG(">");
-    // LOG(b[i]);
+    LOGI("[");
+    LOGI(i);
+    LOGI("]");
+    LOGI("(");
+    LOGI(midiString.count);
+    LOGI(")");
+    LOGI(":");
+    LOG(b[i]);
+
     unsigned char cbyte = b[i];
 
     //auto begin sysex collect
@@ -269,7 +276,12 @@ void MINIM::ControlSurface::collectMidi(uint8_t* b, int blen, int offset){
     //auto cancel sysex collect and parse string
     if((cbyte & CMD_ANY_STATUS_BYTE) && sysex){
       sysex = false;
-      altering = 0;
+      altering = 0; 
+      // if(cbyte & CMD_SYMBOL_ALTER && !altering && !sysex){
+      //   altering = 1;
+      //   sarray_clear(midiString);
+      //   sarray_push(midiString, cbyte);
+      // }
       if(cbyte == CMD_SYSEX_END){
         sarray_push(midiString, cbyte);
       }
@@ -291,17 +303,19 @@ void MINIM::ControlSurface::collectMidi(uint8_t* b, int blen, int offset){
 
     if(cbyte == CMD_SYMBOL_ALTER && !altering && !sysex){
       altering = 1;
+      LOG("Altering start");
       sarray_clear(midiString);
       sarray_push(midiString, cbyte);
-    }
-    else if(altering == 3){
-      cs.parseMidiStream((uint8_t*)midiString.buf,midiString.count);
-      altering = 0;
     }
     else if(sysex || (altering > 0 && altering < 3)){
       sarray_push(midiString, cbyte);
       if(altering)
         altering++;
+    }
+    if(altering == 3){
+      LOG("Altering parse");
+      cs.parseMidiStream((uint8_t*)midiString.buf,midiString.count);
+      altering = 0;
     }
     
   }
