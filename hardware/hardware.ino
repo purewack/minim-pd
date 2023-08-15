@@ -8,11 +8,8 @@
 #include "api/src/BufferPainter.cpp"
 #include "api/src/DisplayList.cpp"
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-
 // #define SELFTEST
-#define INTERNAL_TESTS
+// #define INTERNAL_TESTS
 
 
 #include <USBMIDI.h>
