@@ -301,7 +301,7 @@ void MINIM::ControlSurface::collectMidi(uint8_t* b, int blen, int offset){
 
 
 
-    if(cbyte == CMD_SYMBOL_ALTER && !altering && !sysex){
+    if((cbyte & CMD_SYMBOL_ALTER) && !altering && !sysex){
       altering = 1;
       LOG("Altering start");
       sarray_clear(midiString);
