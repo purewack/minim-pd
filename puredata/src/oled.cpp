@@ -32,6 +32,7 @@ void oled_onCommand(t_oled *x, t_symbol *s, int argc, t_atom *argv);
 #include "../../hardware/api/include/api.h"
 
 void oled_fresh(t_oled *oled){
+    oled->a_table_i = 0;
     SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYSEX_ID[0]));
     SETFLOAT(oled->a_table+oled->a_table_i+1,(float)(CMD_SYSEX_ID[1]));
     SETFLOAT(oled->a_table+oled->a_table_i+2,(float)(CMD_SYSEX_ID[2]));
@@ -39,6 +40,10 @@ void oled_fresh(t_oled *oled){
     SETFLOAT(oled->a_table+oled->a_table_i+4,(float)(oled->context));
     oled->a_table_i = 5;
 }
+
+// void oled_var(t_oled *oled){
+
+// }
 
 void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
     
@@ -51,14 +56,32 @@ void oled_onCommand(t_oled *oled, t_symbol *s, int argc, t_atom *argv){
     if(s == gensym("reset_bytes")){
         oled->a_table_i = 0;
     }
-    else if(s == gensym("start")){
+    else if(s == gensym("start") || s == gensym("(")){
         oled_fresh(oled);
     }
-    else if(oled->a_table_i > 128 || s == gensym("end")){
+    else if(oled->a_table_i > 128 || s == gensym("end") || s == gensym(")")){
         SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYSEX_END));
         oled->a_table_i+=1;
         outlet_list(oled->o_midi,&s_list,oled->a_table_i,oled->a_table);      
         // oled_fresh(oled);
+    }
+    else if(s == gensym("change") && argc == 2){
+        oled->a_table_i = 0;
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_ALTER));
+        SETFLOAT(oled->a_table+oled->a_table_i+1,atom_getfloat(&argv[0]));
+        SETFLOAT(oled->a_table+oled->a_table_i+2,atom_getfloat(&argv[1]));
+        oled->a_table_i+=3; 
+        outlet_list(oled->o_midi,&s_list,oled->a_table_i,oled->a_table);         
+    }
+    else if(s == gensym("link") && argc == 1){
+        // oled_fresh(oled);
+        SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_LINK + oled->context));
+        unsigned slot = (unsigned int)(atom_getint(&argv[0]) - 1);
+        SETFLOAT(oled->a_table+oled->a_table_i+1,2);
+        SETFLOAT(oled->a_table+oled->a_table_i+2,(slot & 0x3f80)>>7);
+        SETFLOAT(oled->a_table+oled->a_table_i+3,(slot & 0x7F)>>0);
+        oled->a_table_i+=4; 
+        // outlet_list(oled->o_midi,&s_list,oled->a_table_i,oled->a_table);         
     }
     else if(s == gensym("xor")){
         SETFLOAT(oled->a_table+oled->a_table_i,(float)(CMD_SYMBOL_XOR));
