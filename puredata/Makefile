@@ -2,7 +2,7 @@
 
 lib.name = minim
 
-class.sources = src/bank~.cpp src/ticker.cpp src/mapper.cpp src/plonk~.cpp src/oled.cpp
+class.sources = src/bank~.cpp src/ticker.cpp src/mapper.cpp src/plonk~.cpp src/oled.cpp 
 
 # datafiles = help.pd README.txt LICENSE.txt
 

@@ -162,7 +162,7 @@ Napi::Value MINIM::ControlSurface::getDisplayListAtContext(const Napi::CallbackI
   } 
 
     unsigned char buf[CMD_BYTE_COUNT_MAX];
-    auto cc =  this->cs->cmdList[context].accessBuffer(buf);
+    auto cc =  this->cs->cmdList[context].copyBuffer(buf);
   auto list = std::vector<uint8_t>();
   for(int i=0; i<cc; i++)
     list.push_back(buf[i]);
@@ -333,7 +333,7 @@ Napi::Value MINIM::ControlSurface::getLinksAtContext(const Napi::CallbackInfo& i
         count = (info[1].As<Napi::Number>().Uint32Value()) % CMD_LINK_COUNT_MAX;
         
     int16_t buf[CMD_LINK_COUNT_MAX];
-    this->cs->cmdList[context].accessLinkBuffer(buf);
+    this->cs->cmdList[context].copyLinkBuffer(buf);
     auto links = std::vector<int16_t>();
 
     for(int i=0; i<count; i++)

@@ -1,6 +1,13 @@
 #include "include/io.h"
 #include "include/common.h"
+#include "include/util.h"
 #include <USBCompositeSerial.h>
+#include <libmaple/timer.h>
+#include <libmaple/dma.h>
+#include <libmaple/gpio.h>
+#include <libmaple/spi.h>
+#include <libmaple/delay.h>
+
 hw_t io;
 extern USBCompositeSerial logger;
 
@@ -42,47 +49,24 @@ void io_mux_irq(){
     io.bstate_old = io.bstate;
     io.bstate &= ~(0x1f<<ii);
     io.bstate |= (aa<<ii);
-    io.bscan_down |= (io.bstate & (~io.bstate_old));
-    io.bscan_up |= (io.bstate_old & (~io.bstate));
   }
   else{
     io.turns_state = (io.turns_state << 2) | (aa&0x3);
     if((io.turns_state&0xf) == 0b1011){
       io.turns_right++;
-      usbmidi.sendControlChange(0,1,65);
+      // usbmidi.sendControlChange(0,1,65);
     }
-    if((io.turns_state&0xf) == 0b0111){
+    if((io.turns_state&0xf) == 0b1110){
       io.turns_left++;
-      usbmidi.sendControlChange(0,1,63);
+      // usbmidi.sendControlChange(0,1,63);
     }
     io.bstate_old = io.bstate;
     io.bstate &= ~(0x400);
     io.bstate |= ((aa&0x4)<<8);
-    io.bscan_down |= (io.bstate & (~io.bstate_old));
-    io.bscan_up |= (io.bstate_old & (~io.bstate));
   }
 
-  if(io.bscan_down){
-    auto n = midi_base;
-    for(int i=0; i<11; i++){
-      if((1<<i)&io.bscan_down){
-        n+=i;
-        usbmidi.sendNoteOn(0,n,127);
-        break;
-      }
-    }
-    io.bscan_down = 0;
-  }
-  if(io.bscan_up){
-    auto n = midi_base;
-    for(int i=0; i<11; i++){
-      if((1<<i)&io.bscan_up){
-        n+=i;
-        usbmidi.sendNoteOff(0,n,0);
-        break;
-      }
-    }
-    io.bscan_up = 0;
-  }
+  io.bscan_down |= (io.bstate & (~io.bstate_old));
+  io.bscan_up |= (io.bstate_old & (~io.bstate));
+ 
   io.row = (io.row+1) % 3;
 }

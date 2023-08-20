@@ -42,7 +42,7 @@ Napi::Value MINIM::DisplayList::asArray(const Napi::CallbackInfo& info){
   Napi::HandleScope scope(env);
 
   uint8_t buf[CMD_BYTE_COUNT_MAX];
-  auto count = this->list->accessBuffer(buf);
+  auto count = this->list->copyBuffer(buf);
   auto commands = std::vector<uint8_t>();
   for(int i=0; i<count; i++)
     commands.push_back(buf[i]);
@@ -135,7 +135,7 @@ Napi::Value MINIM::DisplayList::showLinks(const Napi::CallbackInfo& info){
         auto at    = (info[0].As<Napi::Number>().Int32Value());
         auto count = (info[1].As<Napi::Number>().Int32Value());
         int16_t buf[CMD_LINK_COUNT_MAX];
-        this->list->accessLinkBuffer(buf);
+        this->list->copyLinkBuffer(buf);
         auto values = std::vector<int16_t>();
         for(int i=at; i<(at+count); i++)
             values.push_back(buf[i]);

@@ -1,7 +1,7 @@
-#include "gfx.h"
-#include "fonttiny.h"
+#include "../include/gfx.h"
+#include "../gfx/fonttiny.h"
 
-int API::BufferPainter::accessBuffer(uint8_t* buf){
+int API::BufferPainter::copyBuffer(uint8_t* buf){
   int pixels = 0;
   for(int yy=0; yy<32; yy++){
     for(int xx=0; xx<128; xx++){
@@ -220,46 +220,48 @@ void API::BufferPainter::drawPixel(int x, int y, int tx, int ty){
   }
 }
 
-
-// void API::BufferPainter::drawBitmap(int x, int y, int w, int h, int bpc, int blen, const uint8_t* buf){
-//   int nw = w < 0;
-//   int nh = h < 0;
-//   if(nw) w = -w;
-//   if(nh) h = -h;
-//   for(int xx=0; xx<w; xx++){
-//     int xxx = nw ? w-xx : xx;
-//     for(int yy=0; yy<h; yy++){
-//       int yyy = nh ? h-yy : yy;
-//       uint8_t bb = (xxx*bpc) + (yy>>3)%bpc;
-//       uint8_t ybyte = 0;
-//       ybyte |= (buf[bb%blen]);
+void API::BufferPainter::drawBitmap(int x, int y, int w, int h, int bpc, int blen, const uint8_t* buf){
+  int nw = w < 0;
+  int nh = h < 0;
+  if(nw) w = -w;
+  if(nh) h = -h;
+  for(int xx=0; xx<w; xx++){
+    int xxx = nw ? w-xx : xx;
+    for(int yy=0; yy<h; yy++){
+      int yyy = nh ? h-yy : yy;
+      uint8_t bb = (xxx*bpc) + (yy>>3)%bpc;
+      uint8_t ybyte = 0;
+      ybyte |= (buf[bb%blen]);
       
-//       if((!nh && ybyte & (1<<(yy%8))) || (nh && ybyte & (1<<(8-(yy%8)))))
-//         this->drawPixel(xxx,yy,x,y);
-//     }
-//   }
-// }
+      if((!nh && ybyte & (1<<(yy%8))) || (nh && ybyte & (1<<(8-(yy%8)))))
+        this->drawPixel(xxx,yy,x,y);
+    }
+  }
+}
 
-// #ifdef _MINIM_TARGET_BUILD
-// #include "gfx/fonttiny.cpp"
-// #endif
-
-// void BufferPainter::drawChar(char ch, int x, int y){
-//   ch = (ch < ' ' || ch > 126) ? 0 : (ch-' '+1);
-//   this->drawBitmap(x,y,
-//     fonttiny_wide,
-//     fonttiny_tall,
-//     fonttiny_tall>>3,
-//     fonttiny_wide,
-//     &fonttiny_data[int(ch)*fonttiny_wide]
-//   );
-// }
+void API::BufferPainter::drawChar(char ch, int x, int y){
+  if(!fontData) return;
+  ch = (ch < ' ' || ch > 126) ? 0 : (ch-' '+1);
+  this->drawBitmap(x,y,
+    fontWide,
+    fontTall,
+    fontTall>>3,
+    fontWide,
+    &fontData[int(ch)*fontWide]
+  );
+}
 
 
-// void BufferPainter::drawString(const char* str, int x, int y){
-//   int ii = 0;
-// 	while(str[ii] != 0){
-// 		this->drawChar(str[ii], x + ii*fonttiny_wide*this->scale, y);
-//     ii++;
-// 	}
-// }
+void API::BufferPainter::drawString(const char* str, int x, int y){
+  int ii = 0;
+	while(str[ii] != 0){
+		this->drawChar(str[ii], x + ii*fontWide*this->scale, y);
+    ii++;
+	}
+}
+
+void API::BufferPainter::setFont(int wide, int tall, uint8_t* data){
+  this->fontWide = wide;
+  this->fontTall = tall;
+  this->fontData = data;
+}

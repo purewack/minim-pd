@@ -1,5 +1,5 @@
-#include "gfx.h"
-#include "api.h"
+#include "../include/gfx.h"
+#include "../include/api.h"
 
 API::DisplayList::DisplayList(uint8_t* buffer){
     this->commands.buf = this->_buf;
@@ -52,13 +52,13 @@ unsigned int API::DisplayList::getCommandAt(unsigned int i){
     return this->commands.buf[i];
 }
 
-int API::DisplayList::accessBuffer(uint8_t* buf){
+int API::DisplayList::copyBuffer(uint8_t* buf){
     unsigned int i=0;
     for(i=0; i<this->commands.count; i++)
         buf[i] = (this->commands.buf[i]);
     return i;
 }
-int API::DisplayList::accessLinkBuffer(int16_t* buf){
+int API::DisplayList::copyLinkBuffer(int16_t* buf){
     unsigned int i = 0;
     for(unsigned int i=0; i<CMD_LINK_COUNT_MAX; i++)
         buf[i] = (this->links[i]);

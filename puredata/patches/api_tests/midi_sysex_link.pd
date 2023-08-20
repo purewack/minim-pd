@@ -1,0 +1,124 @@
+#N canvas 171 468 1028 515 12;
+#X obj 61 130 midiout;
+#X obj 144 251 noteout;
+#X msg 136 223 0, f 5;
+#X obj 137 200 bang;
+#X floatatom 194 189 5 0 127 0 - - - 0;
+#X msg 40 93 240 0 127 127 0 76 4 0 0 20 20 86 2 0 0 247;
+#X text 38 70 send line with link to midi noteon 0 channel 0;
+#X text 232 158 send param value to link0;
+#X msg 192 219 0;
+#X floatatom 194 162 5 0 127 0 - - - 0;
+#X floatatom 279 276 5 0 0 0 - - - 0;
+#X msg 297 218 clear;
+#X floatatom 254 218 5 0 0 0 - - - 0;
+#X floatatom 339 186 5 0 127 0 - - - 0;
+#X obj 286 186 t f b;
+#X obj 32 235 midiin;
+#X obj 33 261 print;
+#X obj 281 252 pipe 24;
+#X text 33 10 send string hello to context 0;
+#X msg 32 33 240 0 127 127 0 84 7 0 0 72 69 76 76 79 247;
+#X obj 363 480 midiout;
+#X text 467 38 send counter layout with links;
+#X obj 784 68 i;
+#X obj 825 66 + 1;
+#X obj 826 93 mod 4;
+#X floatatom 779 94 5 0 0 0 - - - 0;
+#X obj 820 41 bng 16 50 10 0 empty empty empty 0 -8 0 10 #fcfcfc #000000
+#000000;
+#X obj 852 10 bng 16 250 50 0 empty empty empty 0 -8 0 10 #fcfcfc #000000
+#000000;
+#X msg 876 12 stop;
+#X obj 658 190 dac~;
+#X obj 656 157 plonk~ 900;
+#X obj 780 127 == 0;
+#X obj 816 125 == 1;
+#X obj 850 125 == 2;
+#X obj 884 127 == 3;
+#X obj 849 201 midiout;
+#X msg 119 125 144 0 \$1;
+#X msg 467 82 240 0 127 127 0 82 5 0 8 31 8 0 82 5 32 8 31 8 0 82 5
+64 8 31 8 0 82 5 96 8 31 8 0 86 2 0 4 86 2 0 9 86 2 0 14 86 2 0 19
+247, f 17;
+#X obj 636 130 plonk~ 1100;
+#X msg 879 71 3;
+#X msg 747 165 144 0 \$1;
+#X msg 814 166 144 1 \$1;
+#X msg 879 167 144 2 \$1;
+#X msg 945 167 144 3 \$1;
+#X msg 271 334 240 0 127 127 1 82 5 0 8 31 8 0 82 5 32 8 31 8 0 82
+5 64 8 31 8 0 82 5 96 8 31 8 0 86 2 0 4 86 2 0 9 86 2 0 14 86 2 0 19
+247, f 17;
+#X obj 775 302 midiout;
+#X msg 408 334 240 0 127 127 2 82 5 0 8 31 8 0 82 5 32 8 31 8 0 82
+5 64 8 31 8 0 82 5 96 8 31 8 0 86 2 0 4 86 2 0 9 86 2 0 14 86 2 0 19
+247, f 17;
+#X msg 542 333 240 0 127 127 3 82 5 0 8 31 8 0 82 5 32 8 31 8 0 82
+5 64 8 31 8 0 82 5 96 8 31 8 0 86 2 0 4 86 2 0 9 86 2 0 14 86 2 0 19
+247, f 17;
+#X msg 681 333 240 0 127 127 4 82 5 0 8 31 8 0 82 5 32 8 31 8 0 82
+5 64 8 31 8 0 82 5 96 8 31 8 0 86 2 0 4 86 2 0 9 86 2 0 14 86 2 0 19
+247, f 17;
+#X msg 817 334 240 0 127 127 5 82 5 0 8 31 8 0 82 5 32 8 31 8 0 82
+5 64 8 31 8 0 82 5 96 8 31 8 0 86 2 0 4 86 2 0 9 86 2 0 14 86 2 0 19
+247, f 17;
+#X msg 462 262 145 0 \$1 146 0 \$1 147 0 \$1 148 0 \$1 149 0 \$1;
+#X msg 796 262 145 1 \$1 146 1 \$1 147 1 \$1 148 1 \$1 149 1 \$1;
+#X obj 843 40 metro 200;
+#X connect 2 0 1 0;
+#X connect 3 0 2 0;
+#X connect 4 0 1 1;
+#X connect 4 0 3 0;
+#X connect 5 0 0 0;
+#X connect 8 0 1 1;
+#X connect 8 0 3 0;
+#X connect 9 0 36 0;
+#X connect 10 0 4 0;
+#X connect 11 0 17 0;
+#X connect 12 0 17 0;
+#X connect 13 0 14 0;
+#X connect 14 0 12 0;
+#X connect 14 1 11 0;
+#X connect 15 0 16 0;
+#X connect 17 0 10 0;
+#X connect 19 0 0 0;
+#X connect 22 0 23 0;
+#X connect 22 0 25 0;
+#X connect 23 0 24 0;
+#X connect 24 0 22 1;
+#X connect 25 0 31 0;
+#X connect 25 0 32 0;
+#X connect 25 0 33 0;
+#X connect 25 0 34 0;
+#X connect 26 0 22 0;
+#X connect 27 0 39 0;
+#X connect 27 0 52 0;
+#X connect 28 0 52 0;
+#X connect 30 0 29 0;
+#X connect 30 0 29 1;
+#X connect 31 0 40 0;
+#X connect 31 0 38 0;
+#X connect 31 0 50 0;
+#X connect 32 0 41 0;
+#X connect 33 0 42 0;
+#X connect 33 0 51 0;
+#X connect 34 0 43 0;
+#X connect 36 0 0 0;
+#X connect 37 0 20 0;
+#X connect 38 0 29 0;
+#X connect 38 0 29 1;
+#X connect 39 0 22 0;
+#X connect 40 0 35 0;
+#X connect 41 0 35 0;
+#X connect 42 0 35 0;
+#X connect 43 0 35 0;
+#X connect 44 0 20 0;
+#X connect 46 0 20 0;
+#X connect 47 0 20 0;
+#X connect 48 0 20 0;
+#X connect 49 0 20 0;
+#X connect 50 0 45 0;
+#X connect 51 0 45 0;
+#X connect 52 0 26 0;
+#X connect 52 0 30 0;

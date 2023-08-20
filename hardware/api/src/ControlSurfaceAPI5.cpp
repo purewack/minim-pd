@@ -1,10 +1,11 @@
-#include "surface.h"
-#include "api.h"
+#include "../include/surface.h"
+#include "../include/api.h"
 
 #define CHECK(X) if(!_isArgsValid(& midiBytes[i+1],midiBytesCount-i)) {\
         if(check.hook) {check.hook(check.env, X"_arg_error",offset+i);}\
         return -i;\
     }\
+    if(check.logger) {check.logger(X);} \
     if(check.hook) {check.hook(check.env,X,offset+i); i+=midiBytes[i+1]+1; continue;}
             
 
@@ -24,7 +25,13 @@ int API::ControlSurfaceAPI5::_MidiStreamHasSysex(const unsigned char* midiStream
     return 0;
 }
 
-#include <iostream>
+int listAdd(API::DisplayList* list, const unsigned char* midiBytes, unsigned int i){
+    int c = midiBytes[i+1]+2;
+    for(int j=0; j<c; j++)
+        list->add(midiBytes[i+j]);  
+    return c-1;
+}
+
 int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsigned char* midiBytes, const int midiBytesCount, API::ParseArgs& check){
 
     auto list = &this->cmdList[this->context];
@@ -32,15 +39,16 @@ int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsign
     int i;
     for(i=0; i<midiBytesCount; i++){
         if( midiBytes[i] & 0x80 ) {
+            if(check.logger) check.logger("status");
             if(check.hook) {
                 if(midiBytes[i] == CMD_SYSEX_ID[0]
                 && midiBytes[i+1] == CMD_SYSEX_ID[1]
                 && midiBytes[i+2] == CMD_SYSEX_ID[2]
                 && midiBytes[i+3] == CMD_SYSEX_ID[3] ){
-                    check.hook(check.env,"start",offset+i); i+=4; continue;
+                    check.hook(check.env,"start_i",offset+i); i+=4; continue;
                 }
                 else if(midiBytes[i] == CMD_SYSEX_END){
-                    check.hook(check.env,"end",offset+i); continue;
+                    check.hook(check.env,"end_i",offset+i); continue;
                 }
             }
             else 
@@ -73,20 +81,34 @@ int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsign
             i+=3;
             continue;
         }
+        else if( midiBytes[i] == CMD_SYMBOL_XOR){
+            CHECK("xor");
+            i += listAdd(list,midiBytes,i);
+            continue;
+        }
+        else if( midiBytes[i] == CMD_SYMBOL_SCALE){
+            CHECK("scale");
+            i += listAdd(list,midiBytes,i);
+            continue;
+        }
         else if( midiBytes[i] == CMD_SYMBOL_LINE){
             CHECK("line");
-            int c = midiBytes[i+1]+2;
-            for(int j=0; j<c; j++)
-                list->add(midiBytes[j+i]);  
-            i+=c-1;
+            i += listAdd(list,midiBytes,i);
             continue;
         }
         else if( midiBytes[i] == CMD_SYMBOL_RECT){
             CHECK("rect");
-            int c = midiBytes[i+1]+2;
-            for(int j=0; j<c; j++)
-                list->add(midiBytes[j+i]);  
-            i+=c-1;
+            i += listAdd(list,midiBytes,i);
+            continue;
+        }
+        else if( midiBytes[i] == CMD_SYMBOL_STRING){
+            CHECK("string");
+            i += listAdd(list,midiBytes,i);
+            continue;
+        }
+        else if( midiBytes[i] == CMD_SYMBOL_BITMAP){
+            CHECK("bitmap");
+            i += listAdd(list,midiBytes,i);
             continue;
         }
         else {
@@ -97,19 +119,64 @@ int API::ControlSurfaceAPI5::parseMidiCommands(unsigned int offset, const unsign
 }
 
 int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamBytes, int midiStreamBytesLength){
-    ParseArgs args = {0,0};
+    ParseArgs args = {0,0,0};
     return parseMidiStream(midiStreamBytes,midiStreamBytesLength,args);
 }
 int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamBytes, int midiStreamBytesLength, API::ParseArgs& check){
+    
     int draws = 0;
     for(int i=0; i<midiStreamBytesLength; i++){
         if(midiStreamBytes[i] == CMD_SYSEX_START){
             this->sysex = true;
+
+            if(midiStreamBytes[i] == CMD_GFX_ID[0]
+            && midiStreamBytes[i+1] == CMD_GFX_ID[1]
+            && midiStreamBytes[i+2] == CMD_GFX_ID[2]
+            && midiStreamBytes[i+3] == CMD_GFX_ID[3] )
+            {
+                LOG(i);
+                //mode: write tto shared memory
+                i+=4;
+                if(check.logger) check.logger("start shared upload"); 
+                if(check.hook) check.hook(check.env,"gfx_start",i);
+                int startLSB = midiStreamBytes[i++];
+                int startMSB = midiStreamBytes[i++];
+                int countLSB = midiStreamBytes[i++];
+                int countMSB = midiStreamBytes[i++];
+                int start = (startLSB + (startMSB<<7));
+                int count = (countLSB + (countMSB<<7));
+                auto buf = &midiStreamBytes[i++];
+                int n = 0;
+                for(int j=start; j<start+count; j++){
+                    if(start+count >= SHARED_BUF_MAX) break;
+                    if(midiStreamBytes[i+1] & 0x80){
+                        if(check.logger) check.logger("end shared upload partial");
+                        if(check.hook) check.hook(check.env,"gfx_end_partial",i);
+                        this->sysex = false;
+                        i+=1;
+                        this->updateContextsFlag |= (1<<context);
+                        break;
+                    }
+                    sharedBuffer[j]  = (uint8_t(buf[n+0]) << 0);
+                    sharedBuffer[j] |= (uint8_t(buf[n+1]) << 4);
+                    n+=2;
+                }
+                i+=count-2;
+                
+                // for(int j=start; j<start+count/2; j++){
+                //     LOG(sharedBuffer[j]);
+                // }
+                LOG(i);
+                
+                if(check.logger) check.logger("end shared upload"); 
+                if(check.hook) check.hook(check.env,"gfx_end",i);
+                continue;
+            }
+
             if(midiStreamBytes[i] == CMD_SYSEX_ID[0]
             && midiStreamBytes[i+1] == CMD_SYSEX_ID[1]
             && midiStreamBytes[i+2] == CMD_SYSEX_ID[2]
             && midiStreamBytes[i+3] == CMD_SYSEX_ID[3] ){
-                
                 //mode: write display list to context
                 i+=4;
                 auto context = midiStreamBytes[i++];
@@ -117,6 +184,7 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
                 this->context = context;
                 
                 if(midiStreamBytes[i+1] & 0x80){
+                    if(check.logger) check.logger("end partial");
                     if(check.hook) check.hook(check.env,"end_partial",i);
                     this->sysex = false;
                     i+=1;
@@ -124,10 +192,12 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
                     continue;
                 }
 
-                if(check.hook) check.hook(check.env,"start",i);
+                if(check.hook) check.hook(check.env,"start_main",i);
                 auto parsed = this->parseMidiCommands(context, &midiStreamBytes[i], midiStreamBytesLength-i, check);
-                
+
                 if(parsed < 0){
+                    if(check.logger) check.logger("parse error");
+                    if(check.hook) check.hook(check.env,"parse_error",i);
                     //error parsing, close to byte -parsed
                     this->errorContextsFlag |= (1<<context);
                     this->errorLocation[context] = (-parsed);
@@ -135,6 +205,8 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
                 }
                 else {
                     i += parsed-1;
+                    if(check.logger) check.logger("parse ok");
+                    if(check.hook) check.hook(check.env,"parse_ok",i);
                     this->updateContextsFlag |= (1<<context);
                     this->errorContextsFlag &= ~(1<<context);
                     this->errorLocation[context] = -1;
@@ -144,8 +216,9 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
             }
         }
         if(midiStreamBytes[i] & 0x80){
+                if(check.logger) check.logger("have end");
             this->sysex = false;
-            if(check.hook) check.hook(check.env,"end",i);
+            if(check.hook) check.hook(check.env,"end_full",i);
         }
         if(((midiStreamBytes[i]>>4) == 0x9) && !this->sysex){
             unsigned char context = (midiStreamBytes[i] & 0x0F) % CONTEXT_MAX;
@@ -165,16 +238,15 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
     return draws;
 }
 int API::ControlSurfaceAPI5::updateContext(int context){
-    int d = 0;
     if(this->updateContextsFlag & (1<<context)){
-        d = this->parseDisplayList(context);
+        return this->parseDisplayList(context);
     }
-    return d;
+    return 0;
 }
 
 
 int API::ControlSurfaceAPI5::parseDisplayList(unsigned int context){
-    if(context > 5) context = 5;
+    if(context > CONTEXT_MAX) context = CONTEXT_MAX;
     
     int commandCount = 0;
     this->gfx.clear();
@@ -185,18 +257,19 @@ int API::ControlSurfaceAPI5::parseDisplayList(unsigned int context){
     this->updateContextsFlag &= ~(1<<context);
 
     for(unsigned int i=0; i<count; i++){
-        if(list->getCommandAt(i) == CMD_SYMBOL_SCALE){
+        auto cmd = list->getCommandAt(i);
+        if(cmd == CMD_SYMBOL_SCALE){
             commandCount++;
             gfx.scale = list->getCommandAt(i+2);
             if(gfx.scale <= 0) gfx.scale = 1;
             i+=2;
         }
-        else if(list->getCommandAt(i) == CMD_SYMBOL_XOR){
+        else if(cmd == CMD_SYMBOL_XOR){
             commandCount++;
             gfx.modexor = list->getCommandAt(i+2);
             i+=2;
         }
-        else if(list->getCommandAt(i) == CMD_SYMBOL_LINE){
+        else if(cmd == CMD_SYMBOL_LINE){
             commandCount++;
             int x = list->getCommandAt(i+2);
             int y = list->getCommandAt(i+3);
@@ -205,7 +278,7 @@ int API::ControlSurfaceAPI5::parseDisplayList(unsigned int context){
             gfx.drawLine(x,y,x2,y2);
             i+=5;
         }
-        else if(list->getCommandAt(i) == CMD_SYMBOL_RECT){
+        else if(cmd == CMD_SYMBOL_RECT){
             commandCount++;
             int x = list->getCommandAt(i+2);
             int y = list->getCommandAt(i+3);
@@ -219,27 +292,40 @@ int API::ControlSurfaceAPI5::parseDisplayList(unsigned int context){
             else
                 gfx.drawRectSize(x,y,w,h);
         }
-        // else if(cmds[i] == CMD_SYMBOL_STRING){
-        //     i++;
-        //     int x = getCByte(cmds,&i);
-        //     int y = getCByte(cmds,&i);
-        //     const char* str = (char*)&cmds[++i];
-        //     gfx_drawString(str,x,y); 
-        //     int j = 0;
-        //     while(cmds[i+j] != 0) j++;
-        //     i+=j;
-        // }
-        // else if(cmds[i] == CMD_SYMBOL_BITMAP){
-        //     i++;
-        //     int x = getCByte(cmds,&i);
-        //     int y = getCByte(cmds,&i);
-        //     int w = getCByte(cmds,&i);
-        //     int h = getCByte(cmds,&i);
-        //     int start = getCByte(cmds,&i);
-        //     int bytes_per_col = getCByte(cmds,&i);
-        //     int llen = getCByte(cmds,&i);
-        //     gfx_drawBitmap(x,y,w,h,bytes_per_col,llen,data_buf+start);
-        // }
+        else if(cmd == CMD_SYMBOL_STRING){
+            commandCount++; 
+            auto len = list->getCommandAt(i+1);
+            auto x = list->getCommandAt(i+2);
+            auto y = list->getCommandAt(i+3);
+            char str[256];
+            for(int j=0; j<len-2; j++)
+                str[j] = list->getCommandAt(i+4 + j);
+            if(str[len-2] != 0) str[len-1] = 0;
+            gfx.drawString(str,x,y); 
+            i+=len;
+        }
+        else if(cmd == CMD_SYMBOL_BITMAP){
+            commandCount++;
+            auto len = list->getCommandAt(i+1);
+            int target_x = list->getCommandAt(i+2);
+            int target_y = list->getCommandAt(i+3);
+            int target_w = list->getCommandAt(i+4);
+            int target_h = list->getCommandAt(i+5);
+            int source_startLSB = list->getCommandAt(i+6);
+            int source_startMSB = list->getCommandAt(i+7);
+            int source_height = list->getCommandAt(i+8);
+            int source_width = list->getCommandAt(i+9);
+            gfx.drawBitmap (
+                target_x,
+                target_y,
+                target_w,
+                target_h,
+                source_height,
+                source_width,
+                (source_startLSB + (source_startMSB<<7)) + sharedBuffer
+            );
+            i+=len;
+        }
     }
 
     return commandCount;
