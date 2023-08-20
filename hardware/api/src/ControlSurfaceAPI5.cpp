@@ -134,7 +134,7 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
             && midiStreamBytes[i+2] == CMD_GFX_ID[2]
             && midiStreamBytes[i+3] == CMD_GFX_ID[3] )
             {
-                LOG(i);
+                // LOG(i);
                 //mode: write tto shared memory
                 i+=4;
                 if(check.logger) check.logger("start shared upload"); 
@@ -166,7 +166,7 @@ int API::ControlSurfaceAPI5::parseMidiStream(const unsigned char* midiStreamByte
                 // for(int j=start; j<start+count/2; j++){
                 //     LOG(sharedBuffer[j]);
                 // }
-                LOG(i);
+                // LOG(i);
                 
                 if(check.logger) check.logger("end shared upload"); 
                 if(check.hook) check.hook(check.env,"gfx_end",i);
