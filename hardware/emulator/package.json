@@ -10,7 +10,7 @@
     "@testing-library/user-event": "^13.5.0",
     "electron-is-dev": "^2.0.0",
     "ipc": "^0.0.1",
-    "minim.node": "link:./native/build/Release/minim.node",
+    "minim": "file:native",
     "node-addon-api": "^6.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -29,8 +29,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test --verbose",
     "eject": "react-scripts eject",
-    "install": "node-gyp rebuild -C ./native --runtime=electron --target=25.0.0 --arch=x64 --dist-url=https://electronjs.org/headers",
-    "dev": "concurrently -k \"BROWSER=none yarn start\" \"yarn:electron\"",
+    "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:127.0.0.1:3000 && electron .",
     "dist": "electron-builder"
   },
