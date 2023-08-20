@@ -137,6 +137,7 @@ input:where([type=range])::-webkit-slider-thumb:hover {
   color: var(--c-sel);
   z-index: 50;
   font-size: 1rem;
+  font-style: italic;
   border-top: solid 2px var(--c-high);
 }
 .help:hover::before
@@ -150,27 +151,25 @@ input:where([type=range])::-webkit-slider-thumb:hover {
   flex-direction: column;
 }
 
-.MinimButton{
+.DropDown{
   position: relative;
 }
-.OptionPanel {
+.DropDownContent {
   margin: 0;
   opacity: 0;
-  pointer-events: none;
+  display: inline-block;
   position: absolute;
   background-color: var(--c-back);
-  color: var(--c-back);
-  top:90%;
-  left:0;;
+  color: var(--c-main);
+  top:80%;
+  left:0;
   z-index: 20;
   filter: drop-shadow(0 0 5px var(--c-high));
+  pointer-events: none;
 }
-.MinimButton:hover .OptionPanel { 
+.DropDown:hover .DropDownContent { 
   opacity: 1;
-  pointer-events: unset;
-}
-.OptionPanel button{
-  background-color: var(--c-high);
+  pointer-events: all;
 }
 
 .MenuTitle {

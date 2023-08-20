@@ -31,6 +31,7 @@ function App() {
   const screenOrder = [1,2,3,4,5,0]
   const [errors, setErrors] = useState([...Array(6).fill(null)])
   const [midiStream, setMidiStream] = useState('')
+  const [realOutputInjectPort,  setRealOutputInjectPort] = useState();
   const [inspectContext, setInspectContext] = useState(null)
 
   const [optPanel, setOptPanel] = useState(false)
@@ -65,13 +66,15 @@ function App() {
   return (
     <div className={darkMode ? "App ThemeDark" : "App"}>
       <div className='MenuTitle'>
-        <button className='MinimButton'>
-          MINIM
-          <div className='OptionPanel'>
+        <div className='DropDown'>
+          <button className='MinimButton'>
+            MINIM
+          </button>
+          <div className='DropDownContent'>
             <button onClick={()=>{window.app.dev()}}>Dev tools</button>
-            <button onClick={()=>{setDarkMode(t=>!t)}}>Theme</button>
+            <button role='button' onClick={()=>{setDarkMode(t=>!t)}}>Theme</button>
           </div>
-        </button>
+        </div>
 
         <MidiFlowIndicator onClick={()=>{
           setIoPanel(i => !i)
@@ -80,7 +83,11 @@ function App() {
             //incoming real midi data
             commitStream(ev.data,errorHandle)
             asyncDisplayStream(ev.data,setMidiStream)
-          }}/>
+          }}
+          onNewOutput={(port)=>{
+            setRealOutputInjectPort(port)
+          }}
+          />
         </MidiFlowIndicator>
         <button onClick={()=>{
           window.app.end()
@@ -92,8 +99,10 @@ function App() {
         {<InjectMidiPanel 
           onInject={(symbols,code,stream)=>{
             //incoming injected midi data
-            commitStream(new Uint8Array(symbols),errorHandle)
+            const ss = new Uint8Array(symbols)
+            commitStream(ss,errorHandle)
             setMidiStream(stream)
+            if(realOutputInjectPort) realOutputInjectPort.send(ss)
           }} 
           stream={midiStream}
         />}

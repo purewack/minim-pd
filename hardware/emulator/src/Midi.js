@@ -1,7 +1,7 @@
 import { Children, useEffect, useRef, useState } from 'react';
 import './style/midi.css'
 
-export default function SettingsMidi({className, inputCallback, outputDispatchArray, ...restProps}){
+export default function SettingsMidi({className, inputCallback, onNewOutput, ...restProps}){
     const [midiAccess, setMidiAccess] = useState(null)
     const [portList, setPortsList] = useState(null)
     const [inPort, setInPort] = useState(null)
@@ -33,8 +33,13 @@ export default function SettingsMidi({className, inputCallback, outputDispatchAr
           entry.onmidimessage = null
       }
       
-      for (const entry of midiAccess.outputs) 
+      for (const entry of midiAccess.outputs){
         outs.push(entry[1].name);
+        if(outPort === entry[1].name){
+          onNewOutput?.(entry[1])
+          console.log('set ', outPort, entry)
+        }
+      }
       
       setPortsList({input: [...ins], output: [...outs]})
     },[inPort,outPort,midiAccess])
@@ -233,11 +238,11 @@ export function StreamCodeBlocks({blockArray, onNewArgument, onRemove}){
           
           : c.arguments.map((a,j) => 
               <div className='help' 
+              key={`arg_${i}_${j}`} 
               data-help={window.ControlSurface.getAPICommands(c.name)[`arg_${j}`]}>
               <input 
                 data-argindex={j}
                 data-name={c.name}
-                key={`arg_${i}_${j}`} 
                 type='text'
                 className={'argument'} 
                 value={a}  
